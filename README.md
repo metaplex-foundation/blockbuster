@@ -13,10 +13,10 @@ For more information about Plerkle and the [Digital Asset RPC infrastructure](ht
 
 This library contains parsers for the following programs and the parsers are specific to how these contracts relate to metaplex assets.
 
-Gummyroll (Solana)
-Bubblegum (Metaplex)
-Spl Token (Solana)
-Token Metadata (Metaplex)
-Auction House (Metaplex)
-Candy Machine (Metaplex)
-Hydra (Metaplex)
+* Gummyroll (Solana)
+* Bubblegum (Metaplex)
+* Spl Token (Solana)
+* Token Metadata (Metaplex)
+* Auction House (Metaplex)
+* Candy Machine (Metaplex)
+* Hydra (Metaplex)
