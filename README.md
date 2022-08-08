@@ -7,7 +7,7 @@ This repositiory is the home for Metaplex Program Parsers. Program parsers are c
 ## Mode of Operation
 This library works best as a consumer of messages sent via a geyser plugin using the [Plerkle Serialization](https://github.com/metaplex-foundation/digital-asset-validator-plugin) library by metaplex. Its 
 The types from that library are FlatBuffer based currently and are the wire format of messages coming out of Plerkle into the rest of the infrastructure.
-For more information about Plerkle see here `LINK  TO PLERKLE`. It can however be used in any general programs provided you can create the data in the FlatBuffer types.
+For more information about Plerkle and the [Digital Asset RPC infrastructure](https://github.com/metaplex-foundation/digital-asset-validator-plugin) It can however be used in any general programs provided you can create the data in the FlatBuffer types.
 
 ## Scope
 
