@@ -1,0 +1,13 @@
+[package]
+name = "blockbuster"
+description = "Metaplex canonical program parsers, for indexing, analytics etc...."
+version = "0.0.1"
+authors = ["Metaplex Developers <dev@metaplex.com>"]
+repository = "https://github.com/metaplex-foundation/blockbuster"
+license = "AGPL-3.0"
+edition = "2021"
+readme = "README.md"
+
+[dependencies]
+gummyroll = { git = "https://github.com/ngundotra/solana-program-library/tree/main-contracts", features = ["no-entrypoint"] }
+bubblegum = { git = "https://github.com/metaplex-foundation/metaplex-program-library", features = ["no-entrypoint"] }
