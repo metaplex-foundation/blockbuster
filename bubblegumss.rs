@@ -1,207 +1,207 @@
-use {
-    crate::{
-        error::IngesterError,
-        events::handle_event,
-        get_gummy_roll_events,
-        parsers::{InstructionBundle, ProgramHandler, ProgramHandlerConfig},
-        save_changelog_events,
-        tasks::BgTask,
-        utils::bytes_from_fb_table,
-        utils::filter_events_from_logs,
-    },
-    anchor_client::anchor_lang::{self, prelude::Pubkey, AnchorDeserialize},
-    async_trait::async_trait,
-    bubblegum::state::{
-        leaf_schema::{LeafSchema, LeafSchemaEvent, Version},
-        NFTDecompressionEvent,
-    },
-    digital_asset_types::{
-        adapter::{TokenStandard, UseMethod, Uses},
-        dao::{
-            asset, asset_authority, asset_creators, asset_data, asset_grouping,
-            sea_orm_active_enums::{ChainMutability, Mutability, OwnerType, RoyaltyTargetType},
-        },
-        json::ChainDataV1,
-    },
-    flatbuffers::{ForwardsUOffset, Vector},
-    lazy_static::lazy_static,
-    num_traits::FromPrimitive,
-    plerkle_serialization::transaction_info_generated::transaction_info::{self},
-    sea_orm::{
-        entity::*, query::*, sea_query::OnConflict, DatabaseConnection, DatabaseTransaction,
-        DbBackend, DbErr, JsonValue, SqlxPostgresConnector, TransactionTrait,
-    },
-    serde_json, solana_sdk,
-    solana_sdk::pubkeys,
-    sqlx::{self, Pool, Postgres},
-    std::fmt::{Display, Formatter},
-    tokio::sync::mpsc::UnboundedSender,
-};
-
-pubkeys!(
-    BubblegumProgramID,
-    "BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY"
-);
-
-pub struct BubblegumHandler {
-    id: Pubkey,
-    storage: DatabaseConnection,
-    task_sender: UnboundedSender<Box<dyn BgTask>>,
-}
-
-pub struct DownloadMetadata {
-    asset_data_id: i64,
-    uri: String,
-}
-
-impl Display for DownloadMetadata {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "DownloadMetadata from {} for {}",
-            self.uri, self.asset_data_id
-        )
-    }
-}
-
-#[async_trait]
-impl BgTask for DownloadMetadata {
-    async fn task(&self, db: &DatabaseConnection) -> Result<(), IngesterError> {
-        let body: serde_json::Value = reqwest::get(self.uri.clone()) // Need to check for malicious sites ?
-            .await?
-            .json()
-            .await?;
-        let model = asset_data::ActiveModel {
-            id: Unchanged(self.asset_data_id),
-            metadata: Set(body),
-            ..Default::default()
-        };
-        asset_data::Entity::update(model)
-            .filter(asset_data::Column::Id.eq(self.asset_data_id))
-            .exec(db)
-            .await
-            .map(|_| ())
-            .map_err(|db| {
-                IngesterError::TaskManagerError(format!(
-                    "Database error with {}, error: {}",
-                    self, db
-                ))
-            })
-    }
-}
-
-#[async_trait]
-impl ProgramHandler for BubblegumHandler {
-    fn id(&self) -> Pubkey {
-        self.id
-    }
-
-    fn config(&self) -> &ProgramHandlerConfig {
-        lazy_static! {
-            static ref CONFIG: ProgramHandlerConfig = ProgramHandlerConfig {
-                responds_to_instruction: true,
-                responds_to_account: false
-            };
-        }
-        return &CONFIG;
-    }
-
-    async fn handle_instruction(&self, bundle: &InstructionBundle) -> Result<(), IngesterError> {
-        handle_bubblegum_instruction(
-            &bundle.instruction,
-            bundle.slot,
-            &bundle.instruction_logs,
-            &bundle.keys,
-            &self.storage,
-            &self.task_sender,
-        )
-        .await
-    }
-}
-
-impl BubblegumHandler {
-    pub fn new(pool: Pool<Postgres>, task_queue: UnboundedSender<Box<dyn BgTask>>) -> Self {
-        BubblegumHandler {
-            id: BubblegumProgramID(),
-            task_sender: task_queue,
-            storage: SqlxPostgresConnector::from_sqlx_postgres_pool(pool),
-        }
-    }
-}
-
-fn get_leaf_event(logs: &Vec<&str>) -> Result<LeafSchemaEvent, IngesterError> {
-    get_bubblegum_event(logs)
-}
-
-fn get_decompress_event(logs: &Vec<&str>) -> Result<NFTDecompressionEvent, IngesterError> {
-    get_bubblegum_event(logs)
-}
-
-fn get_bubblegum_event<T: anchor_lang::Event + anchor_lang::AnchorDeserialize>(
-    logs: &Vec<&str>,
-) -> Result<T, IngesterError> {
-    let event_logs = filter_events_from_logs(logs);
-    if event_logs.is_err() {
-        println!("Error finding event logs in bubblegum logs");
-        return Err(IngesterError::CompressedAssetEventMalformed);
-    }
-
-    let mut found_event: Option<T> = None;
-    for event in event_logs.unwrap() {
-        let event = handle_event::<T>(event);
-        if event.is_ok() {
-            found_event = event.ok()
-        }
-    }
-    found_event.ok_or(IngesterError::CompressedAssetEventMalformed)
-}
-
-async fn tree_change_only<'a>(
-    db: &DatabaseConnection,
-    slot: u64,
-    logs: &Vec<&'a str>,
-) -> Result<(), IngesterError> {
-    let gummy_roll_events = get_gummy_roll_events(logs)?;
-    db.transaction::<_, _, IngesterError>(|txn| {
-        Box::pin(async move {
-            save_changelog_events(gummy_roll_events, slot, txn)
-                .await
-                .map(|_| ())
-        })
-    })
-    .await
-    .map_err(Into::into)
-}
-
-async fn update_asset(
-    txn: &DatabaseTransaction,
-    id: Vec<u8>,
-    seq: Option<u64>,
-    model: asset::ActiveModel,
-) -> Result<(), IngesterError> {
-    let update_one = if let Some(seq) = seq {
-        asset::Entity::update(model)
-            .filter(asset::Column::Id.eq(id))
-            .filter(asset::Column::Seq.lte(seq))
-    } else {
-        asset::Entity::update(model).filter(asset::Column::Id.eq(id))
-    };
-
-    match update_one.exec(txn).await {
-        Ok(_) => Ok(()),
-        Err(err) => match err {
-            DbErr::RecordNotFound(ref s) => {
-                if s.find("None of the database rows are affected") != None {
-                    Ok(())
-                } else {
-                    Err(IngesterError::from(err))
-                }
-            }
-            _ => Err(IngesterError::from(err)),
-        },
-    }
-}
-
+// use {
+//     crate::{
+//         error::IngesterError,
+//         events::handle_event,
+//         get_gummy_roll_events,
+//         parsers::{InstructionBundle, ProgramHandler, ProgramHandlerConfig},
+//         save_changelog_events,
+//         tasks::BgTask,
+//         utils::bytes_from_fb_table,
+//         utils::filter_events_from_logs,
+//     },
+//     anchor_client::anchor_lang::{self, prelude::Pubkey, AnchorDeserialize},
+//     async_trait::async_trait,
+//     bubblegum::state::{
+//         leaf_schema::{LeafSchema, LeafSchemaEvent, Version},
+//         NFTDecompressionEvent,
+//     },
+//     digital_asset_types::{
+//         adapter::{TokenStandard, UseMethod, Uses},
+//         dao::{
+//             asset, asset_authority, asset_creators, asset_data, asset_grouping,
+//             sea_orm_active_enums::{ChainMutability, Mutability, OwnerType, RoyaltyTargetType},
+//         },
+//         json::ChainDataV1,
+//     },
+//     flatbuffers::{ForwardsUOffset, Vector},
+//     lazy_static::lazy_static,
+//     num_traits::FromPrimitive,
+//     plerkle_serialization::transaction_info_generated::transaction_info::{self},
+//     sea_orm::{
+//         entity::*, query::*, sea_query::OnConflict, DatabaseConnection, DatabaseTransaction,
+//         DbBackend, DbErr, JsonValue, SqlxPostgresConnector, TransactionTrait,
+//     },
+//     serde_json, solana_sdk,
+//     solana_sdk::pubkeys,
+//     sqlx::{self, Pool, Postgres},
+//     std::fmt::{Display, Formatter},
+//     tokio::sync::mpsc::UnboundedSender,
+// };
+//
+// pubkeys!(
+//     BubblegumProgramID,
+//     "BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY"
+// );
+//
+// pub struct BubblegumHandler {
+//     id: Pubkey,
+//     storage: DatabaseConnection,
+//     task_sender: UnboundedSender<Box<dyn BgTask>>,
+// }
+//
+// pub struct DownloadMetadata {
+//     asset_data_id: i64,
+//     uri: String,
+// }
+//
+// impl Display for DownloadMetadata {
+//     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+//         write!(
+//             f,
+//             "DownloadMetadata from {} for {}",
+//             self.uri, self.asset_data_id
+//         )
+//     }
+// }
+//
+// #[async_trait]
+// impl BgTask for DownloadMetadata {
+//     async fn task(&self, db: &DatabaseConnection) -> Result<(), IngesterError> {
+//         let body: serde_json::Value = reqwest::get(self.uri.clone()) // Need to check for malicious sites ?
+//             .await?
+//             .json()
+//             .await?;
+//         let model = asset_data::ActiveModel {
+//             id: Unchanged(self.asset_data_id),
+//             metadata: Set(body),
+//             ..Default::default()
+//         };
+//         asset_data::Entity::update(model)
+//             .filter(asset_data::Column::Id.eq(self.asset_data_id))
+//             .exec(db)
+//             .await
+//             .map(|_| ())
+//             .map_err(|db| {
+//                 IngesterError::TaskManagerError(format!(
+//                     "Database error with {}, error: {}",
+//                     self, db
+//                 ))
+//             })
+//     }
+// }
+//
+// #[async_trait]
+// impl ProgramHandler for BubblegumHandler {
+//     fn id(&self) -> Pubkey {
+//         self.id
+//     }
+//
+//     fn config(&self) -> &ProgramHandlerConfig {
+//         lazy_static! {
+//             static ref CONFIG: ProgramHandlerConfig = ProgramHandlerConfig {
+//                 responds_to_instruction: true,
+//                 responds_to_account: false
+//             };
+//         }
+//         return &CONFIG;
+//     }
+//
+//     async fn handle_instruction(&self, bundle: &InstructionBundle) -> Result<(), IngesterError> {
+//         handle_bubblegum_instruction(
+//             &bundle.instruction,
+//             bundle.slot,
+//             &bundle.instruction_logs,
+//             &bundle.keys,
+//             &self.storage,
+//             &self.task_sender,
+//         )
+//         .await
+//     }
+// }
+//
+// impl BubblegumHandler {
+//     pub fn new(pool: Pool<Postgres>, task_queue: UnboundedSender<Box<dyn BgTask>>) -> Self {
+//         BubblegumHandler {
+//             id: BubblegumProgramID(),
+//             task_sender: task_queue,
+//             storage: SqlxPostgresConnector::from_sqlx_postgres_pool(pool),
+//         }
+//     }
+// }
+//
+// fn get_leaf_event(logs: &Vec<&str>) -> Result<LeafSchemaEvent, IngesterError> {
+//     get_bubblegum_event(logs)
+// }
+//
+// fn get_decompress_event(logs: &Vec<&str>) -> Result<NFTDecompressionEvent, IngesterError> {
+//     get_bubblegum_event(logs)
+// }
+//
+// fn get_bubblegum_event<T: anchor_lang::Event + anchor_lang::AnchorDeserialize>(
+//     logs: &Vec<&str>,
+// ) -> Result<T, IngesterError> {
+//     let event_logs = filter_events_from_logs(logs);
+//     if event_logs.is_err() {
+//         println!("Error finding event logs in bubblegum logs");
+//         return Err(IngesterError::CompressedAssetEventMalformed);
+//     }
+//
+//     let mut found_event: Option<T> = None;
+//     for event in event_logs.unwrap() {
+//         let event = handle_event::<T>(event);
+//         if event.is_ok() {
+//             found_event = event.ok()
+//         }
+//     }
+//     found_event.ok_or(IngesterError::CompressedAssetEventMalformed)
+// }
+//
+// async fn tree_change_only<'a>(
+//     db: &DatabaseConnection,
+//     slot: u64,
+//     logs: &Vec<&'a str>,
+// ) -> Result<(), IngesterError> {
+//     let gummy_roll_events = get_gummy_roll_events(logs)?;
+//     db.transaction::<_, _, IngesterError>(|txn| {
+//         Box::pin(async move {
+//             save_changelog_events(gummy_roll_events, slot, txn)
+//                 .await
+//                 .map(|_| ())
+//         })
+//     })
+//     .await
+//     .map_err(Into::into)
+// }
+//
+// async fn update_asset(
+//     txn: &DatabaseTransaction,
+//     id: Vec<u8>,
+//     seq: Option<u64>,
+//     model: asset::ActiveModel,
+// ) -> Result<(), IngesterError> {
+//     let update_one = if let Some(seq) = seq {
+//         asset::Entity::update(model)
+//             .filter(asset::Column::Id.eq(id))
+//             .filter(asset::Column::Seq.lte(seq))
+//     } else {
+//         asset::Entity::update(model).filter(asset::Column::Id.eq(id))
+//     };
+//
+//     match update_one.exec(txn).await {
+//         Ok(_) => Ok(()),
+//         Err(err) => match err {
+//             DbErr::RecordNotFound(ref s) => {
+//                 if s.find("None of the database rows are affected") != None {
+//                     Ok(())
+//                 } else {
+//                     Err(IngesterError::from(err))
+//                 }
+//             }
+//             _ => Err(IngesterError::from(err)),
+//         },
+//     }
+// }
+//
 async fn handle_bubblegum_instruction<'a, 'b, 't>(
     instruction: &'a transaction_info::CompiledInstruction<'a>,
     slot: u64,
