@@ -12,19 +12,17 @@ use solana_sdk::{
     },
 };
 use solana_sdk::pubkeys;
-
-
-use mpl_bubblegum::state::leaf_schema::{
-    LeafSchemaEvent,
-};
-use spl_compression::events::ChangeLogEvent;
+pub use spl_compression::events::ChangeLogEvent;
 use anchor_lang::Discriminator;
 use plerkle_serialization::account_info_generated::account_info::AccountInfo;
 use mpl_bubblegum::state::metaplex_adapter::MetadataArgs;
 use wrapper;
 use crate::program_handler::ProgramMatcher;
-
 pub use mpl_bubblegum::InstructionName;
+pub use mpl_bubblegum::state::leaf_schema::{
+    LeafSchemaEvent,
+    LeafSchema,
+};
 
 pubkeys!(
     BubblegumProgramID,
@@ -140,10 +138,10 @@ impl ProgramParser<BubblegumInstruction, ()> for BubblegumParser {
                     });
                 }
                 InstructionName::VerifyCreator => {
-                    b_inst.payload = Some(Payload::VerifyCreator { creator: Pubkey::new_from_array(keys.get(3).0) });
+                    b_inst.payload = Some(Payload::VerifyCreator { creator: Pubkey::new_from_array(keys[3].0) });
                 }
                 InstructionName::UnverifyCreator => {
-                    b_inst.payload = Some(Payload::UnverifyCreator { creator: Pubkey::new_from_array(keys.get(3).0) });
+                    b_inst.payload = Some(Payload::UnverifyCreator { creator: Pubkey::new_from_array(keys[3].0) });
                 }
                 _ => {}
             };

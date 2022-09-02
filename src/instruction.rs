@@ -10,11 +10,10 @@ pub type IxPair<'a> = (
 );
 
 
-pub struct InstructionBundle<'a, 'b> {
+pub struct InstructionBundle<'a> {
     pub txn_id: String,
     pub instruction: CompiledInstruction<'a>,
     pub inner_ix: Option<Vec<IxPair<'a>>>,
-    pub keys: Vector<'b, ForwardsUOffset<Pubkey>>,
-    pub instruction_logs: Vec<&'b str>,
+    pub keys: &'a [Pubkey],
     pub slot: u64,
 }
