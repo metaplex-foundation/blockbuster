@@ -1,8 +1,8 @@
 # BlockBuster
 
-BlockBuster -> "Busting Solana blocks into little peices to index and operate on the programs therein" - Noone - 1995
+BlockBuster -> "Busting Solana blocks into little pieces to index and operate on the programs therein" - Noone - 1995
 
-This repositiory is the home for Metaplex Program Parsers. Program parsers are cannonical libraries that take a transaction or account update from a geyser plugin and parse them coprrecly according to Metaplex smart contracts. This sort of parsing is hard to automate as it must contain some knowledge of the api structure of the contract which is not fully describable yet via IDLS. Things like remainign accounts, optional accounts and complex instruction data are not always 100% clear what they mean without knowldege of the contract. 
+This repositiory is the home for Metaplex Program Parsers. Program parsers are cannonical libraries that take a transaction or account update from a geyser plugin and parse them correctly according to Metaplex smart contracts. This sort of parsing is hard to automate as it must contain some knowledge of the api structure of the contract which is not fully describable yet via IDLS. Things like remaining accounts, optional accounts and complex instruction data are not always 100% clear what they mean without knowldege of the contract. 
 
 ## Mode of Operation
 This library works best as a consumer of messages sent via a geyser plugin using the [Plerkle Serialization](https://github.com/metaplex-foundation/digital-asset-validator-plugin) library by metaplex. Its 
