@@ -6,11 +6,7 @@ use crate::{
 
 use mpl_bubblegum::{get_instruction_type};
 use borsh::de::BorshDeserialize;
-use solana_sdk::{
-    pubkey::{
-        Pubkey
-    },
-};
+use solana_sdk::pubkey::Pubkey;
 use solana_sdk::pubkeys;
 pub use spl_compression::events::ChangeLogEvent;
 use anchor_lang::Discriminator;
@@ -138,10 +134,10 @@ impl ProgramParser<BubblegumInstruction, ()> for BubblegumParser {
                     });
                 }
                 InstructionName::VerifyCreator => {
-                    b_inst.payload = Some(Payload::VerifyCreator { creator: Pubkey::new_from_array(keys[3].0) });
+                    b_inst.payload = Some(Payload::VerifyCreator { creator: Pubkey::new_from_array(keys.get(3).unwrap().0) });
                 }
                 InstructionName::UnverifyCreator => {
-                    b_inst.payload = Some(Payload::UnverifyCreator { creator: Pubkey::new_from_array(keys[3].0) });
+                    b_inst.payload = Some(Payload::UnverifyCreator { creator: Pubkey::new_from_array(keys.get(3).unwrap().0) });
                 }
                 _ => {}
             };
