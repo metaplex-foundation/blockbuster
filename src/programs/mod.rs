@@ -4,5 +4,5 @@ pub mod bubblegum;
 
 pub enum ParsedProgram {
     Bubblegum,
-    Gummyroll
+    Gummyroll,
 }
