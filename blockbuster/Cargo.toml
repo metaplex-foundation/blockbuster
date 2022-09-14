@@ -1,0 +1,27 @@
+[package]
+name = "blockbuster"
+description = "Metaplex canonical program parsers, for indexing, analytics etc...."
+version = "0.0.2"
+authors = ["Metaplex Developers <dev@metaplex.com>"]
+repository = "https://github.com/metaplex-foundation/blockbuster"
+license = "AGPL-3.0"
+edition = "2021"
+readme = "../README.md"
+
+[dependencies]
+spl-account-compression = { version = "0.1.0", features = ["no-entrypoint"] }
+spl-noop = { version = "0.1.0", features = ["no-entrypoint"] }
+mpl-bubblegum = { version = "0.1.0", features = ["no-entrypoint"] }
+mpl-token-metadata = { version = "1.3.6", features = ["no-entrypoint"] }
+plerkle_serialization = { path = "../../digital-asset-validator-plugin/plerkle_serialization", version = ">=0.0.5" }
+spl-token = { version = "=3.3.0", features = ["no-entrypoint"] }
+async-trait = "0.1.57"
+lazy_static = "1.4.0"
+flatbuffers = "2.1.2"
+borsh = "0.9.3"
+anchor-lang = "^0.25.0"
+thiserror = "1.0.32"
+solana-sdk = "~1.10.29"
+
+
+
