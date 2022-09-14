@@ -1,24 +1,22 @@
+use crate::program_handler::ParseResult;
 use crate::{
-    error::BlockbusterError,
-    instruction::InstructionBundle,
-    program_handler::{ProgramParser},
+    error::BlockbusterError, instruction::InstructionBundle, program_handler::ProgramParser,
 };
-
-use mpl_bubblegum::{get_instruction_type};
+use crate::{program_handler::NotUsed, programs::ProgramParseResult};
 use borsh::de::BorshDeserialize;
+use solana_sdk::borsh::try_from_slice_unchecked;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::pubkeys;
 
-use plerkle_serialization::account_info_generated::account_info::AccountInfo;
 use mpl_bubblegum::state::metaplex_adapter::MetadataArgs;
+use plerkle_serialization::account_info_generated::account_info::AccountInfo;
 
+pub use mpl_bubblegum::state::leaf_schema::{LeafSchema, LeafSchemaEvent};
 pub use mpl_bubblegum::InstructionName;
-pub use mpl_bubblegum::state::leaf_schema::{
-    LeafSchemaEvent,
-    LeafSchema,
+use mpl_token_metadata::state::{
+    CollectionAuthorityRecord, Edition, EditionMarker, Key, MasterEditionV1, MasterEditionV2,
+    Metadata, ReservationListV1, ReservationListV2, TokenMetadataAccount, UseAuthorityRecord,
 };
-use mpl_token_metadata::state::{Key, Edition, MasterEditionV2, Metadata, ReservationListV1, MasterEditionV1, ReservationListV2, EditionMarker, UseAuthorityRecord, CollectionAuthorityRecord};
-
 
 pubkeys!(
     token_metadata_id,
@@ -34,12 +32,31 @@ pub enum TokenMetadataAccountData {
     EditionMarker(EditionMarker),
     UseAuthorityRecord(UseAuthorityRecord),
     CollectionAuthorityRecord(CollectionAuthorityRecord),
-    // Add more types here from Key
+    ReservationListV2(ReservationListV2),
+    ReservationListV1(ReservationListV1),
 }
 
 pub struct TokenMetadataAccountState {
     key: Key,
     data: TokenMetadataAccountData,
+}
+
+impl TokenMetadataAccountState {
+    pub fn new(key: Key) -> Self {
+        TokenMetadataAccountState { key, data: todo!() }
+    }
+}
+
+impl ParseResult for TokenMetadataAccountState {
+    fn result(&self) -> &Self
+    where
+        Self: Sized,
+    {
+        self
+    }
+    fn result_type(&self) -> ProgramParseResult {
+        ProgramParseResult::TokenMetadata(self)
+    }
 }
 
 pub struct TokenMetadataParser;
@@ -52,4 +69,36 @@ impl ProgramParser for TokenMetadataParser {
         key == &token_metadata_id()
     }
 
+    fn handle_account(
+        &self,
+        account_info: &AccountInfo,
+    ) -> Result<Box<(dyn ParseResult + 'static)>, BlockbusterError> {
+        let account_raw_data = account_info.data().unwrap();
+
+        let data = account_raw_data[8..].to_owned();
+        let data_buf = &mut data.as_slice();
+        let metadata = 
+        let mut token_metadata_account_state = TokenMetadataAccountState::new(metadata.key);
+
+        match metadata.key {
+            EditionV1 => {
+                let data: Edition = try_from_slice_unchecked(data_buf)?;
+                token_metadata_account_state.data =
+                    TokenMetadataAccountData::EditionV1(data)
+            }
+            MasterEditionV2 => {
+                token_metadata_account_state.data =
+                    try_from_slice_unchecked(&metadata.data).unwrap()
+            }
+        }
+
+        Ok(Box::new(token_metadata_account_state))
+    }
+
+    fn handle_instruction(
+        &self,
+        _bundle: &InstructionBundle,
+    ) -> Result<Box<(dyn ParseResult + 'static)>, BlockbusterError> {
+        Ok(Box::new(NotUsed::new()))
+    }
 }
