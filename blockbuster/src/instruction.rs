@@ -1,17 +1,10 @@
-use std::collections::{HashSet, VecDeque};
+use flatbuffers::{ForwardsUOffset, Vector};
 use plerkle_serialization::transaction_info_generated::transaction_info::{
-    TransactionInfo,
-    CompiledInstruction,
-    InnerInstructions,
-    Pubkey,
+    CompiledInstruction, InnerInstructions, Pubkey, TransactionInfo,
 };
-use flatbuffers::{Vector, ForwardsUOffset};
+use std::collections::{HashSet, VecDeque};
 
-pub type IxPair<'a> = (
-    Pubkey,
-    CompiledInstruction<'a>,
-);
-
+pub type IxPair<'a> = (Pubkey, CompiledInstruction<'a>);
 
 pub struct InstructionBundle<'a> {
     pub txn_id: &'a str,
@@ -22,11 +15,11 @@ pub struct InstructionBundle<'a> {
     pub slot: u64,
 }
 
-pub fn order_instructions<'a,'b,>(
+pub fn order_instructions<'a, 'b>(
     programs: HashSet<&'b [u8]>,
     transaction_info: &'a TransactionInfo<'a>,
 ) -> VecDeque<(IxPair<'a>, Option<Vec<IxPair<'a>>>)> {
-    let mut ordered_ixs: VecDeque<(IxPair, Option<Vec<IxPair>>)> =  VecDeque::new();
+    let mut ordered_ixs: VecDeque<(IxPair, Option<Vec<IxPair>>)> = VecDeque::new();
     // Get inner instructions.
     let inner_ix_list = transaction_info.inner_instructions();
 
@@ -55,7 +48,9 @@ pub fn order_instructions<'a,'b,>(
         let inner: Option<Vec<IxPair>> = get_inner_ixs(inner_ix_list, i).map(|inner_ixs| {
             let mut inner_list: VecDeque<IxPair> = VecDeque::new();
             for inner_ix_instance in inner_ixs.instructions().unwrap() {
-                let inner_program_id = keys.get(inner_ix_instance.program_id_index() as usize).unwrap();
+                let inner_program_id = keys
+                    .get(inner_ix_instance.program_id_index() as usize)
+                    .unwrap();
                 inner_list.push_front((*inner_program_id, inner_ix_instance));
                 if programs.get(inner_program_id.0.as_ref()).is_some() {
                     let mut new_inner_list = inner_list.clone();

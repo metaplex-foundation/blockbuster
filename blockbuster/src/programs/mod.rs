@@ -6,6 +6,5 @@ pub mod bubblegum;
 
 pub enum ProgramParseResult<'a> {
     Bubblegum(&'a BubblegumInstruction),
-    Unknown
+    Unknown,
 }
-

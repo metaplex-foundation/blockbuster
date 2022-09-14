@@ -9,7 +9,6 @@ pub enum BlockbusterError {
     IOError(String),
 }
 
-
 impl From<std::io::Error> for BlockbusterError {
     fn from(err: Error) -> Self {
         BlockbusterError::IOError(err.to_string())

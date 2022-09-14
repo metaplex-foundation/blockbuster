@@ -1,44 +1,30 @@
 use crate::{
     error::BlockbusterError,
     instruction::InstructionBundle,
-    program_handler::{ProgramParser, ParseResult},
+    program_handler::{ParseResult, ProgramParser},
 };
 
-use mpl_bubblegum::{get_instruction_type};
-use borsh::de::BorshDeserialize;
-use solana_sdk::pubkey::Pubkey;
-use solana_sdk::pubkeys;
-pub use spl_account_compression::events::ChangeLogEvent;
+use crate::{program_handler::NotUsed, programs::ProgramParseResult};
 use anchor_lang::Discriminator;
-use plerkle_serialization::account_info_generated::account_info::AccountInfo;
-use mpl_bubblegum::state::metaplex_adapter::MetadataArgs;
-use spl_noop;
-pub use mpl_bubblegum::InstructionName;
-pub use mpl_bubblegum::state::leaf_schema::{
-    LeafSchemaEvent,
-    LeafSchema,
+use borsh::de::BorshDeserialize;
+use mpl_bubblegum::{get_instruction_type, state::metaplex_adapter::MetadataArgs};
+pub use mpl_bubblegum::{
+    id as program_id,
+    state::leaf_schema::{LeafSchema, LeafSchemaEvent},
+    InstructionName,
 };
-use crate::program_handler::NotUsed;
-use crate::programs::ProgramParseResult;
-pub use mpl_bubblegum::id as program_id;
+use plerkle_serialization::account_info_generated::account_info::AccountInfo;
+use solana_sdk::{pubkey::Pubkey};
+pub use spl_account_compression::events::ChangeLogEvent;
+use spl_noop;
 
 pub enum Payload {
     Unknown,
-    MintV1 {
-        args: MetadataArgs
-    },
-    Decompress {
-        args: MetadataArgs
-    },
-    CancelRedeem {
-        root: [u8; 32]
-    },
-    VerifyCreator {
-        creator: Pubkey
-    },
-    UnverifyCreator {
-        creator: Pubkey
-    },
+    MintV1 { args: MetadataArgs },
+    Decompress { args: MetadataArgs },
+    CancelRedeem { root: [u8; 32] },
+    VerifyCreator { creator: Pubkey },
+    UnverifyCreator { creator: Pubkey },
 }
 
 pub struct BubblegumInstruction {
@@ -60,7 +46,10 @@ impl BubblegumInstruction {
 }
 
 impl ParseResult for BubblegumInstruction {
-    fn result(&self) -> &Self where Self: Sized {
+    fn result(&self) -> &Self
+    where
+        Self: Sized,
+    {
         self
     }
     fn result_type(&self) -> ProgramParseResult {
@@ -71,7 +60,10 @@ impl ParseResult for BubblegumInstruction {
 pub struct BubblegumParser;
 
 impl ProgramParser for BubblegumParser {
-    fn handle_account<>(&self, _account_info: &AccountInfo) -> Result<Box<(dyn ParseResult + 'static)>, BlockbusterError> {
+    fn handle_account(
+        &self,
+        _account_info: &AccountInfo,
+    ) -> Result<Box<(dyn ParseResult + 'static)>, BlockbusterError> {
         Ok(Box::new(NotUsed::new()))
     }
 
@@ -82,7 +74,10 @@ impl ProgramParser for BubblegumParser {
         key == &program_id()
     }
 
-    fn handle_instruction(&self, bundle: &InstructionBundle) -> Result<Box<(dyn ParseResult + 'static)>, BlockbusterError> {
+    fn handle_instruction(
+        &self,
+        bundle: &InstructionBundle,
+    ) -> Result<Box<(dyn ParseResult + 'static)>, BlockbusterError> {
         let InstructionBundle {
             instruction,
             inner_ix,
@@ -98,7 +93,7 @@ impl ProgramParser for BubblegumParser {
 
         if let Some(ixs) = inner_ix {
             for ix in ixs {
-                if ix.0.0 == spl_noop::id().to_bytes() {
+                if ix.0 .0 == spl_noop::id().to_bytes() {
                     let cix = ix.1;
                     if let Some(data) = cix.data() {
                         let disc = &data[0..8];
@@ -119,27 +114,27 @@ impl ProgramParser for BubblegumParser {
             match b_inst.instruction {
                 InstructionName::MintV1 => {
                     let args: MetadataArgs = MetadataArgs::try_from_slice(data)?;
-                    b_inst.payload = Some(Payload::MintV1 {
-                        args
-                    });
+                    b_inst.payload = Some(Payload::MintV1 { args });
                 }
                 InstructionName::DecompressV1 => {
                     let args: MetadataArgs = MetadataArgs::try_from_slice(data)?;
-                    b_inst.payload = Some(Payload::Decompress {
-                        args
-                    });
+                    b_inst.payload = Some(Payload::Decompress { args });
                 }
                 InstructionName::CancelRedeem => {
-                    let slice: [u8; 32] = data.try_into().map_err(|_e| BlockbusterError::InstructionParsingError)?;
-                    b_inst.payload = Some(Payload::CancelRedeem {
-                        root: slice
-                    });
+                    let slice: [u8; 32] = data
+                        .try_into()
+                        .map_err(|_e| BlockbusterError::InstructionParsingError)?;
+                    b_inst.payload = Some(Payload::CancelRedeem { root: slice });
                 }
                 InstructionName::VerifyCreator => {
-                    b_inst.payload = Some(Payload::VerifyCreator { creator: Pubkey::new_from_array(keys.get(3).unwrap().0) });
+                    b_inst.payload = Some(Payload::VerifyCreator {
+                        creator: Pubkey::new_from_array(keys.get(3).unwrap().0),
+                    });
                 }
                 InstructionName::UnverifyCreator => {
-                    b_inst.payload = Some(Payload::UnverifyCreator { creator: Pubkey::new_from_array(keys.get(3).unwrap().0) });
+                    b_inst.payload = Some(Payload::UnverifyCreator {
+                        creator: Pubkey::new_from_array(keys.get(3).unwrap().0),
+                    });
                 }
                 _ => {}
             };
@@ -147,7 +142,3 @@ impl ProgramParser for BubblegumParser {
         Ok(Box::new(b_inst))
     }
 }
-
-
-
-
