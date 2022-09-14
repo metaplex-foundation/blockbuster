@@ -1,21 +1,24 @@
+use std::borrow::Borrow;
+
 use crate::program_handler::ParseResult;
 use crate::{
     error::BlockbusterError, instruction::InstructionBundle, program_handler::ProgramParser,
 };
 use crate::{program_handler::NotUsed, programs::ProgramParseResult};
-use borsh::de::BorshDeserialize;
 use solana_sdk::borsh::try_from_slice_unchecked;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::pubkeys;
 
-use mpl_bubblegum::state::metaplex_adapter::MetadataArgs;
 use plerkle_serialization::account_info_generated::account_info::AccountInfo;
 
 pub use mpl_bubblegum::state::leaf_schema::{LeafSchema, LeafSchemaEvent};
 pub use mpl_bubblegum::InstructionName;
 use mpl_token_metadata::state::{
     CollectionAuthorityRecord, Edition, EditionMarker, Key, MasterEditionV1, MasterEditionV2,
-    Metadata, ReservationListV1, ReservationListV2, TokenMetadataAccount, UseAuthorityRecord,
+    Metadata, ReservationListV1, ReservationListV2, UseAuthorityRecord,
+    COLLECTION_AUTHORITY_RECORD_SIZE, MAX_EDITION_LEN, MAX_EDITION_MARKER_SIZE,
+    MAX_MASTER_EDITION_LEN, MAX_METADATA_LEN, MAX_RESERVATION_LIST_SIZE,
+    MAX_RESERVATION_LIST_V1_SIZE, USE_AUTHORITY_RECORD_SIZE,
 };
 
 pubkeys!(
@@ -24,7 +27,6 @@ pubkeys!(
 );
 
 pub enum TokenMetadataAccountData {
-    Uninitialized,
     EditionV1(Edition),
     MasterEditionV1(MasterEditionV1),
     MetadataV1(Metadata),
@@ -39,12 +41,6 @@ pub enum TokenMetadataAccountData {
 pub struct TokenMetadataAccountState {
     key: Key,
     data: TokenMetadataAccountData,
-}
-
-impl TokenMetadataAccountState {
-    pub fn new(key: Key) -> Self {
-        TokenMetadataAccountState { key, data: todo!() }
-    }
 }
 
 impl ParseResult for TokenMetadataAccountState {
@@ -73,24 +69,100 @@ impl ProgramParser for TokenMetadataParser {
         &self,
         account_info: &AccountInfo,
     ) -> Result<Box<(dyn ParseResult + 'static)>, BlockbusterError> {
-        let account_raw_data = account_info.data().unwrap();
+        let account_data = if let Some(account_info) = account_info.data() {
+            account_info
+        } else {
+            return Err(BlockbusterError::DeserializationError);
+        };
 
-        let data = account_raw_data[8..].to_owned();
-        let data_buf = &mut data.as_slice();
-        let metadata = 
-        let mut token_metadata_account_state = TokenMetadataAccountState::new(metadata.key);
+        let token_metadata_account_state = match account_data.len() {
+            MAX_EDITION_LEN => {
+                let account: Edition = try_from_slice_unchecked(account_data)?;
 
-        match metadata.key {
-            EditionV1 => {
-                let data: Edition = try_from_slice_unchecked(data_buf)?;
-                token_metadata_account_state.data =
-                    TokenMetadataAccountData::EditionV1(data)
+                TokenMetadataAccountState {
+                    key: account.key,
+                    data: TokenMetadataAccountData::EditionV1(account),
+                }
             }
-            MasterEditionV2 => {
-                token_metadata_account_state.data =
-                    try_from_slice_unchecked(&metadata.data).unwrap()
+            MAX_MASTER_EDITION_LEN => {
+                let version = account_data.borrow()[0];
+
+                let token_metadata_account_state = match version {
+                    2 => {
+                        let account: MasterEditionV1 = try_from_slice_unchecked(account_data)?;
+
+                        TokenMetadataAccountState {
+                            key: account.key,
+                            data: TokenMetadataAccountData::MasterEditionV1(account),
+                        }
+                    }
+                    6 => {
+                        let account: MasterEditionV2 = try_from_slice_unchecked(account_data)?;
+
+                        TokenMetadataAccountState {
+                            key: account.key,
+                            data: TokenMetadataAccountData::MasterEditionV2(account),
+                        }
+                    }
+                    _ => {
+                        return Err(BlockbusterError::FailedToDeserializeToMasterEdition);
+                    }
+                };
+
+                token_metadata_account_state
             }
-        }
+            USE_AUTHORITY_RECORD_SIZE => {
+                let account: UseAuthorityRecord = try_from_slice_unchecked(account_data)?;
+
+                TokenMetadataAccountState {
+                    key: account.key,
+                    data: TokenMetadataAccountData::UseAuthorityRecord(account),
+                }
+            }
+            MAX_EDITION_MARKER_SIZE => {
+                let account: EditionMarker = try_from_slice_unchecked(account_data)?;
+
+                TokenMetadataAccountState {
+                    key: account.key,
+                    data: TokenMetadataAccountData::EditionMarker(account),
+                }
+            }
+            COLLECTION_AUTHORITY_RECORD_SIZE => {
+                let account: CollectionAuthorityRecord = try_from_slice_unchecked(account_data)?;
+
+                TokenMetadataAccountState {
+                    key: account.key,
+                    data: TokenMetadataAccountData::CollectionAuthorityRecord(account),
+                }
+            }
+            MAX_METADATA_LEN => {
+                let account: Metadata = try_from_slice_unchecked(account_data)?;
+
+                TokenMetadataAccountState {
+                    key: account.key,
+                    data: TokenMetadataAccountData::MetadataV1(account),
+                }
+            }
+            MAX_RESERVATION_LIST_V1_SIZE => {
+                let account: ReservationListV1 = try_from_slice_unchecked(account_data)?;
+
+                TokenMetadataAccountState {
+                    key: account.key,
+                    data: TokenMetadataAccountData::ReservationListV1(account),
+                }
+            }
+            MAX_RESERVATION_LIST_SIZE => {
+                let account: ReservationListV2 = try_from_slice_unchecked(account_data)?;
+
+                TokenMetadataAccountState {
+                    key: account.key,
+                    data: TokenMetadataAccountData::ReservationListV2(account),
+                }
+            }
+            _ => {
+                return Err(BlockbusterError::InvalidAccountType);
+            }
+        };
 
         Ok(Box::new(token_metadata_account_state))
     }
