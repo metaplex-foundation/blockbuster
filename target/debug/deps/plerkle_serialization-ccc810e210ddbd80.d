@@ -1,0 +1,9 @@
+/Users/stranzhay/Programming/blockbuster/target/debug/deps/plerkle_serialization-ccc810e210ddbd80.rmeta: /Users/stranzhay/Programming/digital-asset-validator-plugin/plerkle_serialization/src/lib.rs /Users/stranzhay/Programming/digital-asset-validator-plugin/plerkle_serialization/src/account_info_generated.rs /Users/stranzhay/Programming/digital-asset-validator-plugin/plerkle_serialization/src/block_info_generated.rs /Users/stranzhay/Programming/digital-asset-validator-plugin/plerkle_serialization/src/slot_status_info_generated.rs /Users/stranzhay/Programming/digital-asset-validator-plugin/plerkle_serialization/src/transaction_info_generated.rs
+
+/Users/stranzhay/Programming/blockbuster/target/debug/deps/plerkle_serialization-ccc810e210ddbd80.d: /Users/stranzhay/Programming/digital-asset-validator-plugin/plerkle_serialization/src/lib.rs /Users/stranzhay/Programming/digital-asset-validator-plugin/plerkle_serialization/src/account_info_generated.rs /Users/stranzhay/Programming/digital-asset-validator-plugin/plerkle_serialization/src/block_info_generated.rs /Users/stranzhay/Programming/digital-asset-validator-plugin/plerkle_serialization/src/slot_status_info_generated.rs /Users/stranzhay/Programming/digital-asset-validator-plugin/plerkle_serialization/src/transaction_info_generated.rs
+
+/Users/stranzhay/Programming/digital-asset-validator-plugin/plerkle_serialization/src/lib.rs:
+/Users/stranzhay/Programming/digital-asset-validator-plugin/plerkle_serialization/src/account_info_generated.rs:
+/Users/stranzhay/Programming/digital-asset-validator-plugin/plerkle_serialization/src/block_info_generated.rs:
+/Users/stranzhay/Programming/digital-asset-validator-plugin/plerkle_serialization/src/slot_status_info_generated.rs:
+/Users/stranzhay/Programming/digital-asset-validator-plugin/plerkle_serialization/src/transaction_info_generated.rs:
