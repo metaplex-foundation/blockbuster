@@ -8,6 +8,6 @@ pub mod token_account;
 
 pub enum ProgramParseResult<'a> {
     Bubblegum(&'a BubblegumInstruction),
-    TokenAccount(&'a TokenProgramAccount),
+    TokenProgramAccount(&'a TokenProgramAccount),
     Unknown,
 }
