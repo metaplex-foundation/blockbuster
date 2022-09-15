@@ -1,6 +1,0 @@
-/Users/stranzhay/Programming/bb/target/debug/deps/libbytemuck_derive-1416b93dfbbcfa65.dylib: /Users/stranzhay/.cargo/registry/src/github.com-1ecc6299db9ec823/bytemuck_derive-1.2.1/src/lib.rs /Users/stranzhay/.cargo/registry/src/github.com-1ecc6299db9ec823/bytemuck_derive-1.2.1/src/traits.rs
-
-/Users/stranzhay/Programming/bb/target/debug/deps/bytemuck_derive-1416b93dfbbcfa65.d: /Users/stranzhay/.cargo/registry/src/github.com-1ecc6299db9ec823/bytemuck_derive-1.2.1/src/lib.rs /Users/stranzhay/.cargo/registry/src/github.com-1ecc6299db9ec823/bytemuck_derive-1.2.1/src/traits.rs
-
-/Users/stranzhay/.cargo/registry/src/github.com-1ecc6299db9ec823/bytemuck_derive-1.2.1/src/lib.rs:
-/Users/stranzhay/.cargo/registry/src/github.com-1ecc6299db9ec823/bytemuck_derive-1.2.1/src/traits.rs:
