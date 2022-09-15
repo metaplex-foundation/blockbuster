@@ -1,2 +1,0 @@
-cargo:rustc-env=TYPENUM_BUILD_CONSTS=/Users/stranzhay/Programming/blockbuster/target/debug/build/typenum-b0d7bbae173dad32/out/consts.rs
-cargo:rustc-env=TYPENUM_BUILD_OP=/Users/stranzhay/Programming/blockbuster/target/debug/build/typenum-b0d7bbae173dad32/out/op.rs
