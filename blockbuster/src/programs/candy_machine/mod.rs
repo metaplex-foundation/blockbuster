@@ -1,58 +1,87 @@
 use crate::{
     error::BlockbusterError,
     instruction::InstructionBundle,
-    program_handler::{ProgramParser},
+    program_handler::{NotUsed, ParseResult, ProgramParser},
+    programs::{
+        candy_machine::state::{CandyMachine, CollectionPDA, FreezePDA},
+        ProgramParseResult,
+    },
 };
-
-use mpl_bubblegum::{get_instruction_type};
-use borsh::de::BorshDeserialize;
-use solana_sdk::pubkey::Pubkey;
-use solana_sdk::pubkeys;
-
+use borsh::BorshDeserialize;
 use plerkle_serialization::account_info_generated::account_info::AccountInfo;
-use mpl_bubblegum::state::metaplex_adapter::MetadataArgs;
+use solana_sdk::{pubkey::Pubkey, pubkeys};
+use std::convert::TryInto;
 
-pub use mpl_bubblegum::InstructionName;
-pub use mpl_bubblegum::state::leaf_schema::{
-    LeafSchemaEvent,
-    LeafSchema,
-};
-use mpl_token_metadata::state::{Key, Edition, MasterEditionV2, Metadata, ReservationListV1, MasterEditionV1, ReservationListV2, EditionMarker, UseAuthorityRecord, CollectionAuthorityRecord};
-
-use mpl_candy_machine::state::CandyMachines;
+mod state;
 
 pubkeys!(
     candy_machine_id,
     "cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ"
 );
 
-pub enum TokenMetadataAccountData {
-    Uninitialized,
-    EditionV1(Edition),
-    MasterEditionV1(MasterEditionV1),
-    MetadataV1(Metadata),
-    MasterEditionV2(MasterEditionV2),
-    EditionMarker(EditionMarker),
-    UseAuthorityRecord(UseAuthorityRecord),
-    CollectionAuthorityRecord(CollectionAuthorityRecord),
-    
+// Anchor account discriminators.
+const CANDY_MACHINE_DISCRIMINATOR: [u8; 8] = [51, 173, 177, 113, 25, 241, 109, 189];
+const COLLECTION_PDA_DISCRIMINATOR: [u8; 8] = [203, 128, 119, 125, 234, 89, 232, 157];
+const FREEZE_PDA_DISCRIMINATOR: [u8; 8] = [154, 58, 148, 24, 101, 200, 243, 127];
 
-    CandyMachine(CandyMachine)
+pub enum CandyMachineAccountData {
+    CandyMachine(CandyMachine),
+    CollectionPDA(CollectionPDA),
+    FreezePDA(FreezePDA),
 }
 
-pub struct TokenMetadataAccountState {
-    key: Key,
-    data: TokenMetadataAccountData,
+impl ParseResult for CandyMachineAccountData {
+    fn result_type(&self) -> ProgramParseResult {
+        ProgramParseResult::CandyMachine(self)
+    }
 }
 
-pub struct TokenMetadataParser;
+pub struct CandyMachineParser;
 
-impl ProgramParser for TokenMetadataParser {
+impl ProgramParser for CandyMachineParser {
     fn key(&self) -> Pubkey {
-        token_metadata_id()
-    }
-    fn key_match(&self, key: &Pubkey) -> bool {
-        key == &token_metadata_id()
+        candy_machine_id()
     }
 
+    fn key_match(&self, key: &Pubkey) -> bool {
+        key == &candy_machine_id()
+    }
+
+    fn handle_account(
+        &self,
+        account_info: &AccountInfo,
+    ) -> Result<Box<dyn ParseResult>, BlockbusterError> {
+        let account_data = if let Some(account_info) = account_info.data() {
+            account_info
+        } else {
+            return Err(BlockbusterError::DeserializationError);
+        };
+
+        let discriminator: [u8; 8] = account_data[0..8].try_into().unwrap();
+
+        let account_type = match discriminator {
+            CANDY_MACHINE_DISCRIMINATOR => {
+                let candy_machine = CandyMachine::try_from_slice(&account_data[8..])?;
+                CandyMachineAccountData::CandyMachine(candy_machine)
+            }
+            COLLECTION_PDA_DISCRIMINATOR => {
+                let collection_pda = CollectionPDA::try_from_slice(&account_data[8..])?;
+                CandyMachineAccountData::CollectionPDA(collection_pda)
+            }
+            FREEZE_PDA_DISCRIMINATOR => {
+                let freeze_pda = FreezePDA::try_from_slice(&account_data[8..])?;
+                CandyMachineAccountData::FreezePDA(freeze_pda)
+            }
+            _ => return Err(BlockbusterError::UnknownAccountDiscriminator),
+        };
+
+        Ok(Box::new(account_type))
+    }
+
+    fn handle_instruction(
+        &self,
+        _bundle: &InstructionBundle,
+    ) -> Result<Box<dyn ParseResult>, BlockbusterError> {
+        Ok(Box::new(NotUsed::new()))
+    }
 }
