@@ -7,6 +7,10 @@ pub enum BlockbusterError {
     InstructionParsingError,
     #[error("IO Error {0}")]
     IOError(String),
+    #[error("Could not deserialize data")]
+    DeserializationError,
+    #[error("Data length is invalid.")]
+    InvalidDataLength,
 }
 
 impl From<std::io::Error> for BlockbusterError {
