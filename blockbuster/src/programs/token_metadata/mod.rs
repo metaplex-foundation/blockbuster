@@ -1,10 +1,9 @@
-use std::borrow::Borrow;
-
 use crate::program_handler::ParseResult;
 use crate::{
     error::BlockbusterError, instruction::InstructionBundle, program_handler::ProgramParser,
 };
 use crate::{program_handler::NotUsed, programs::ProgramParseResult};
+use borsh::BorshDeserialize;
 use solana_sdk::borsh::try_from_slice_unchecked;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::pubkeys;
@@ -16,9 +15,6 @@ pub use mpl_bubblegum::InstructionName;
 use mpl_token_metadata::state::{
     CollectionAuthorityRecord, Edition, EditionMarker, Key, MasterEditionV1, MasterEditionV2,
     Metadata, ReservationListV1, ReservationListV2, UseAuthorityRecord,
-    COLLECTION_AUTHORITY_RECORD_SIZE, MAX_EDITION_LEN, MAX_EDITION_MARKER_SIZE,
-    MAX_MASTER_EDITION_LEN, MAX_METADATA_LEN, MAX_RESERVATION_LIST_SIZE,
-    MAX_RESERVATION_LIST_V1_SIZE, USE_AUTHORITY_RECORD_SIZE,
 };
 
 pubkeys!(
@@ -75,8 +71,10 @@ impl ProgramParser for TokenMetadataParser {
             return Err(BlockbusterError::DeserializationError);
         };
 
-        let token_metadata_account_state = match account_data.len() {
-            MAX_EDITION_LEN => {
+        let key = Key::try_from_slice(&account_data[0..1])?;
+
+        let token_metadata_account_state = match key {
+            Key::EditionV1 => {
                 let account: Edition = try_from_slice_unchecked(account_data)?;
 
                 TokenMetadataAccountState {
@@ -84,34 +82,23 @@ impl ProgramParser for TokenMetadataParser {
                     data: TokenMetadataAccountData::EditionV1(account),
                 }
             }
-            MAX_MASTER_EDITION_LEN => {
-                let version = account_data.borrow()[0];
+            Key::MasterEditionV1 => {
+                let account: MasterEditionV2 = try_from_slice_unchecked(account_data)?;
 
-                let token_metadata_account_state = match version {
-                    2 => {
-                        let account: MasterEditionV1 = try_from_slice_unchecked(account_data)?;
-
-                        TokenMetadataAccountState {
-                            key: account.key,
-                            data: TokenMetadataAccountData::MasterEditionV1(account),
-                        }
-                    }
-                    6 => {
-                        let account: MasterEditionV2 = try_from_slice_unchecked(account_data)?;
-
-                        TokenMetadataAccountState {
-                            key: account.key,
-                            data: TokenMetadataAccountData::MasterEditionV2(account),
-                        }
-                    }
-                    _ => {
-                        return Err(BlockbusterError::FailedToDeserializeToMasterEdition);
-                    }
-                };
-
-                token_metadata_account_state
+                TokenMetadataAccountState {
+                    key: account.key,
+                    data: TokenMetadataAccountData::MasterEditionV2(account),
+                }
             }
-            USE_AUTHORITY_RECORD_SIZE => {
+            Key::MasterEditionV2 => {
+                let account: MasterEditionV1 = try_from_slice_unchecked(account_data)?;
+
+                TokenMetadataAccountState {
+                    key: account.key,
+                    data: TokenMetadataAccountData::MasterEditionV1(account),
+                }
+            }
+            Key::UseAuthorityRecord => {
                 let account: UseAuthorityRecord = try_from_slice_unchecked(account_data)?;
 
                 TokenMetadataAccountState {
@@ -119,7 +106,7 @@ impl ProgramParser for TokenMetadataParser {
                     data: TokenMetadataAccountData::UseAuthorityRecord(account),
                 }
             }
-            MAX_EDITION_MARKER_SIZE => {
+            Key::EditionMarker => {
                 let account: EditionMarker = try_from_slice_unchecked(account_data)?;
 
                 TokenMetadataAccountState {
@@ -127,7 +114,7 @@ impl ProgramParser for TokenMetadataParser {
                     data: TokenMetadataAccountData::EditionMarker(account),
                 }
             }
-            COLLECTION_AUTHORITY_RECORD_SIZE => {
+            Key::CollectionAuthorityRecord => {
                 let account: CollectionAuthorityRecord = try_from_slice_unchecked(account_data)?;
 
                 TokenMetadataAccountState {
@@ -135,7 +122,7 @@ impl ProgramParser for TokenMetadataParser {
                     data: TokenMetadataAccountData::CollectionAuthorityRecord(account),
                 }
             }
-            MAX_METADATA_LEN => {
+            Key::MetadataV1 => {
                 let account: Metadata = try_from_slice_unchecked(account_data)?;
 
                 TokenMetadataAccountState {
@@ -143,7 +130,7 @@ impl ProgramParser for TokenMetadataParser {
                     data: TokenMetadataAccountData::MetadataV1(account),
                 }
             }
-            MAX_RESERVATION_LIST_V1_SIZE => {
+            Key::ReservationListV1 => {
                 let account: ReservationListV1 = try_from_slice_unchecked(account_data)?;
 
                 TokenMetadataAccountState {
@@ -151,7 +138,7 @@ impl ProgramParser for TokenMetadataParser {
                     data: TokenMetadataAccountData::ReservationListV1(account),
                 }
             }
-            MAX_RESERVATION_LIST_SIZE => {
+            Key::ReservationListV2 => {
                 let account: ReservationListV2 = try_from_slice_unchecked(account_data)?;
 
                 TokenMetadataAccountState {
@@ -159,8 +146,8 @@ impl ProgramParser for TokenMetadataParser {
                     data: TokenMetadataAccountData::ReservationListV2(account),
                 }
             }
-            _ => {
-                return Err(BlockbusterError::InvalidAccountType);
+            Key::Uninitialized => {
+                return Err(BlockbusterError::UninitializedAccount);
             }
         };
 

@@ -14,7 +14,9 @@ pub enum BlockbusterError {
     #[error("Account type is not valid")]
     InvalidAccountType,
     #[error("Master edition version is invalid")]
-    FailedToDeserializeToMasterEdition
+    FailedToDeserializeToMasterEdition,
+    #[error("Uninitialized account type")]
+    UninitializedAccount,
 }
 
 impl From<std::io::Error> for BlockbusterError {
