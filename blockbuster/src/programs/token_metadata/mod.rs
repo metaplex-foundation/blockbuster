@@ -51,5 +51,4 @@ impl ProgramParser for TokenMetadataParser {
     fn key_match(&self, key: &Pubkey) -> bool {
         key == &token_metadata_id()
     }
-
 }
