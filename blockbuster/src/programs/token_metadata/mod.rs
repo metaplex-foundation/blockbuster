@@ -9,8 +9,7 @@ use borsh::de::BorshDeserialize;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::pubkeys;
 
-use plerkle_serialization::account_info_generated::account_info::AccountInfo;
-use mpl_bubblegum::state::metaplex_adapter::MetadataArgs;
+use plerkle_serialization::AccountInfo;
 
 pub use mpl_bubblegum::InstructionName;
 pub use mpl_bubblegum::state::leaf_schema::{
