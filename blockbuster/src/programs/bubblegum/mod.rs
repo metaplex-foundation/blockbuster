@@ -13,8 +13,8 @@ pub use mpl_bubblegum::{
     state::leaf_schema::{LeafSchema, LeafSchemaEvent},
     InstructionName,
 };
-use plerkle_serialization::account_info_generated::account_info::AccountInfo;
-use solana_sdk::{pubkey::Pubkey};
+use plerkle_serialization::AccountInfo;
+use solana_sdk::pubkey::Pubkey;
 pub use spl_account_compression::events::ChangeLogEvent;
 use spl_noop;
 
@@ -46,32 +46,32 @@ impl BubblegumInstruction {
 }
 
 impl ParseResult for BubblegumInstruction {
+    fn result_type(&self) -> ProgramParseResult {
+        ProgramParseResult::Bubblegum(self)
+    }
     fn result(&self) -> &Self
     where
         Self: Sized,
     {
         self
     }
-    fn result_type(&self) -> ProgramParseResult {
-        ProgramParseResult::Bubblegum(self)
-    }
 }
 
 pub struct BubblegumParser;
 
 impl ProgramParser for BubblegumParser {
+    fn key(&self) -> Pubkey {
+        program_id()
+    }
+
+    fn key_match(&self, key: &Pubkey) -> bool {
+        key == &program_id()
+    }
     fn handle_account(
         &self,
         _account_info: &AccountInfo,
     ) -> Result<Box<(dyn ParseResult + 'static)>, BlockbusterError> {
         Ok(Box::new(NotUsed::new()))
-    }
-
-    fn key(&self) -> Pubkey {
-        program_id()
-    }
-    fn key_match(&self, key: &Pubkey) -> bool {
-        key == &program_id()
     }
 
     fn handle_instruction(
