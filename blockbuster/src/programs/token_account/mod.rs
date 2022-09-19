@@ -3,7 +3,7 @@ use crate::{
     error::BlockbusterError, instruction::InstructionBundle, program_handler::ProgramParser,
 };
 use crate::{program_handler::NotUsed, programs::ProgramParseResult};
-use plerkle_serialization::account_info_generated::account_info::AccountInfo;
+use plerkle_serialization::AccountInfo;
 use solana_sdk::program_pack::Pack;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::pubkeys;

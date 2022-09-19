@@ -1,7 +1,5 @@
 use flatbuffers::{ForwardsUOffset, Vector};
-use plerkle_serialization::transaction_info_generated::transaction_info::{
-    CompiledInstruction, InnerInstructions, Pubkey, TransactionInfo,
-};
+use plerkle_serialization::{CompiledInstruction, InnerInstructions, Pubkey, TransactionInfo};
 use std::collections::{HashSet, VecDeque};
 
 pub type IxPair<'a> = (Pubkey, CompiledInstruction<'a>);
@@ -40,7 +38,7 @@ pub fn order_instructions<'a, 'b>(
         }
         Some(keys) => keys,
     };
-
+    println!("{:?}", programs);
     for (i, instruction) in outer_instructions.iter().enumerate() {
         let program_id = keys.get(instruction.program_id_index() as usize).unwrap();
         let outer: IxPair = (*program_id, instruction);
@@ -52,15 +50,19 @@ pub fn order_instructions<'a, 'b>(
                     .get(inner_ix_instance.program_id_index() as usize)
                     .unwrap();
                 inner_list.push_front((*inner_program_id, inner_ix_instance));
+                println!("\t {:?}", inner_program_id);
                 if programs.get(inner_program_id.0.as_ref()).is_some() {
+                    println!("\t\t added {:?}", inner_program_id);
                     let mut new_inner_list = inner_list.clone();
                     new_inner_list.pop_front();
-                    ordered_ixs.push_back((outer, Some(new_inner_list.into())));
+                    let inner = (*inner_program_id, inner_ix_instance);
+                    ordered_ixs.push_back((inner, Some(new_inner_list.into())));
                 }
             }
             inner_list.into()
         });
         if programs.get(program_id.0.as_ref()).is_some() {
+            println!("\t\t added {:?}", program_id);
             ordered_ixs.push_back((outer, inner));
         }
     }
