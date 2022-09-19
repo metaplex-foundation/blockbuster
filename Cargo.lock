@@ -325,6 +325,7 @@ dependencies = [
  "flatbuffers",
  "lazy_static",
  "mpl-bubblegum",
+ "mpl-candy-machine-core",
  "mpl-token-metadata",
  "plerkle_serialization",
  "rand 0.8.5",
@@ -942,6 +943,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "mpl-candy-machine-core"
+version = "0.0.2"
+source = "git+https://github.com/metaplex-foundation/metaplex-program-library?branch=febo/candy-machine-core#1d4fd2dd35caa78e3903c92a8c3b46045cccf089"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "arrayref",
+ "mpl-token-metadata",
+ "solana-program",
+ "spl-associated-token-account",
+ "spl-token",
+]
+
+[[package]]
 name = "mpl-token-metadata"
 version = "1.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1087,6 +1102,8 @@ checksum = "478c572c3d73181ff3c2539045f6eb99e5491218eae919370993b890cdbdd98e"
 [[package]]
 name = "plerkle_serialization"
 version = "0.1.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e628612dc22307343609991eb17d78991ad252729836ef7b87be5b24bfc5287c"
 dependencies = [
  "flatbuffers",
 ]
