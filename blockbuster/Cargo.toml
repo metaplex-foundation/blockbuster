@@ -13,7 +13,7 @@ spl-account-compression = { version = "0.1.0", features = ["no-entrypoint"] }
 spl-noop = { version = "0.1.0", features = ["no-entrypoint"] }
 mpl-bubblegum = { version = "0.1.0", features = ["no-entrypoint"] }
 mpl-token-metadata = { version = "1.3.6", features = ["no-entrypoint"] }
-plerkle_serialization = { path = "../../digital-asset-validator-plugin/plerkle_serialization", version = "0.1.7" }
+plerkle_serialization = { version = "0.1.7" }
 spl-token = { version = "=3.3.0", features = ["no-entrypoint"] }
 async-trait = "0.1.57"
 lazy_static = "1.4.0"
