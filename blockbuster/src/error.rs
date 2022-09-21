@@ -11,6 +11,14 @@ pub enum BlockbusterError {
     DeserializationError,
     #[error("Data length is invalid.")]
     InvalidDataLength,
+    #[error("Unknown anchor account discriminator.")]
+    UnknownAccountDiscriminator,
+    #[error("Account type is not valid")]
+    InvalidAccountType,
+    #[error("Master edition version is invalid")]
+    FailedToDeserializeToMasterEdition,
+    #[error("Uninitialized account type")]
+    UninitializedAccount,
 }
 
 impl From<std::io::Error> for BlockbusterError {
