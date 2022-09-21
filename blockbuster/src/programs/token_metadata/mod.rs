@@ -8,7 +8,7 @@ use solana_sdk::borsh::try_from_slice_unchecked;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::pubkeys;
 
-use plerkle_serialization::account_info_generated::account_info::AccountInfo;
+use plerkle_serialization::AccountInfo;
 
 pub use mpl_bubblegum::state::leaf_schema::{LeafSchema, LeafSchemaEvent};
 pub use mpl_bubblegum::InstructionName;
@@ -41,8 +41,8 @@ pub struct TokenMetadataAccountState {
 
 impl ParseResult for TokenMetadataAccountState {
     fn result(&self) -> &Self
-    where
-        Self: Sized,
+        where
+            Self: Sized,
     {
         self
     }

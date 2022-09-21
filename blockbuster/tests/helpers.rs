@@ -1,3 +1,5 @@
+extern crate core;
+
 use flatbuffers::{FlatBufferBuilder, InvalidFlatbuffer, WIPOffset};
 use solana_sdk::pubkey::Pubkey;
 use rand::Rng;
@@ -121,4 +123,19 @@ pub fn get_programs(txn_info: TransactionInfo) -> Vec<Pubkey> {
     outer_keys.append(inner_keys);
     outer_keys.dedup();
     outer_keys
+}
+
+
+pub fn build_instruction<'a>(fbb: &'a mut FlatBufferBuilder<'a>, data: &[u8], account_indexes: &[u8]) -> Result<CompiledInstruction<'a>, flatbuffers::InvalidFlatbuffer> {
+    let accounts_vec = fbb.create_vector(account_indexes);
+    let ix_data = fbb.create_vector(data);
+    let mut builder = CompiledInstructionBuilder::new(fbb);
+    builder.add_accounts(accounts_vec);
+    builder.add_program_id_index(0);
+    builder.add_data(ix_data);
+    let offset = builder.finish();
+    fbb.finish_minimal(offset);
+    let data = fbb.finished_data();
+    let c = root_as_compiled_instruction(data);
+    c
 }

@@ -18,6 +18,7 @@ use solana_sdk::pubkey::Pubkey;
 pub use spl_account_compression::events::ChangeLogEvent;
 use spl_noop;
 
+#[derive(Eq, PartialEq)]
 pub enum Payload {
     Unknown,
     MintV1 { args: MetadataArgs },
@@ -93,11 +94,12 @@ impl ProgramParser for BubblegumParser {
 
         if let Some(ixs) = inner_ix {
             for ix in ixs {
-                if ix.0 .0 == spl_noop::id().to_bytes() {
+                if ix.0.0 == spl_noop::id().to_bytes() {
                     let cix = ix.1;
                     if let Some(data) = cix.data() {
                         let disc = &data[0..8];
                         if disc == leaf_event {
+                            println!("{:?}", ix.0.0);
                             let event = LeafSchemaEvent::try_from_slice(data)?;
                             b_inst.leaf_update = Some(event)
                         }

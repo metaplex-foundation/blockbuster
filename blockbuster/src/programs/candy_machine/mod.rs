@@ -8,7 +8,7 @@ use crate::{
     },
 };
 use borsh::BorshDeserialize;
-use plerkle_serialization::account_info_generated::account_info::AccountInfo;
+use plerkle_serialization::AccountInfo;
 use solana_sdk::{pubkey::Pubkey, pubkeys};
 use std::convert::TryInto;
 
