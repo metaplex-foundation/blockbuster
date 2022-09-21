@@ -325,6 +325,7 @@ dependencies = [
  "flatbuffers",
  "lazy_static",
  "mpl-bubblegum",
+ "mpl-candy-machine-core",
  "mpl-token-metadata",
  "plerkle_serialization",
  "rand 0.8.5",
@@ -937,6 +938,20 @@ dependencies = [
  "mpl-token-metadata",
  "solana-program",
  "spl-account-compression",
+ "spl-associated-token-account",
+ "spl-token",
+]
+
+[[package]]
+name = "mpl-candy-machine-core"
+version = "0.0.2"
+source = "git+https://github.com/metaplex-foundation/metaplex-program-library?branch=febo/candy-machine-core#1d4fd2dd35caa78e3903c92a8c3b46045cccf089"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "arrayref",
+ "mpl-token-metadata",
+ "solana-program",
  "spl-associated-token-account",
  "spl-token",
 ]

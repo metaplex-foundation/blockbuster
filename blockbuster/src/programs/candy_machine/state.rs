@@ -1,6 +1,5 @@
 /// These are copied over from mpl-candy-machine due to current Solana/Anchor version conflict
 /// between that program and mpl-bubblegum, spl-account-compression, and spl-noop.
-
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_sdk::pubkey::Pubkey;
 

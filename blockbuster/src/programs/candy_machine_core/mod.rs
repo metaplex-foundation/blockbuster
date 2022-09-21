@@ -2,37 +2,29 @@ use crate::{
     error::BlockbusterError,
     instruction::InstructionBundle,
     program_handler::{NotUsed, ParseResult, ProgramParser},
-    programs::{
-        candy_machine::state::{CandyMachine, CollectionPDA, FreezePDA},
-        ProgramParseResult,
-    },
+    programs::ProgramParseResult,
 };
 use borsh::BorshDeserialize;
+use mpl_candy_machine_core::CandyMachine;
 use plerkle_serialization::AccountInfo;
 use solana_sdk::{pubkey::Pubkey, pubkeys};
 use std::convert::TryInto;
 
-mod state;
-
 pubkeys!(
-    candy_machine_id,
-    "cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ"
+    candy_machine_core_id,
+    "CndyV3LdqHUfDLmE5naZjVN8rBZz4tqhdefbAnjHG3JR"
 );
 
 // Anchor account discriminators.
 const CANDY_MACHINE_DISCRIMINATOR: [u8; 8] = [51, 173, 177, 113, 25, 241, 109, 189];
-const COLLECTION_PDA_DISCRIMINATOR: [u8; 8] = [203, 128, 119, 125, 234, 89, 232, 157];
-const FREEZE_PDA_DISCRIMINATOR: [u8; 8] = [154, 58, 148, 24, 101, 200, 243, 127];
 
-pub enum CandyMachineAccountData {
-    CandyMachine(CandyMachine),
-    CollectionPDA(CollectionPDA),
-    FreezePDA(FreezePDA),
+pub enum CandyMachineCoreAccountData {
+    CandyMachineCore(CandyMachine),
 }
 
-impl ParseResult for CandyMachineAccountData {
+impl ParseResult for CandyMachineCoreAccountData {
     fn result_type(&self) -> ProgramParseResult {
-        ProgramParseResult::CandyMachine(self)
+        ProgramParseResult::CandyMachineCore(self)
     }
 }
 
@@ -40,11 +32,11 @@ pub struct CandyMachineParser;
 
 impl ProgramParser for CandyMachineParser {
     fn key(&self) -> Pubkey {
-        candy_machine_id()
+        candy_machine_core_id()
     }
 
     fn key_match(&self, key: &Pubkey) -> bool {
-        key == &candy_machine_id()
+        key == &candy_machine_core_id()
     }
 
     fn handle_account(
@@ -62,15 +54,7 @@ impl ProgramParser for CandyMachineParser {
         let account_type = match discriminator {
             CANDY_MACHINE_DISCRIMINATOR => {
                 let candy_machine = CandyMachine::try_from_slice(&account_data[8..])?;
-                CandyMachineAccountData::CandyMachine(candy_machine)
-            }
-            COLLECTION_PDA_DISCRIMINATOR => {
-                let collection_pda = CollectionPDA::try_from_slice(&account_data[8..])?;
-                CandyMachineAccountData::CollectionPDA(collection_pda)
-            }
-            FREEZE_PDA_DISCRIMINATOR => {
-                let freeze_pda = FreezePDA::try_from_slice(&account_data[8..])?;
-                CandyMachineAccountData::FreezePDA(freeze_pda)
+                CandyMachineCoreAccountData::CandyMachineCore(candy_machine)
             }
             _ => return Err(BlockbusterError::UnknownAccountDiscriminator),
         };
