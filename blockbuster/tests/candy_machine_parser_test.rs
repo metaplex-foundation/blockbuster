@@ -1,27 +1,29 @@
 extern crate core;
 
-use crate::helpers::{build_account_update, random_list, random_pubkey};
+use crate::helpers::{build_random_account_update, random_list, random_pubkey};
 use blockbuster::{
     error::BlockbusterError,
-    programs::candy_machine::{
-        state::{
-            CandyMachine as CandyMachineAccountType,
-            CandyMachineData as CandyMachineDataAccountType, Creator, EndSettingType, EndSettings,
-            GatekeeperConfig, HiddenSettings, WhitelistMintMode, WhitelistMintSettings,
-        },
-        CandyMachineAccountData::CandyMachine,
-    },
-};
-use blockbuster::{
     program_handler::ProgramParser,
     programs::{
-        candy_machine::{candy_machine_id, CandyMachineParser, CANDY_MACHINE_DISCRIMINATOR},
+        candy_machine::{
+            candy_machine_id,
+            state::{
+                CandyMachine as CandyMachineAccountType,
+                CandyMachineData as CandyMachineDataAccountType,
+                CollectionPDA as CollectionPDAAccountType, Creator, EndSettingType, EndSettings,
+                FreezePDA as FreezePDAAccountType, GatekeeperConfig, HiddenSettings,
+                WhitelistMintMode, WhitelistMintSettings,
+            },
+            CandyMachineAccountData::{CandyMachine, CollectionPDA, FreezePDA},
+            CandyMachineParser, CANDY_MACHINE_DISCRIMINATOR, COLLECTION_PDA_DISCRIMINATOR,
+            FREEZE_PDA_DISCRIMINATOR,
+        },
         ProgramParseResult,
     },
 };
+
 use borsh::BorshSerialize;
 use flatbuffers::FlatBufferBuilder;
-use solana_geyser_plugin_interface::geyser_plugin_interface::ReplicaAccountInfo;
 
 mod helpers;
 
@@ -117,21 +119,10 @@ fn test_basic_success_parsing_candy_machine_account() {
         .serialize(&mut data)
         .expect("Could not serialize candy machine data");
 
-    // Create a `ReplicaAccountInfo` to store the account update.
-    let replica_account_info = ReplicaAccountInfo {
-        pubkey: &random_pubkey().to_bytes()[..],
-        lamports: 1,
-        owner: &random_pubkey().to_bytes()[..],
-        executable: false,
-        rent_epoch: 1000,
-        data: &data,
-        write_version: 1,
-    };
-
-    // Flatbuffer serialize the `ReplicaAccountInfo` into
+    // Flatbuffer serialize the data.
     let mut fbb = FlatBufferBuilder::new();
-    let account_info = build_account_update(&mut fbb, &replica_account_info, 0, false)
-        .expect("Could not build account update");
+    let account_info =
+        build_random_account_update(&mut fbb, &data).expect("Could not build account update");
 
     // Use `CandyMachineParser` to parse the account update.
     let subject = CandyMachineParser {};
@@ -154,28 +145,17 @@ fn test_basic_success_parsing_candy_machine_account() {
 }
 
 #[test]
-fn test_unkown_discriminator_fails() {
+fn test_unknown_discriminator_fails() {
     // Borsh serialize the CandyMachine discriminator.
     let mut data = CANDY_MACHINE_DISCRIMINATOR.to_vec();
 
     // Corrupt the discriminator.
     data[0] = 0;
 
-    // Create a `ReplicaAccountInfo` to store the account update.
-    let replica_account_info = ReplicaAccountInfo {
-        pubkey: &random_pubkey().to_bytes()[..],
-        lamports: 1,
-        owner: &random_pubkey().to_bytes()[..],
-        executable: false,
-        rent_epoch: 1000,
-        data: &data,
-        write_version: 1,
-    };
-
-    // Flatbuffer serialize the `ReplicaAccountInfo` into
+    // Flatbuffer serialize the data.
     let mut fbb = FlatBufferBuilder::new();
-    let account_info = build_account_update(&mut fbb, &replica_account_info, 0, false)
-        .expect("Could not build account update");
+    let account_info =
+        build_random_account_update(&mut fbb, &data).expect("Could not build account update");
 
     // Use `CandyMachineParser` to parse the account update.
     let subject = CandyMachineParser {};
@@ -198,21 +178,10 @@ fn test_wrong_size_candy_machine_account_fails() {
     // Add some random data.
     data.append(&mut random_list(32, u8::MAX));
 
-    // Create a `ReplicaAccountInfo` to store the account update.
-    let replica_account_info = ReplicaAccountInfo {
-        pubkey: &random_pubkey().to_bytes()[..],
-        lamports: 1,
-        owner: &random_pubkey().to_bytes()[..],
-        executable: false,
-        rent_epoch: 1000,
-        data: &data,
-        write_version: 1,
-    };
-
-    // Flatbuffer serialize the `ReplicaAccountInfo` into
+    // Flatbuffer serialize the data.
     let mut fbb = FlatBufferBuilder::new();
-    let account_info = build_account_update(&mut fbb, &replica_account_info, 0, false)
-        .expect("Could not build account update");
+    let account_info =
+        build_random_account_update(&mut fbb, &data).expect("Could not build account update");
 
     // Use `CandyMachineParser` to parse the account update.
     let subject = CandyMachineParser {};
@@ -225,5 +194,87 @@ fn test_wrong_size_candy_machine_account_fails() {
             BlockbusterError::IOError(_) => (),
             _ => panic!("Unexpected error: {}", err),
         }
+    }
+}
+
+#[test]
+fn test_basic_success_parsing_collection_pda_account() {
+    // Create CollectionPDA test data.
+    let test_collection_pda = CollectionPDAAccountType {
+        mint: random_pubkey(),
+        candy_machine: random_pubkey(),
+    };
+
+    // Borsh serialize the CandyMachine test data.
+    let mut data = COLLECTION_PDA_DISCRIMINATOR.to_vec();
+    test_collection_pda
+        .serialize(&mut data)
+        .expect("Could not serialize CollectionPDA data");
+
+    // Flatbuffer serialize the data.
+    let mut fbb = FlatBufferBuilder::new();
+    let account_info =
+        build_random_account_update(&mut fbb, &data).expect("Could not build account update");
+
+    // Use `CandyMachineParser` to parse the account update.
+    let subject = CandyMachineParser {};
+    let result = subject.handle_account(&account_info);
+    assert!(result.is_ok());
+
+    // Check `ProgramParseResult` and make sure the data is parsed and matches the test data.
+    if let ProgramParseResult::CandyMachine(candy_machine_account_data) =
+        result.unwrap().result_type()
+    {
+        match candy_machine_account_data {
+            CollectionPDA(parsed_collection_pda) => {
+                assert_eq!(*parsed_collection_pda, test_collection_pda);
+            }
+            _ => panic!("Unexpected CandyMachineAccountData variant"),
+        }
+    } else {
+        panic!("Unexpected ProgramParseResult variant");
+    }
+}
+
+#[test]
+fn test_basic_success_parsing_freeze_pda_account() {
+    // Create FreezePDA test data.
+    let test_freeze_pda = FreezePDAAccountType {
+        candy_machine: random_pubkey(),
+        allow_thaw: true,
+        frozen_count: 3,
+        mint_start: Some(1663833216),
+        freeze_time: 300,
+        freeze_fee: 1000000,
+    };
+
+    // Borsh serialize the CandyMachine test data.
+    let mut data = FREEZE_PDA_DISCRIMINATOR.to_vec();
+    test_freeze_pda
+        .serialize(&mut data)
+        .expect("Could not serialize FreezePDA data");
+
+    // Flatbuffer serialize the data.
+    let mut fbb = FlatBufferBuilder::new();
+    let account_info =
+        build_random_account_update(&mut fbb, &data).expect("Could not build account update");
+
+    // Use `CandyMachineParser` to parse the account update.
+    let subject = CandyMachineParser {};
+    let result = subject.handle_account(&account_info);
+    assert!(result.is_ok());
+
+    // Check `ProgramParseResult` and make sure the data is parsed and matches the test data.
+    if let ProgramParseResult::CandyMachine(candy_machine_account_data) =
+        result.unwrap().result_type()
+    {
+        match candy_machine_account_data {
+            FreezePDA(parsed_freeze_pda) => {
+                assert_eq!(*parsed_freeze_pda, test_freeze_pda);
+            }
+            _ => panic!("Unexpected CandyMachineAccountData variant"),
+        }
+    } else {
+        panic!("Unexpected ProgramParseResult variant");
     }
 }

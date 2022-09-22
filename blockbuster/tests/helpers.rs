@@ -208,3 +208,23 @@ pub fn build_account_update<'a>(
     let data = fbb.finished_data();
     root_as_account_info(data)
 }
+
+pub fn build_random_account_update<'a>(
+    fbb: &'a mut FlatBufferBuilder<'a>,
+    data: &[u8]
+) -> Result<AccountInfo<'a>, flatbuffers::InvalidFlatbuffer> {
+    // Create a `ReplicaAccountInfo` to store the account update.
+    // All fields except caller-specified `data` are just random values.
+    let replica_account_info = ReplicaAccountInfo {
+        pubkey: &random_pubkey().to_bytes()[..],
+        lamports: 1,
+        owner: &random_pubkey().to_bytes()[..],
+        executable: false,
+        rent_epoch: 1000,
+        data,
+        write_version: 1,
+    };
+
+    // Flatbuffer serialize the `ReplicaAccountInfo`.
+    build_account_update(fbb, &replica_account_info, 0, false)
+}
