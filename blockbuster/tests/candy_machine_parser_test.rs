@@ -1,8 +1,11 @@
 extern crate core;
 
-use crate::helpers::{build_random_account_update, random_list, random_pubkey};
+use crate::helpers::{
+    build_random_account_update, build_random_instruction, random_list, random_pubkey,
+};
 use blockbuster::{
     error::BlockbusterError,
+    instruction::InstructionBundle,
     program_handler::ProgramParser,
     programs::{
         candy_machine::{
@@ -21,18 +24,12 @@ use blockbuster::{
         ProgramParseResult,
     },
 };
+use plerkle_serialization::root_as_compiled_instruction;
 
 use borsh::BorshSerialize;
 use flatbuffers::FlatBufferBuilder;
 
 mod helpers;
-
-#[test]
-fn test_setup() {
-    let subject = CandyMachineParser {};
-    assert_eq!(subject.key(), candy_machine_id());
-    assert!(subject.key_match(&candy_machine_id()));
-}
 
 fn get_test_candy_machine() -> CandyMachineAccountType {
     // Create CandyMachine test data.
@@ -105,6 +102,44 @@ fn get_test_candy_machine() -> CandyMachineAccountType {
         token_mint: Some(random_pubkey()),
         items_redeemed: 33,
         data: candy_machine_data,
+    }
+}
+
+#[test]
+fn test_setup() {
+    let subject = CandyMachineParser {};
+    assert_eq!(subject.key(), candy_machine_id());
+    assert!(subject.key_match(&candy_machine_id()));
+}
+
+#[test]
+fn test_unused_instruction_parsing() {
+    // Build a random test instruction.
+    let mut fbb = FlatBufferBuilder::new();
+    let offset = build_random_instruction(&mut fbb, 10, 3);
+    fbb.finish_minimal(offset);
+    let data = fbb.finished_data();
+    let outer_ix = root_as_compiled_instruction(data).expect("Could not create random instruction");
+
+    // Bundle the instruction with more random data.
+    let bundle = InstructionBundle {
+        txn_id: "",
+        program: plerkle_serialization::Pubkey(random_pubkey().to_bytes()),
+        instruction: outer_ix,
+        inner_ix: None,
+        keys: &[plerkle_serialization::Pubkey(random_pubkey().to_bytes())],
+        slot: 0,
+    };
+
+    // Use `CandyMachineParser` to parse the account update.
+    let subject = CandyMachineParser {};
+    let result = subject.handle_instruction(&bundle);
+
+    // Check `ProgramParseResult` and make sure it expected variant.
+    assert!(result.is_ok());
+    match result.unwrap().result_type() {
+        ProgramParseResult::Unknown => (),
+        _ => panic!("Unexpected ProgramParseResult variant"),
     }
 }
 
