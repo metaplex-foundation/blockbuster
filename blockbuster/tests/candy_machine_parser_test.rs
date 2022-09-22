@@ -1,12 +1,15 @@
 extern crate core;
 use crate::helpers::{build_account_update, random_list, random_pubkey};
-use blockbuster::programs::candy_machine::{
-    state::{
-        CandyMachine as CandyMachineAccountType, CandyMachineData as CandyMachineDataAccountType,
-        Creator, EndSettingType, EndSettings, GatekeeperConfig, HiddenSettings, WhitelistMintMode,
-        WhitelistMintSettings,
+use blockbuster::{
+    error::BlockbusterError,
+    programs::candy_machine::{
+        state::{
+            CandyMachine as CandyMachineAccountType,
+            CandyMachineData as CandyMachineDataAccountType, Creator, EndSettingType, EndSettings,
+            GatekeeperConfig, HiddenSettings, WhitelistMintMode, WhitelistMintSettings,
+        },
+        CandyMachineAccountData::CandyMachine,
     },
-    CandyMachineAccountData::CandyMachine,
 };
 use blockbuster::{
     program_handler::ProgramParser,
@@ -28,8 +31,7 @@ fn test_setup() {
     assert!(subject.key_match(&candy_machine_id()));
 }
 
-#[test]
-fn test_basic_success_parsing_candy_machine_account() {
+fn get_test_candy_machine() -> CandyMachineAccountType {
     // Create CandyMachine test data.
     let end_settings = EndSettings {
         end_setting_type: EndSettingType::Amount,
@@ -94,13 +96,19 @@ fn test_basic_success_parsing_candy_machine_account() {
         gatekeeper: Some(gatekeeper_config),
     };
 
-    let test_candy_machine = CandyMachineAccountType {
+    CandyMachineAccountType {
         authority: random_pubkey(),
         wallet: random_pubkey(),
         token_mint: Some(random_pubkey()),
         items_redeemed: 33,
         data: candy_machine_data,
-    };
+    }
+}
+
+#[test]
+fn test_basic_success_parsing_candy_machine_account() {
+    // Get CandyMachine test data.
+    let test_candy_machine = get_test_candy_machine();
 
     // Borsh serialize the CandyMachine test data.
     let mut data = CANDY_MACHINE_DISCRIMINATOR.to_vec();
@@ -141,5 +149,43 @@ fn test_basic_success_parsing_candy_machine_account() {
         }
     } else {
         panic!("Unexpected ProgramParseResult variant");
+    }
+}
+
+#[test]
+fn test_unkown_discriminator_fails() {
+    // Borsh serialize the CandyMachine test data.
+    let mut data = CANDY_MACHINE_DISCRIMINATOR.to_vec();
+
+    // Corrupt the discriminator.
+    data[0] = 0;
+
+    // Create a `ReplicaAccountInfo` to store the account update.
+    let replica_account_info = ReplicaAccountInfo {
+        pubkey: &random_pubkey().to_bytes()[..],
+        lamports: 1,
+        owner: &random_pubkey().to_bytes()[..],
+        executable: false,
+        rent_epoch: 1000,
+        data: &data,
+        write_version: 1,
+    };
+
+    // Flatbuffer serialize the `ReplicaAccountInfo` into
+    let mut fbb = FlatBufferBuilder::new();
+    let account_info = build_account_update(&mut fbb, &replica_account_info, 0, false)
+        .expect("Could not build account update");
+
+    // Use `CandyMachineParser` to parse the account update.
+    let subject = CandyMachineParser {};
+    let result = subject.handle_account(&account_info);
+
+    // Validate expected error.
+    assert!(result.is_err());
+    if let Err(err) = result {
+        match err {
+            BlockbusterError::UnknownAccountDiscriminator => (),
+            _ => panic!("Unexpected error: {}", err),
+        }
     }
 }
