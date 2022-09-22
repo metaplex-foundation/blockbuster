@@ -12,7 +12,7 @@ use blockbuster::program_handler::ParseResult;
 use blockbuster::programs::ProgramParseResult;
 use plerkle_serialization::{CompiledInstruction, CompiledInstructionBuilder, Pubkey, root_as_compiled_instruction};
 use crate::helpers::{build_instruction, random_list_of, random_pubkey, random_u8_bound};
-use anchor_lang::InstructionData;
+use anchor_lang::{Event, InstructionData};
 use mpl_bubblegum::state::leaf_schema::{LeafSchema, LeafSchemaEvent, Version};
 use spl_account_compression::state::PathNode;
 
@@ -74,13 +74,13 @@ fn test_basic_success_parsing() {
     let mut fbb = FlatBufferBuilder::new(); // I really REALLLY hate this
     let outer_ix = build_instruction(&mut fbb, &ix.data(), &account_indexes).unwrap();
     let mut fbb = FlatBufferBuilder::new();
-    let noop_bgum = spl_noop::instruction([LeafSchemaEvent::discriminator().as_ref(), &lse.try_to_vec().unwrap()].concat()).data;
+    let noop_bgum = spl_noop::instruction(lse.data()).data;
     let noop_bgum_ix = (Pubkey(spl_noop::id().to_bytes()), build_instruction(&mut fbb, &noop_bgum, &account_indexes).unwrap());
     let mut fbb = FlatBufferBuilder::new();
     // The Compression Instruction here doesnt matter only the noop but we add it here to ensure we are validating that one Account compression event is happening after Bubblegum
     let gummy_roll_ix: IxPair = (Pubkey(spl_account_compression::id().to_bytes()), build_instruction(&mut fbb, &[0; 0], &account_indexes).unwrap());
     let mut fbb = FlatBufferBuilder::new();
-    let noop_compression =  spl_noop::instruction([ChangeLogEvent::discriminator().as_ref(), &cs.try_to_vec().unwrap()].concat()).data;
+    let noop_compression =  spl_noop::instruction(cs.data()).data;
     let noop_compression_ix = (Pubkey(spl_noop::id().to_bytes()), build_instruction(&mut fbb, &noop_compression, &account_indexes).unwrap());
 
     let inner_ix = vec![noop_bgum_ix, gummy_roll_ix, noop_compression_ix];
@@ -94,7 +94,6 @@ fn test_basic_success_parsing() {
         slot: 0,
     };
     let result = subject.handle_instruction(&bundle);
-    result.
     assert!(result.is_ok());
     if let ProgramParseResult::Bubblegum(b) = result.unwrap().result_type() {
         assert!(b.payload.is_none());

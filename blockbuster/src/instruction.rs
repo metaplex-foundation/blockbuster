@@ -38,7 +38,6 @@ pub fn order_instructions<'a, 'b>(
         }
         Some(keys) => keys,
     };
-    println!("{:?}", programs);
     for (i, instruction) in outer_instructions.iter().enumerate() {
         let program_id = keys.get(instruction.program_id_index() as usize).unwrap();
         let outer: IxPair = (*program_id, instruction);
@@ -50,7 +49,6 @@ pub fn order_instructions<'a, 'b>(
                     .get(inner_ix_instance.program_id_index() as usize)
                     .unwrap();
                 inner_list.push_front((*inner_program_id, inner_ix_instance));
-                println!("\t {:?}", inner_program_id);
                 if programs.get(inner_program_id.0.as_ref()).is_some() {
                     println!("\t\t added {:?}", inner_program_id);
                     let mut new_inner_list = inner_list.clone();
@@ -62,7 +60,6 @@ pub fn order_instructions<'a, 'b>(
             inner_list.into()
         });
         if programs.get(program_id.0.as_ref()).is_some() {
-            println!("\t\t added {:?}", program_id);
             ordered_ixs.push_back((outer, inner));
         }
     }
