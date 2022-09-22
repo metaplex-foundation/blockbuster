@@ -416,6 +416,7 @@ dependencies = [
  "flatbuffers",
  "lazy_static",
  "mpl-bubblegum",
+ "mpl-candy-guard",
  "mpl-candy-machine-core",
  "mpl-token-metadata",
  "plerkle_serialization",
@@ -1546,6 +1547,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "mpl-candy-guard"
+version = "0.0.1"
+source = "git+https://github.com/metaplex-foundation/candy-guard?branch=remove-anchor-spl#1d946636399d58034048c93033dc82653d2192dc"
+dependencies = [
+ "anchor-lang",
+ "arrayref",
+ "mpl-candy-guard-derive",
+ "mpl-candy-machine-core",
+ "mpl-token-metadata",
+ "solana-gateway",
+ "solana-program",
+ "spl-associated-token-account",
+ "spl-token",
+]
+
+[[package]]
+name = "mpl-candy-guard-derive"
+version = "0.0.1"
+source = "git+https://github.com/metaplex-foundation/candy-guard?branch=remove-anchor-spl#1d946636399d58034048c93033dc82653d2192dc"
+dependencies = [
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "mpl-candy-machine-core"
 version = "0.0.2"
 source = "git+https://github.com/metaplex-foundation/metaplex-program-library?branch=remove-anchor-spl#e6cc13eda724588847b11322ed85ea9fecf5972e"
@@ -1745,7 +1771,9 @@ checksum = "1df8c4ec4b0627e53bdf214615ad287367e482558cf84b109250b37464dc03ae"
 
 [[package]]
 name = "plerkle_serialization"
-version = "0.2.0"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4c7cf6b49a9975a09c26e6238090c3774ab553e7c10a831bcfba06a3304220a4"
 dependencies = [
  "chrono",
  "flatbuffers",
@@ -2297,6 +2325,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "sol-did"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d2546d424d6898908c205d99d3af07ad42e2e8aec8f0d459235dc0bd4e9866fe"
+dependencies = [
+ "borsh",
+ "num-derive",
+ "num-traits",
+ "solana-program",
+ "thiserror",
+]
+
+[[package]]
 name = "solana-account-decoder"
 version = "1.10.39"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2412,6 +2453,21 @@ dependencies = [
  "quote",
  "rustc_version",
  "syn",
+]
+
+[[package]]
+name = "solana-gateway"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "243daaf437dff89891d520c3e9be7b4a6940c30a1bda2ac094e621046f303eda"
+dependencies = [
+ "bitflags",
+ "borsh",
+ "num-derive",
+ "num-traits",
+ "sol-did",
+ "solana-program",
+ "thiserror",
 ]
 
 [[package]]
