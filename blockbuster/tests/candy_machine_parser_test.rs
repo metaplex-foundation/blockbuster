@@ -135,7 +135,7 @@ fn test_basic_success_parsing_candy_machine_account() {
     {
         match candy_machine_account_data {
             CandyMachine(parsed_candy_machine) => {
-                assert_eq!(*parsed_candy_machine, test_candy_machine);
+                assert_eq!(*parsed_candy_machine, Box::new(test_candy_machine));
             }
             _ => panic!("Unexpected CandyMachineAccountData variant"),
         }

@@ -1,3 +1,6 @@
+// Workaround since this module is only used for testing.
+#![allow(dead_code)]
+
 extern crate core;
 
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
@@ -169,8 +172,8 @@ pub fn build_instruction<'a>(
     let offset = builder.finish();
     fbb.finish_minimal(offset);
     let data = fbb.finished_data();
-    let c = root_as_compiled_instruction(data);
-    c
+
+    root_as_compiled_instruction(data)
 }
 
 pub fn build_account_update<'a>(
@@ -178,7 +181,7 @@ pub fn build_account_update<'a>(
     account: &ReplicaAccountInfo,
     slot: u64,
     is_startup: bool,
-) -> Result<(AccountInfo<'a>), flatbuffers::InvalidFlatbuffer> {
+) -> Result<AccountInfo<'a>, flatbuffers::InvalidFlatbuffer> {
     // Serialize vector data.
     let pubkey = fbb.create_vector(account.pubkey);
     let owner = fbb.create_vector(account.owner);

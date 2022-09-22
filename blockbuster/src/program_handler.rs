@@ -23,6 +23,12 @@ impl NotUsed {
     }
 }
 
+impl Default for NotUsed {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ParseResult for NotUsed {
     fn result_type(&self) -> ProgramParseResult {
         ProgramParseResult::Unknown

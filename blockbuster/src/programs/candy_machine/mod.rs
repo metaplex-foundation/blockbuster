@@ -25,7 +25,7 @@ pub const COLLECTION_PDA_DISCRIMINATOR: [u8; 8] = [203, 128, 119, 125, 234, 89, 
 pub const FREEZE_PDA_DISCRIMINATOR: [u8; 8] = [154, 58, 148, 24, 101, 200, 243, 127];
 
 pub enum CandyMachineAccountData {
-    CandyMachine(CandyMachine),
+    CandyMachine(Box<CandyMachine>),
     CollectionPDA(CollectionPDA),
     FreezePDA(FreezePDA),
 }
@@ -62,7 +62,7 @@ impl ProgramParser for CandyMachineParser {
         let account_type = match discriminator {
             CANDY_MACHINE_DISCRIMINATOR => {
                 let candy_machine = CandyMachine::try_from_slice(&account_data[8..])?;
-                CandyMachineAccountData::CandyMachine(candy_machine)
+                CandyMachineAccountData::CandyMachine(Box::new(candy_machine))
             }
             COLLECTION_PDA_DISCRIMINATOR => {
                 let collection_pda = CollectionPDA::try_from_slice(&account_data[8..])?;

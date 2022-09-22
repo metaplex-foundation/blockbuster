@@ -9,7 +9,7 @@ use solana_sdk::{program_pack::Pack, pubkey::Pubkey, pubkeys};
 use spl_token::state::{Account as TokenAccount, Mint};
 
 pubkeys!(
-    TokenProgramID,
+    token_program_id,
     "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
 );
 
@@ -34,10 +34,10 @@ impl ParseResult for TokenProgramAccount {
 
 impl ProgramParser for TokenAccountParser {
     fn key(&self) -> Pubkey {
-        TokenProgramID()
+        token_program_id()
     }
     fn key_match(&self, key: &Pubkey) -> bool {
-        key == &TokenProgramID()
+        key == &token_program_id()
     }
 
     fn handle_account(
@@ -52,12 +52,12 @@ impl ProgramParser for TokenAccountParser {
 
         let account_type = match account_data.len() {
             165 => {
-                let token_account = TokenAccount::unpack(&account_data).unwrap();
+                let token_account = TokenAccount::unpack(account_data).unwrap();
 
                 TokenProgramAccount::TokenAccount(token_account)
             }
             82 => {
-                let mint = Mint::unpack(&account_data).unwrap();
+                let mint = Mint::unpack(account_data).unwrap();
 
                 TokenProgramAccount::Mint(mint)
             }
