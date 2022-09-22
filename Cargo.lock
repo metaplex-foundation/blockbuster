@@ -408,7 +408,7 @@ checksum = "8d696c370c750c948ada61c69a0ee2cbbb9c50b1019ddb86d9317157a99c2cae"
 
 [[package]]
 name = "blockbuster"
-version = "0.0.2"
+version = "0.1.0"
 dependencies = [
  "anchor-lang",
  "async-trait",
@@ -416,6 +416,7 @@ dependencies = [
  "flatbuffers",
  "lazy_static",
  "mpl-bubblegum",
+ "mpl-candy-machine-core",
  "mpl-token-metadata",
  "plerkle_serialization",
  "rand 0.8.5",
@@ -1531,13 +1532,28 @@ dependencies = [
 
 [[package]]
 name = "mpl-bubblegum"
-version = "0.1.1"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fb619f02bf90fe62be93d7d545495ed237db7bb122d5e3767aeb41eec080659d"
 dependencies = [
  "anchor-lang",
  "bytemuck",
  "mpl-token-metadata",
  "solana-program",
  "spl-account-compression",
+ "spl-associated-token-account",
+ "spl-token",
+]
+
+[[package]]
+name = "mpl-candy-machine-core"
+version = "0.0.2"
+source = "git+https://github.com/metaplex-foundation/metaplex-program-library?branch=remove-anchor-spl#e6cc13eda724588847b11322ed85ea9fecf5972e"
+dependencies = [
+ "anchor-lang",
+ "arrayref",
+ "mpl-token-metadata",
+ "solana-program",
  "spl-associated-token-account",
  "spl-token",
 ]

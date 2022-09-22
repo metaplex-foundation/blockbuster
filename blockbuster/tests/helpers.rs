@@ -1,10 +1,12 @@
 extern crate core;
 
-use flatbuffers::{FlatBufferBuilder, InvalidFlatbuffer, WIPOffset};
-use solana_sdk::pubkey::Pubkey;
+use flatbuffers::{FlatBufferBuilder, WIPOffset};
+use plerkle_serialization::{
+    root_as_compiled_instruction, CompiledInstruction, CompiledInstructionBuilder,
+    InnerInstructionsBuilder, Pubkey as FBPubkey, TransactionInfo, TransactionInfoBuilder,
+};
 use rand::Rng;
-use plerkle_serialization::{Pubkey as FBPubkey, CompiledInstruction, CompiledInstructionArgs, CompiledInstructionBuilder, InnerInstructionsBuilder, root_as_compiled_instruction, TransactionInfo, TransactionInfoArgs, TransactionInfoBuilder, root_as_transaction_info};
-
+use solana_sdk::pubkey::Pubkey;
 
 pub fn random_program() -> Pubkey {
     Pubkey::new_unique()
@@ -46,7 +48,8 @@ pub fn random_list(size: usize, elem_max: u8) -> Vec<u8> {
 }
 
 pub fn random_list_of<FN, T>(size: usize, fun: FN) -> Vec<T>
-    where FN: Fn(u8) -> T
+where
+    FN: Fn(u8) -> T,
 {
     let mut s = rand::thread_rng();
     let mut data: Vec<T> = Vec::with_capacity(size);
@@ -56,7 +59,11 @@ pub fn random_list_of<FN, T>(size: usize, fun: FN) -> Vec<T>
     data
 }
 
-pub fn build_random_instruction<'a>(fbb: &mut FlatBufferBuilder<'a>, accounts_number_in_transaction: usize, number_of_accounts: usize) -> WIPOffset<CompiledInstruction<'a>> {
+pub fn build_random_instruction<'a>(
+    fbb: &mut FlatBufferBuilder<'a>,
+    accounts_number_in_transaction: usize,
+    number_of_accounts: usize,
+) -> WIPOffset<CompiledInstruction<'a>> {
     let accounts = random_list(5, random_u8_bound(1, number_of_accounts as u8));
     let accounts = fbb.create_vector(&accounts);
     let data = random_data(10);
@@ -91,9 +98,7 @@ pub fn build_random_transaction(mut fbb: FlatBufferBuilder) -> FlatBufferBuilder
 
     let outer_instructions = fbb.create_vector(&outer_instructions);
     let inner_instructions = fbb.create_vector(&inner_instructions);
-    let account_keys = random_list_of(10, |_| {
-        FBPubkey(random_pubkey().to_bytes())
-    });
+    let account_keys = random_list_of(10, |_| FBPubkey(random_pubkey().to_bytes()));
     let account_keys = fbb.create_vector(&account_keys);
     let mut builder = TransactionInfoBuilder::new(&mut fbb);
     let slot = s.gen();
@@ -109,24 +114,50 @@ pub fn build_random_transaction(mut fbb: FlatBufferBuilder) -> FlatBufferBuilder
 }
 
 pub fn get_programs(txn_info: TransactionInfo) -> Vec<Pubkey> {
-    let mut outer_keys: Vec<Pubkey> = txn_info.outer_instructions().unwrap().iter().map(|ix| {
-        println!("{:?}", txn_info);
-        Pubkey::new(&txn_info.account_keys().unwrap().get(ix.program_id_index() as usize).unwrap().0)
-    }).collect();
+    let mut outer_keys: Vec<Pubkey> = txn_info
+        .outer_instructions()
+        .unwrap()
+        .iter()
+        .map(|ix| {
+            println!("{:?}", txn_info);
+            Pubkey::new(
+                &txn_info
+                    .account_keys()
+                    .unwrap()
+                    .get(ix.program_id_index() as usize)
+                    .unwrap()
+                    .0,
+            )
+        })
+        .collect();
     let mut inner = vec![];
-    let inner_keys = txn_info.inner_instructions().unwrap().iter().fold(&mut inner, |ix, curr| {
-        for p in curr.instructions().unwrap() {
-            ix.push(Pubkey::new(&txn_info.account_keys().unwrap().get(p.program_id_index() as usize).unwrap().0))
-        }
-        ix
-    });
+    let inner_keys = txn_info
+        .inner_instructions()
+        .unwrap()
+        .iter()
+        .fold(&mut inner, |ix, curr| {
+            for p in curr.instructions().unwrap() {
+                ix.push(Pubkey::new(
+                    &txn_info
+                        .account_keys()
+                        .unwrap()
+                        .get(p.program_id_index() as usize)
+                        .unwrap()
+                        .0,
+                ))
+            }
+            ix
+        });
     outer_keys.append(inner_keys);
     outer_keys.dedup();
     outer_keys
 }
 
-
-pub fn build_instruction<'a>(fbb: &'a mut FlatBufferBuilder<'a>, data: &[u8], account_indexes: &[u8]) -> Result<CompiledInstruction<'a>, flatbuffers::InvalidFlatbuffer> {
+pub fn build_instruction<'a>(
+    fbb: &'a mut FlatBufferBuilder<'a>,
+    data: &[u8],
+    account_indexes: &[u8],
+) -> Result<CompiledInstruction<'a>, flatbuffers::InvalidFlatbuffer> {
     let accounts_vec = fbb.create_vector(account_indexes);
     let ix_data = fbb.create_vector(data);
     let mut builder = CompiledInstructionBuilder::new(fbb);

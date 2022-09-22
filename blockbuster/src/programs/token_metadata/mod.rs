@@ -1,17 +1,18 @@
-use crate::program_handler::ParseResult;
 use crate::{
-    error::BlockbusterError, instruction::InstructionBundle, program_handler::ProgramParser,
+    error::BlockbusterError,
+    instruction::InstructionBundle,
+    program_handler::{NotUsed, ParseResult, ProgramParser},
+    programs::ProgramParseResult,
 };
-use crate::{program_handler::NotUsed, programs::ProgramParseResult};
 use borsh::BorshDeserialize;
-use solana_sdk::borsh::try_from_slice_unchecked;
-use solana_sdk::pubkey::Pubkey;
-use solana_sdk::pubkeys;
+use solana_sdk::{borsh::try_from_slice_unchecked, pubkey::Pubkey, pubkeys};
 
 use plerkle_serialization::AccountInfo;
 
-pub use mpl_bubblegum::state::leaf_schema::{LeafSchema, LeafSchemaEvent};
-pub use mpl_bubblegum::InstructionName;
+pub use mpl_bubblegum::{
+    state::leaf_schema::{LeafSchema, LeafSchemaEvent},
+    InstructionName,
+};
 use mpl_token_metadata::state::{
     CollectionAuthorityRecord, Edition, EditionMarker, Key, MasterEditionV1, MasterEditionV2,
     Metadata, ReservationListV1, ReservationListV2, UseAuthorityRecord,
@@ -41,8 +42,8 @@ pub struct TokenMetadataAccountState {
 
 impl ParseResult for TokenMetadataAccountState {
     fn result(&self) -> &Self
-        where
-            Self: Sized,
+    where
+        Self: Sized,
     {
         self
     }

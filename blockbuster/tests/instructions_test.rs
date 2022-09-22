@@ -1,18 +1,17 @@
 mod helpers;
 
-use std::collections::HashSet;
-use flatbuffers::FlatBufferBuilder;
-use solana_sdk::hash::Hash;
-use solana_sdk::pubkey::Pubkey;
 use blockbuster::instruction::order_instructions;
+use flatbuffers::FlatBufferBuilder;
 use helpers::*;
-use plerkle_serialization::{root_as_transaction_info, TransactionInfo};
+use plerkle_serialization::root_as_transaction_info;
 use rand::prelude::IteratorRandom;
+
+use std::collections::HashSet;
 
 #[test]
 fn test_filter() {
     let mut rng = rand::thread_rng();
-    let mut fbb = FlatBufferBuilder::new();
+    let fbb = FlatBufferBuilder::new();
     let fbb = build_random_transaction(fbb);
     let data = fbb.finished_data();
     let txn = root_as_transaction_info(data).expect("TODO: panic message");
@@ -24,12 +23,12 @@ fn test_filter() {
         hs.insert(p.as_ref());
         hs
     });
-    let len = hs.len();
+    let _len = hs.len();
     let hsb = hs.clone();
     let res = order_instructions(hs, &txn);
-    for (ib, inner) in res.iter() {
+    for (ib, _inner) in res.iter() {
         println!("\t\t matching {:?}", ib.0);
-        let public_key_matches = hsb.contains(&ib.0.0.as_ref());
+        let public_key_matches = hsb.contains(&ib.0 .0.as_ref());
         assert!(public_key_matches);
     }
 

@@ -91,7 +91,7 @@ impl ProgramParser for BubblegumParser {
         let change_log_event: &[u8] = &ChangeLogEvent::discriminator();
         if let Some(ixs) = inner_ix {
             for ix in ixs {
-                if ix.0.0 == spl_noop::id().to_bytes() {
+                if ix.0 .0 == spl_noop::id().to_bytes() {
                     let cix = ix.1;
                     if let Some(data) = cix.data() {
                         let disc = &data[0..8];
