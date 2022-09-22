@@ -144,6 +144,57 @@ fn test_unused_instruction_parsing() {
 }
 
 #[test]
+fn test_zero_length_data_fails() {
+    // Empty byte slice.
+    let data: &[u8] = &[];
+
+    // Flatbuffer serialize the data.
+    let mut fbb = FlatBufferBuilder::new();
+    let account_info =
+        build_random_account_update(&mut fbb, data).expect("Could not build account update");
+
+    // Use `CandyMachineParser` to parse the account update.
+    let subject = CandyMachineParser {};
+    let result = subject.handle_account(&account_info);
+
+    // Validate expected error.
+    assert!(result.is_err());
+    if let Err(err) = result {
+        match err {
+            BlockbusterError::DeserializationError => (),
+            _ => panic!("Unexpected error: {}", err,),
+        }
+    }
+}
+
+#[test]
+fn test_unknown_discriminator_fails() {
+    // Borsh serialize the CandyMachine discriminator.
+    let mut data = CANDY_MACHINE_DISCRIMINATOR.to_vec();
+
+    // Corrupt the discriminator.
+    data[0] = 0;
+
+    // Flatbuffer serialize the data.
+    let mut fbb = FlatBufferBuilder::new();
+    let account_info =
+        build_random_account_update(&mut fbb, &data).expect("Could not build account update");
+
+    // Use `CandyMachineParser` to parse the account update.
+    let subject = CandyMachineParser {};
+    let result = subject.handle_account(&account_info);
+
+    // Validate expected error.
+    assert!(result.is_err());
+    if let Err(err) = result {
+        match err {
+            BlockbusterError::UnknownAccountDiscriminator => (),
+            _ => panic!("Unexpected error: {}", err),
+        }
+    }
+}
+
+#[test]
 fn test_basic_success_parsing_candy_machine_account() {
     // Get CandyMachine test data.
     let test_candy_machine = get_test_candy_machine();
@@ -176,33 +227,6 @@ fn test_basic_success_parsing_candy_machine_account() {
         }
     } else {
         panic!("Unexpected ProgramParseResult variant");
-    }
-}
-
-#[test]
-fn test_unknown_discriminator_fails() {
-    // Borsh serialize the CandyMachine discriminator.
-    let mut data = CANDY_MACHINE_DISCRIMINATOR.to_vec();
-
-    // Corrupt the discriminator.
-    data[0] = 0;
-
-    // Flatbuffer serialize the data.
-    let mut fbb = FlatBufferBuilder::new();
-    let account_info =
-        build_random_account_update(&mut fbb, &data).expect("Could not build account update");
-
-    // Use `CandyMachineParser` to parse the account update.
-    let subject = CandyMachineParser {};
-    let result = subject.handle_account(&account_info);
-
-    // Validate expected error.
-    assert!(result.is_err());
-    if let Err(err) = result {
-        match err {
-            BlockbusterError::UnknownAccountDiscriminator => (),
-            _ => panic!("Unexpected error: {}", err),
-        }
     }
 }
 

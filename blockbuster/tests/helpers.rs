@@ -185,7 +185,13 @@ pub fn build_account_update<'a>(
     // Serialize vector data.
     let pubkey = fbb.create_vector(account.pubkey);
     let owner = fbb.create_vector(account.owner);
-    let data = fbb.create_vector(account.data);
+
+    // Don't serialize a zero-length data slice.
+    let data = if !account.data.is_empty() {
+        Some(fbb.create_vector(account.data))
+    } else {
+        None
+    };
 
     // Serialize everything into Account Info table.
     let account_info = AccountInfo::create(
@@ -196,7 +202,7 @@ pub fn build_account_update<'a>(
             owner: Some(owner),
             executable: account.executable,
             rent_epoch: account.rent_epoch,
-            data: Some(data),
+            data,
             write_version: account.write_version,
             slot,
             is_startup,
