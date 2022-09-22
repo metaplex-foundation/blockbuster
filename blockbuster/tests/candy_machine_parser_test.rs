@@ -237,6 +237,32 @@ fn test_basic_success_parsing_collection_pda_account() {
 }
 
 #[test]
+fn test_wrong_size_collection_pda_account_fails() {
+    // Borsh serialize the CandyMachine discriminator.
+    let mut data = COLLECTION_PDA_DISCRIMINATOR.to_vec();
+    // Add some random data.
+    data.append(&mut random_list(8, u8::MAX));
+
+    // Flatbuffer serialize the data.
+    let mut fbb = FlatBufferBuilder::new();
+    let account_info =
+        build_random_account_update(&mut fbb, &data).expect("Could not build account update");
+
+    // Use `CandyMachineParser` to parse the account update.
+    let subject = CandyMachineParser {};
+    let result = subject.handle_account(&account_info);
+
+    // Validate expected error.
+    assert!(result.is_err());
+    if let Err(err) = result {
+        match err {
+            BlockbusterError::IOError(_) => (),
+            _ => panic!("Unexpected error: {}", err),
+        }
+    }
+}
+
+#[test]
 fn test_basic_success_parsing_freeze_pda_account() {
     // Create FreezePDA test data.
     let test_freeze_pda = FreezePDAAccountType {
@@ -276,5 +302,31 @@ fn test_basic_success_parsing_freeze_pda_account() {
         }
     } else {
         panic!("Unexpected ProgramParseResult variant");
+    }
+}
+
+#[test]
+fn test_wrong_size_freeze_pda_account_fails() {
+    // Borsh serialize the CandyMachine discriminator.
+    let mut data = FREEZE_PDA_DISCRIMINATOR.to_vec();
+    // Add some random data.
+    data.append(&mut random_list(32, u8::MAX));
+
+    // Flatbuffer serialize the data.
+    let mut fbb = FlatBufferBuilder::new();
+    let account_info =
+        build_random_account_update(&mut fbb, &data).expect("Could not build account update");
+
+    // Use `CandyMachineParser` to parse the account update.
+    let subject = CandyMachineParser {};
+    let result = subject.handle_account(&account_info);
+
+    // Validate expected error.
+    assert!(result.is_err());
+    if let Err(err) = result {
+        match err {
+            BlockbusterError::IOError(_) => (),
+            _ => panic!("Unexpected error: {}", err),
+        }
     }
 }

@@ -211,7 +211,7 @@ pub fn build_account_update<'a>(
 
 pub fn build_random_account_update<'a>(
     fbb: &'a mut FlatBufferBuilder<'a>,
-    data: &[u8]
+    data: &[u8],
 ) -> Result<AccountInfo<'a>, flatbuffers::InvalidFlatbuffer> {
     // Create a `ReplicaAccountInfo` to store the account update.
     // All fields except caller-specified `data` are just random values.
