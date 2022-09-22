@@ -1,4 +1,5 @@
 extern crate core;
+
 use crate::helpers::{build_account_update, random_list, random_pubkey};
 use blockbuster::{
     error::BlockbusterError,
@@ -154,7 +155,7 @@ fn test_basic_success_parsing_candy_machine_account() {
 
 #[test]
 fn test_unkown_discriminator_fails() {
-    // Borsh serialize the CandyMachine test data.
+    // Borsh serialize the CandyMachine discriminator.
     let mut data = CANDY_MACHINE_DISCRIMINATOR.to_vec();
 
     // Corrupt the discriminator.
@@ -185,6 +186,43 @@ fn test_unkown_discriminator_fails() {
     if let Err(err) = result {
         match err {
             BlockbusterError::UnknownAccountDiscriminator => (),
+            _ => panic!("Unexpected error: {}", err),
+        }
+    }
+}
+
+#[test]
+fn test_wrong_size_candy_machine_account_fails() {
+    // Borsh serialize the CandyMachine discriminator.
+    let mut data = CANDY_MACHINE_DISCRIMINATOR.to_vec();
+    // Add some random data.
+    data.append(&mut random_list(32, u8::MAX));
+
+    // Create a `ReplicaAccountInfo` to store the account update.
+    let replica_account_info = ReplicaAccountInfo {
+        pubkey: &random_pubkey().to_bytes()[..],
+        lamports: 1,
+        owner: &random_pubkey().to_bytes()[..],
+        executable: false,
+        rent_epoch: 1000,
+        data: &data,
+        write_version: 1,
+    };
+
+    // Flatbuffer serialize the `ReplicaAccountInfo` into
+    let mut fbb = FlatBufferBuilder::new();
+    let account_info = build_account_update(&mut fbb, &replica_account_info, 0, false)
+        .expect("Could not build account update");
+
+    // Use `CandyMachineParser` to parse the account update.
+    let subject = CandyMachineParser {};
+    let result = subject.handle_account(&account_info);
+
+    // Validate expected error.
+    assert!(result.is_err());
+    if let Err(err) = result {
+        match err {
+            BlockbusterError::IOError(_) => (),
             _ => panic!("Unexpected error: {}", err),
         }
     }
