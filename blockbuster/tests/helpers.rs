@@ -2,10 +2,12 @@ extern crate core;
 
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
 use plerkle_serialization::{
-    root_as_compiled_instruction, CompiledInstruction, CompiledInstructionBuilder,
-    InnerInstructionsBuilder, Pubkey as FBPubkey, TransactionInfo, TransactionInfoBuilder,
+    root_as_account_info, root_as_compiled_instruction, AccountInfo, AccountInfoArgs,
+    CompiledInstruction, CompiledInstructionBuilder, InnerInstructionsBuilder, Pubkey as FBPubkey,
+    TransactionInfo, TransactionInfoBuilder,
 };
 use rand::Rng;
+use solana_geyser_plugin_interface::geyser_plugin_interface::ReplicaAccountInfo;
 use solana_sdk::pubkey::Pubkey;
 
 pub fn random_program() -> Pubkey {
@@ -169,4 +171,37 @@ pub fn build_instruction<'a>(
     let data = fbb.finished_data();
     let c = root_as_compiled_instruction(data);
     c
+}
+
+pub fn build_account_update<'a>(
+    fbb: &'a mut FlatBufferBuilder<'a>,
+    account: &ReplicaAccountInfo,
+    slot: u64,
+    is_startup: bool,
+) -> Result<(AccountInfo<'a>), flatbuffers::InvalidFlatbuffer> {
+    // Serialize vector data.
+    let pubkey = fbb.create_vector(account.pubkey);
+    let owner = fbb.create_vector(account.owner);
+    let data = fbb.create_vector(account.data);
+
+    // Serialize everything into Account Info table.
+    let account_info = AccountInfo::create(
+        fbb,
+        &AccountInfoArgs {
+            pubkey: Some(pubkey),
+            lamports: account.lamports,
+            owner: Some(owner),
+            executable: account.executable,
+            rent_epoch: account.rent_epoch,
+            data: Some(data),
+            write_version: account.write_version,
+            slot,
+            is_startup,
+        },
+    );
+
+    // Finalize buffer
+    fbb.finish(account_info, None);
+    let data = fbb.finished_data();
+    root_as_account_info(data)
 }

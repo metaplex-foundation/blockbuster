@@ -421,6 +421,7 @@ dependencies = [
  "mpl-token-metadata",
  "plerkle_serialization",
  "rand 0.8.5",
+ "solana-geyser-plugin-interface",
  "solana-sdk",
  "spl-account-compression",
  "spl-noop",

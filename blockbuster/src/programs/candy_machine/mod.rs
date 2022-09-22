@@ -12,7 +12,7 @@ use plerkle_serialization::AccountInfo;
 use solana_sdk::{pubkey::Pubkey, pubkeys};
 use std::convert::TryInto;
 
-mod state;
+pub mod state;
 
 pubkeys!(
     candy_machine_id,
@@ -20,9 +20,9 @@ pubkeys!(
 );
 
 // Anchor account discriminators.
-const CANDY_MACHINE_DISCRIMINATOR: [u8; 8] = [51, 173, 177, 113, 25, 241, 109, 189];
-const COLLECTION_PDA_DISCRIMINATOR: [u8; 8] = [203, 128, 119, 125, 234, 89, 232, 157];
-const FREEZE_PDA_DISCRIMINATOR: [u8; 8] = [154, 58, 148, 24, 101, 200, 243, 127];
+pub const CANDY_MACHINE_DISCRIMINATOR: [u8; 8] = [51, 173, 177, 113, 25, 241, 109, 189];
+pub const COLLECTION_PDA_DISCRIMINATOR: [u8; 8] = [203, 128, 119, 125, 234, 89, 232, 157];
+pub const FREEZE_PDA_DISCRIMINATOR: [u8; 8] = [154, 58, 148, 24, 101, 200, 243, 127];
 
 pub enum CandyMachineAccountData {
     CandyMachine(CandyMachine),
