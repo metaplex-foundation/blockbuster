@@ -1,11 +1,16 @@
+// Workaround since this module is only used for testing.
+#![allow(dead_code)]
+
 extern crate core;
 
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
 use plerkle_serialization::{
-    root_as_compiled_instruction, CompiledInstruction, CompiledInstructionBuilder,
-    InnerInstructionsBuilder, Pubkey as FBPubkey, TransactionInfo, TransactionInfoBuilder,
+    root_as_account_info, root_as_compiled_instruction, AccountInfo, AccountInfoArgs,
+    CompiledInstruction, CompiledInstructionBuilder, InnerInstructionsBuilder, Pubkey as FBPubkey,
+    TransactionInfo, TransactionInfoBuilder,
 };
 use rand::Rng;
+use solana_geyser_plugin_interface::geyser_plugin_interface::ReplicaAccountInfo;
 use solana_sdk::pubkey::Pubkey;
 
 pub fn random_program() -> Pubkey {
@@ -167,6 +172,65 @@ pub fn build_instruction<'a>(
     let offset = builder.finish();
     fbb.finish_minimal(offset);
     let data = fbb.finished_data();
-    let c = root_as_compiled_instruction(data);
-    c
+
+    root_as_compiled_instruction(data)
+}
+
+pub fn build_account_update<'a>(
+    fbb: &'a mut FlatBufferBuilder<'a>,
+    account: &ReplicaAccountInfo,
+    slot: u64,
+    is_startup: bool,
+) -> Result<AccountInfo<'a>, flatbuffers::InvalidFlatbuffer> {
+    // Serialize vector data.
+    let pubkey = fbb.create_vector(account.pubkey);
+    let owner = fbb.create_vector(account.owner);
+
+    // Don't serialize a zero-length data slice.
+    let data = if !account.data.is_empty() {
+        Some(fbb.create_vector(account.data))
+    } else {
+        None
+    };
+
+    // Serialize everything into Account Info table.
+    let account_info = AccountInfo::create(
+        fbb,
+        &AccountInfoArgs {
+            pubkey: Some(pubkey),
+            lamports: account.lamports,
+            owner: Some(owner),
+            executable: account.executable,
+            rent_epoch: account.rent_epoch,
+            data,
+            write_version: account.write_version,
+            slot,
+            is_startup,
+        },
+    );
+
+    // Finalize buffer
+    fbb.finish(account_info, None);
+    let data = fbb.finished_data();
+    root_as_account_info(data)
+}
+
+pub fn build_random_account_update<'a>(
+    fbb: &'a mut FlatBufferBuilder<'a>,
+    data: &[u8],
+) -> Result<AccountInfo<'a>, flatbuffers::InvalidFlatbuffer> {
+    // Create a `ReplicaAccountInfo` to store the account update.
+    // All fields except caller-specified `data` are just random values.
+    let replica_account_info = ReplicaAccountInfo {
+        pubkey: &random_pubkey().to_bytes()[..],
+        lamports: 1,
+        owner: &random_pubkey().to_bytes()[..],
+        executable: false,
+        rent_epoch: 1000,
+        data,
+        write_version: 1,
+    };
+
+    // Flatbuffer serialize the `ReplicaAccountInfo`.
+    build_account_update(fbb, &replica_account_info, 0, false)
 }

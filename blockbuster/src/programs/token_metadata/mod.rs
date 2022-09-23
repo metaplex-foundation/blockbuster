@@ -36,8 +36,8 @@ pub enum TokenMetadataAccountData {
 }
 
 pub struct TokenMetadataAccountState {
-    key: Key,
-    data: TokenMetadataAccountData,
+    pub key: Key,
+    pub data: TokenMetadataAccountData,
 }
 
 impl ParseResult for TokenMetadataAccountState {

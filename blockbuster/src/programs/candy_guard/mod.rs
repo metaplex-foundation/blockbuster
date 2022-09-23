@@ -23,7 +23,7 @@ const CANDY_GUARD_DISCRIMINATOR: [u8; 8] = [44, 207, 199, 184, 112, 103, 34, 181
 const MINT_COUNTER_DISCRIMINATOR: [u8; 8] = [29, 59, 15, 69, 46, 22, 227, 173];
 
 pub enum CandyGuardAccountData {
-    CandyGuard(CandyGuard, CandyGuardData),
+    CandyGuard(CandyGuard, Box<CandyGuardData>),
     MintCounter(MintCounter),
 }
 
@@ -61,7 +61,7 @@ impl ProgramParser for CandyGuardParser {
                 let candy_guard = CandyGuard::try_from_slice(&account_data[8..])?;
                 let candy_guard_data = CandyGuardData::load(&account_data[DATA_OFFSET..])
                     .map_err(|_| BlockbusterError::CandyGuardDataCustomDeserError)?;
-                CandyGuardAccountData::CandyGuard(candy_guard, candy_guard_data)
+                CandyGuardAccountData::CandyGuard(candy_guard, Box::new(candy_guard_data))
             }
             MINT_COUNTER_DISCRIMINATOR => {
                 let mint_counter = MintCounter::try_from_slice(&account_data[8..])?;

@@ -4,7 +4,7 @@ use crate::helpers::{build_instruction, random_list_of, random_pubkey};
 use anchor_lang::{Event, InstructionData};
 use blockbuster::{
     instruction::{InstructionBundle, IxPair},
-    program_handler::{ParseResult, ProgramParser},
+    program_handler::ProgramParser,
     programs::{bubblegum::BubblegumParser, ProgramParseResult},
 };
 use flatbuffers::FlatBufferBuilder;
@@ -102,5 +102,7 @@ fn test_basic_success_parsing() {
         assert!(matched.is_ok());
         assert!(b.leaf_update.is_some());
         assert!(b.tree_update.is_some());
+    } else {
+        panic!("Unexpected ProgramParseResult variant");
     }
 }
