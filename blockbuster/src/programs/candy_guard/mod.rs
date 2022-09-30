@@ -61,7 +61,7 @@ impl ProgramParser for CandyGuardParser {
                 let candy_guard = CandyGuard::try_from_slice(&account_data[8..])?;
                 let candy_guard_data = CandyGuardData::load(&account_data[DATA_OFFSET..])
                     .map_err(|_| BlockbusterError::CandyGuardDataCustomDeserError)?;
-                CandyGuardAccountData::CandyGuard(candy_guard, Box::new(candy_guard_data))
+                CandyGuardAccountData::CandyGuard(candy_guard, candy_guard_data)
             }
             MINT_COUNTER_DISCRIMINATOR => {
                 let mint_counter = MintCounter::try_from_slice(&account_data[8..])?;

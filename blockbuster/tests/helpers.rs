@@ -53,8 +53,8 @@ pub fn random_list(size: usize, elem_max: u8) -> Vec<u8> {
 }
 
 pub fn random_list_of<FN, T>(size: usize, fun: FN) -> Vec<T>
-where
-    FN: Fn(u8) -> T,
+    where
+        FN: Fn(u8) -> T,
 {
     let mut s = rand::thread_rng();
     let mut data: Vec<T> = Vec::with_capacity(size);
@@ -183,8 +183,8 @@ pub fn build_account_update<'a>(
     is_startup: bool,
 ) -> Result<AccountInfo<'a>, flatbuffers::InvalidFlatbuffer> {
     // Serialize vector data.
-    let pubkey = fbb.create_vector(account.pubkey);
-    let owner = fbb.create_vector(account.owner);
+    let pubkey = FBPubkey::from(account.pubkey);
+    let owner =  FBPubkey::from(account.owner);
 
     // Don't serialize a zero-length data slice.
     let data = if !account.data.is_empty() {
@@ -197,9 +197,9 @@ pub fn build_account_update<'a>(
     let account_info = AccountInfo::create(
         fbb,
         &AccountInfoArgs {
-            pubkey: Some(pubkey),
+            pubkey: Some(&pubkey),
             lamports: account.lamports,
-            owner: Some(owner),
+            owner: Some(&owner),
             executable: account.executable,
             rent_epoch: account.rent_epoch,
             data,
