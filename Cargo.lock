@@ -1587,7 +1587,7 @@ dependencies = [
 [[package]]
 name = "mpl-candy-guard"
 version = "0.0.1"
-source = "git+https://github.com/metaplex-foundation/candy-guard?branch=update-tm#53541ab02e3704d0e2c1b14844d58ab27ace1f5f"
+source = "git+https://github.com/metaplex-foundation/candy-guard#b77c50fee6bcfa8986fe10d36cba1e4ec079bb9a"
 dependencies = [
  "anchor-lang",
  "arrayref",
@@ -1603,7 +1603,7 @@ dependencies = [
 [[package]]
 name = "mpl-candy-guard-derive"
 version = "0.0.1"
-source = "git+https://github.com/metaplex-foundation/candy-guard?branch=update-tm#53541ab02e3704d0e2c1b14844d58ab27ace1f5f"
+source = "git+https://github.com/metaplex-foundation/candy-guard#b77c50fee6bcfa8986fe10d36cba1e4ec079bb9a"
 dependencies = [
  "quote",
  "syn",
@@ -1841,9 +1841,9 @@ checksum = "1df8c4ec4b0627e53bdf214615ad287367e482558cf84b109250b37464dc03ae"
 
 [[package]]
 name = "plerkle_serialization"
-version = "0.4.4"
+version = "0.4.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "774c4ca25b8a21c91411fef68a7dad7253d115cf3de97f0ca2d1a2100683b5bc"
+checksum = "2450765cf55bf3f3c32476a3201da27c5c0d5430228f0076e267e8e0d0077814"
 dependencies = [
  "chrono",
  "flatbuffers",
