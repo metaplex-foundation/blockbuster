@@ -408,7 +408,7 @@ checksum = "8d696c370c750c948ada61c69a0ee2cbbb9c50b1019ddb86d9317157a99c2cae"
 
 [[package]]
 name = "blockbuster"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anchor-lang",
  "async-trait",
@@ -418,7 +418,7 @@ dependencies = [
  "mpl-bubblegum",
  "mpl-candy-guard",
  "mpl-candy-machine-core",
- "mpl-token-metadata",
+ "mpl-token-metadata 1.4.1",
  "plerkle_serialization",
  "rand 0.8.5",
  "solana-geyser-plugin-interface",
@@ -768,6 +768,41 @@ dependencies = [
  "serde",
  "subtle",
  "zeroize",
+]
+
+[[package]]
+name = "darling"
+version = "0.13.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a01d95850c592940db9b8194bc39f4bc0e89dee5c4265e4b1807c34a9aba453c"
+dependencies = [
+ "darling_core",
+ "darling_macro",
+]
+
+[[package]]
+name = "darling_core"
+version = "0.13.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "859d65a907b6852c9361e3185c862aae7fafd2887876799fa55f5f99dc40d610"
+dependencies = [
+ "fnv",
+ "ident_case",
+ "proc-macro2",
+ "quote",
+ "strsim",
+ "syn",
+]
+
+[[package]]
+name = "darling_macro"
+version = "0.13.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9c972679f83bdf9c42bd905396b6c3588a843a17f0f16dfcfa3e2c5d57441835"
+dependencies = [
+ "darling_core",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -1235,6 +1270,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "ident_case"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b9e0384b61958566e926dc50660321d12159025e767c18e043daf26b70104c39"
+
+[[package]]
 name = "idna"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1540,7 +1581,7 @@ checksum = "fb619f02bf90fe62be93d7d545495ed237db7bb122d5e3767aeb41eec080659d"
 dependencies = [
  "anchor-lang",
  "bytemuck",
- "mpl-token-metadata",
+ "mpl-token-metadata 1.3.6",
  "solana-program",
  "spl-account-compression",
  "spl-associated-token-account",
@@ -1556,7 +1597,7 @@ dependencies = [
  "arrayref",
  "mpl-candy-guard-derive",
  "mpl-candy-machine-core",
- "mpl-token-metadata",
+ "mpl-token-metadata 1.3.6",
  "solana-gateway",
  "solana-program",
  "spl-associated-token-account",
@@ -1579,7 +1620,7 @@ source = "git+https://github.com/metaplex-foundation/metaplex-program-library?br
 dependencies = [
  "anchor-lang",
  "arrayref",
- "mpl-token-metadata",
+ "mpl-token-metadata 1.3.6",
  "solana-program",
  "spl-associated-token-account",
  "spl-token",
@@ -1596,6 +1637,25 @@ dependencies = [
  "mpl-token-vault",
  "num-derive",
  "num-traits",
+ "shank",
+ "solana-program",
+ "spl-associated-token-account",
+ "spl-token",
+ "thiserror",
+]
+
+[[package]]
+name = "mpl-token-metadata"
+version = "1.4.1"
+source = "git+https://github.com/metaplex-foundation/metaplex-program-library?branch=add-from-traits#0bac00b9a0e662168de141de35f896ba6be68f41"
+dependencies = [
+ "arrayref",
+ "borsh",
+ "mpl-token-vault",
+ "num-derive",
+ "num-traits",
+ "serde",
+ "serde_with",
  "shank",
  "solana-program",
  "spl-associated-token-account",
@@ -1772,9 +1832,9 @@ checksum = "1df8c4ec4b0627e53bdf214615ad287367e482558cf84b109250b37464dc03ae"
 
 [[package]]
 name = "plerkle_serialization"
-version = "0.2.1"
+version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4c7cf6b49a9975a09c26e6238090c3774ab553e7c10a831bcfba06a3304220a4"
+checksum = "c74f26c0f5fcbc839848a33f14d8e5a556c4cfe3f029baf93e2863871543996a"
 dependencies = [
  "chrono",
  "flatbuffers",
@@ -2202,6 +2262,28 @@ dependencies = [
  "itoa",
  "ryu",
  "serde",
+]
+
+[[package]]
+name = "serde_with"
+version = "1.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "678b5a069e50bf00ecd22d0cd8ddf7c236f68581b03db652061ed5eb13a312ff"
+dependencies = [
+ "serde",
+ "serde_with_macros",
+]
+
+[[package]]
+name = "serde_with_macros"
+version = "1.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e182d6ec6f05393cc0e5ed1bf81ad6db3a8feedf8ee515ecdd369809bcce8082"
+dependencies = [
+ "darling",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -2941,6 +3023,12 @@ name = "static_assertions"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
+
+[[package]]
+name = "strsim"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "73473c0e59e6d5812c5dfe2a064a6444949f089e20eec9a2e5506596494e4623"
 
 [[package]]
 name = "strum"

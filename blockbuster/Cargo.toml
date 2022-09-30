@@ -1,7 +1,7 @@
 [package]
 name = "blockbuster"
 description = "Metaplex canonical program parsers, for indexing, analytics etc...."
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Metaplex Developers <dev@metaplex.com>"]
 repository = "https://github.com/metaplex-foundation/blockbuster"
 license = "AGPL-3.0"
@@ -14,8 +14,8 @@ spl-noop = { version = "0.1.0", features = ["no-entrypoint"] }
 mpl-bubblegum = { version = "0.1.2", features = ["no-entrypoint"] }
 mpl-candy-guard = { git = "https://github.com/metaplex-foundation/candy-guard", branch = "remove-anchor-spl", features = ["no-entrypoint"] }
 mpl-candy-machine-core = { git = "https://github.com/metaplex-foundation/metaplex-program-library", branch = "remove-anchor-spl", features = ["no-entrypoint"] }
-mpl-token-metadata = { version = "1.3.6", features = ["no-entrypoint"] }
-plerkle_serialization = { version = "0.2.0" }
+mpl-token-metadata = { version = "1.4.1", git = "https://github.com/metaplex-foundation/metaplex-program-library", branch = "add-from-traits", features = ["no-entrypoint", "serde-feature"] }
+plerkle_serialization = { version = "0.4.3" }
 spl-token = { version = "3.0.1", features = ["no-entrypoint"] }
 async-trait = "0.1.57"
 lazy_static = "1.4.0"
