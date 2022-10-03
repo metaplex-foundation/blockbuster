@@ -11,7 +11,7 @@ readme = "../README.md"
 [dependencies]
 spl-account-compression = { version = "0.1.0", features = ["no-entrypoint"] }
 spl-noop = { version = "0.1.0", features = ["no-entrypoint"] }
-mpl-bubblegum = { version = "0.1.2", features = ["no-entrypoint"], git ="https://github.com/metaplex-foundation/metaplex-program-library", branch="updat-tm-in-bgum" }
+mpl-bubblegum = { version = "0.1.2", features = ["no-entrypoint"], git ="https://github.com/metaplex-foundation/metaplex-program-library" }
 mpl-candy-guard = { git = "https://github.com/metaplex-foundation/candy-guard", features = ["no-entrypoint"] }
 mpl-candy-machine-core = { git = "https://github.com/metaplex-foundation/metaplex-program-library", branch = "remove-anchor-spl", features = ["no-entrypoint"] }
 mpl-token-metadata = { version = "1.4.1", git = "https://github.com/metaplex-foundation/metaplex-program-library", branch = "add-from-traits", features = ["no-entrypoint", "serde-feature"] }
