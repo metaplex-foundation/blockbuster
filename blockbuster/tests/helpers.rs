@@ -206,6 +206,7 @@ pub fn build_account_update<'a>(
             write_version: account.write_version,
             slot,
             is_startup,
+            seen_at: 0,
         },
     );
 
