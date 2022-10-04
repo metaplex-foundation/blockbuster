@@ -417,7 +417,7 @@ dependencies = [
  "lazy_static",
  "mpl-bubblegum",
  "mpl-candy-guard",
- "mpl-candy-machine-core 0.0.2 (git+https://github.com/metaplex-foundation/metaplex-program-library?branch=remove-anchor-spl)",
+ "mpl-candy-machine-core 0.0.2 (git+https://github.com/metaplex-foundation/metaplex-program-library?branch=stranzhay/read-api)",
  "mpl-token-metadata 1.4.1 (git+https://github.com/metaplex-foundation/metaplex-program-library?branch=add-from-traits)",
  "plerkle_serialization",
  "rand 0.8.5",
@@ -1573,7 +1573,7 @@ dependencies = [
 [[package]]
 name = "mpl-bubblegum"
 version = "0.1.2"
-source = "git+https://github.com/metaplex-foundation/metaplex-program-library?branch=updat-tm-in-bgum#4b81de337a7838d0c19ff4d8eb375435ea1faae3"
+source = "git+https://github.com/metaplex-foundation/metaplex-program-library#3200d6106bd2e94a4bad010284c14ca9219737d7"
 dependencies = [
  "anchor-lang",
  "bytemuck",
@@ -1625,7 +1625,7 @@ dependencies = [
 [[package]]
 name = "mpl-candy-machine-core"
 version = "0.0.2"
-source = "git+https://github.com/metaplex-foundation/metaplex-program-library?branch=remove-anchor-spl#5b4637648cce64c76566b5683ea7348c6aacb514"
+source = "git+https://github.com/metaplex-foundation/metaplex-program-library?branch=stranzhay/read-api#b93306cc7207bd0039c35e59acbca8b529533b2b"
 dependencies = [
  "anchor-lang",
  "arrayref",
