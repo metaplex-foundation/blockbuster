@@ -9,7 +9,7 @@ edition = "2021"
 readme = "../README.md"
 
 [dependencies]
-spl-account-compression =  "0.1.0" 
+spl-account-compression = { version = "0.1.0", features = ["no-entrypoint"] }
 spl-noop = { version = "0.1.0", features = ["no-entrypoint"] }
 mpl-bubblegum = { version = "0.1.2", features = ["no-entrypoint"], git ="https://github.com/metaplex-foundation/metaplex-program-library", branch = "stranzhay/read-api" }
 mpl-candy-guard = { git = "https://github.com/metaplex-foundation/candy-guard", branch = "stranzhay/read-api", features = ["no-entrypoint"] }
