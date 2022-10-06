@@ -11,9 +11,9 @@ readme = "../README.md"
 [dependencies]
 spl-account-compression = { version = "0.1.0", features = ["no-entrypoint"] }
 spl-noop = { version = "0.1.0", features = ["no-entrypoint"] }
-mpl-bubblegum = { version = "0.1.2", features = ["no-entrypoint"], git ="https://github.com/metaplex-foundation/metaplex-program-library" }
+mpl-bubblegum = { version = "0.1.2", features = ["no-entrypoint"], git ="https://github.com/metaplex-foundation/metaplex-program-library", branch = "stranzhay/read-api" }
 mpl-candy-guard = { git = "https://github.com/metaplex-foundation/candy-guard", features = ["no-entrypoint"] }
-mpl-candy-machine-core = { git = "https://github.com/metaplex-foundation/metaplex-program-library", branch = "stranzhay/read-api", features = ["no-entrypoint"] }
+mpl-candy-machine-core = { version = "0.0.3", git = "https://github.com/metaplex-foundation/metaplex-program-library", branch = "stranzhay/read-api", features = ["no-entrypoint"] }
 mpl-token-metadata = { version = "1.4.1", git = "https://github.com/metaplex-foundation/metaplex-program-library", features = ["no-entrypoint", "serde-feature"] }
 plerkle_serialization = { version = "0.4.6" }
 spl-token = { version = "3.0.1", features = ["no-entrypoint"] }
