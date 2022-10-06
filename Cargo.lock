@@ -1573,7 +1573,7 @@ dependencies = [
 [[package]]
 name = "mpl-bubblegum"
 version = "0.1.2"
-source = "git+https://github.com/metaplex-foundation/metaplex-program-library?branch=stranzhay/read-api#3c93208c5e22f29135be3bb8e32d722159032c1e"
+source = "git+https://github.com/metaplex-foundation/metaplex-program-library?branch=stranzhay/read-api#dedcd5e5f5b2d00d2ec3c1794155904bb2d109ff"
 dependencies = [
  "anchor-lang",
  "bytemuck",
@@ -1612,7 +1612,7 @@ dependencies = [
 [[package]]
 name = "mpl-candy-machine-core"
 version = "0.0.3"
-source = "git+https://github.com/metaplex-foundation/metaplex-program-library?branch=stranzhay/read-api#3c93208c5e22f29135be3bb8e32d722159032c1e"
+source = "git+https://github.com/metaplex-foundation/metaplex-program-library?branch=stranzhay/read-api#dedcd5e5f5b2d00d2ec3c1794155904bb2d109ff"
 dependencies = [
  "anchor-lang",
  "arrayref",
@@ -1643,7 +1643,7 @@ dependencies = [
 [[package]]
 name = "mpl-token-metadata"
 version = "1.4.3"
-source = "git+https://github.com/metaplex-foundation/metaplex-program-library?branch=stranzhay/read-api#3c93208c5e22f29135be3bb8e32d722159032c1e"
+source = "git+https://github.com/metaplex-foundation/metaplex-program-library?branch=stranzhay/read-api#dedcd5e5f5b2d00d2ec3c1794155904bb2d109ff"
 dependencies = [
  "arrayref",
  "borsh",
