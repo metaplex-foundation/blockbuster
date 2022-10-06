@@ -88,7 +88,7 @@ impl ProgramParser for BubblegumParser {
         let ix_type = get_instruction_type(instruction.data().unwrap());
         let mut b_inst = BubblegumInstruction::new(ix_type);
         let leaf_event: &[u8] = &LeafSchemaEvent::discriminator();
-        let change_log_event: &[u8] = &ChangeLogEvent::discriminator();
+        // let change_log_event: &[u8] = &ChangeLogEvent::discriminator();
         if let Some(ixs) = inner_ix {
             for ix in ixs {
                 if ix.0 .0 == spl_noop::id().to_bytes() {
@@ -99,10 +99,10 @@ impl ProgramParser for BubblegumParser {
                             let event = LeafSchemaEvent::try_from_slice(&data[8..])?;
                             b_inst.leaf_update = Some(event)
                         }
-                        if disc == change_log_event {
-                            let event = ChangeLogEvent::try_from_slice(&data[8..])?;
-                            b_inst.tree_update = Some(event)
-                        }
+                        // if disc == change_log_event {
+                        //     let event = ChangeLogEvent::try_from_slice(&data[8..])?;
+                        //     b_inst.tree_update = Some(event)
+                        // }
                     }
                 }
             }
