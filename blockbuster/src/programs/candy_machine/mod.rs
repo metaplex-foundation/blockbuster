@@ -31,6 +31,12 @@ pub enum CandyMachineAccountData {
 }
 
 impl ParseResult for CandyMachineAccountData {
+    fn result(&self) -> &Self
+    where
+        Self: Sized,
+    {
+        self
+    }
     fn result_type(&self) -> ProgramParseResult {
         ProgramParseResult::CandyMachine(self)
     }
@@ -50,7 +56,7 @@ impl ProgramParser for CandyMachineParser {
     fn handle_account(
         &self,
         account_info: &AccountInfo,
-    ) -> Result<Box<dyn ParseResult>, BlockbusterError> {
+    ) -> Result<Box<dyn ParseResult + 'static>, BlockbusterError> {
         let account_data = if let Some(account_info) = account_info.data() {
             account_info
         } else {
