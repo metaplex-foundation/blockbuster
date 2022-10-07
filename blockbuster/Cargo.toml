@@ -15,7 +15,7 @@ mpl-bubblegum = { version = "0.1.2", features = ["no-entrypoint"], git ="https:/
 mpl-candy-guard = { git = "https://github.com/metaplex-foundation/candy-guard", branch = "stranzhay/read-api", features = ["no-entrypoint"] }
 mpl-candy-machine-core = { version = "0.0.3", git = "https://github.com/metaplex-foundation/metaplex-program-library", branch = "stranzhay/read-api", features = ["no-entrypoint"] }
 mpl-token-metadata = { version = "1.4.1", git = "https://github.com/metaplex-foundation/metaplex-program-library", branch = "stranzhay/read-api", features = ["no-entrypoint", "serde-feature"] }
-plerkle_serialization = { version = "0.4.6" }
+plerkle_serialization = { version = "0.4.6", git = "https://github.com/metaplex-foundation/digital-asset-validator-plugin", branch = "stranzhay/read-api" }
 spl-token = { version = "3.0.1", features = ["no-entrypoint"] }
 async-trait = "0.1.57"
 lazy_static = "1.4.0"
