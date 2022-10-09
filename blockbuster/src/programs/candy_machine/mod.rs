@@ -63,9 +63,9 @@ impl ProgramParser for CandyMachineParser {
             return Err(BlockbusterError::DeserializationError);
         };
 
-        println!(" here in blockbuster");
-
         let discriminator: [u8; 8] = account_data[0..8].try_into().unwrap();
+
+        println!(" candy machine discriminator {:?}", discriminator);
 
         let account_type = match discriminator {
             CANDY_MACHINE_DISCRIMINATOR => {
