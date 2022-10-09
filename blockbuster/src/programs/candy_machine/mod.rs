@@ -14,10 +14,7 @@ use std::convert::TryInto;
 
 pub mod state;
 
-pubkeys!(
-    candy_machine_id,
-    "11111111111111111111111111111111"
-);
+pubkeys!(candy_machine_id, "11111111111111111111111111111111");
 
 // Anchor account discriminators.
 pub const CANDY_MACHINE_DISCRIMINATOR: [u8; 8] = [51, 173, 177, 113, 25, 241, 109, 189];
@@ -62,6 +59,8 @@ impl ProgramParser for CandyMachineParser {
         } else {
             return Err(BlockbusterError::DeserializationError);
         };
+
+        println!(" here in blockbuster candy machine");
 
         let discriminator: [u8; 8] = account_data[0..8].try_into().unwrap();
 
