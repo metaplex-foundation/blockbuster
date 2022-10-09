@@ -60,14 +60,19 @@ impl ProgramParser for CandyMachineParser {
             return Err(BlockbusterError::DeserializationError);
         };
 
+        let mut disc = [0; 8];
         println!(" here in blockbuster candy machine");
         println!(" account_data: {:?}", account_data);
+        println!(
+            " account_data: {:?}",
+            disc.copy_from_slice(&account_data[..8])
+        );
 
-        let discriminator: [u8; 8] = account_data[0..8].try_into().unwrap();
+        disc.copy_from_slice(&account_data[..8]);
 
-        println!(" candy machine discriminator {:?}", discriminator);
+        println!(" candy machine discriminator {:?}", disc);
 
-        let account_type = match discriminator {
+        let account_type = match disc {
             CANDY_MACHINE_DISCRIMINATOR => {
                 let candy_machine = CandyMachine::try_from_slice(&account_data[8..])?;
                 CandyMachineAccountData::CandyMachine(candy_machine)
