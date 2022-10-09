@@ -61,6 +61,7 @@ impl ProgramParser for CandyMachineParser {
         };
 
         println!(" here in blockbuster candy machine");
+        println!(" account_data: {:?}", account_data);
 
         let discriminator: [u8; 8] = account_data[0..8].try_into().unwrap();
 
