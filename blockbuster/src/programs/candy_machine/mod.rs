@@ -14,7 +14,7 @@ use std::convert::TryInto;
 
 pub mod state;
 
-pubkeys!(candy_machine_id, "11111111111111111111111111111111");
+pubkeys!(candy_machine_id, "cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ");
 
 // Anchor account discriminators.
 pub const CANDY_MACHINE_DISCRIMINATOR: [u8; 8] = [51, 173, 177, 113, 25, 241, 109, 189];
