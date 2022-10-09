@@ -16,7 +16,7 @@ pub mod state;
 
 pubkeys!(
     candy_machine_id,
-    "cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ"
+    "11111111111111111111111111111111"
 );
 
 // Anchor account discriminators.
