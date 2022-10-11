@@ -67,7 +67,7 @@ impl ProgramParser for CandyMachineParser {
 
         let account_type = match discriminator {
             CANDY_MACHINE_DISCRIMINATOR => {
-                let candy_machine = CandyMachine::try_from_slice(&account_data[8..])?;
+                let candy_machine = CandyMachine::try_from_slice(&account_data)?;
                 println!("account type {:?}", candy_machine);
                 CandyMachineAccountData::CandyMachine(candy_machine)
             }
