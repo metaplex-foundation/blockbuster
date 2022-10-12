@@ -9,9 +9,9 @@ edition = "2021"
 readme = "../README.md"
 
 [dependencies]
-spl-account-compression = { version = "0.1.2", git = "https://github.com/danenbm/solana-program-library", branch = "danenbm/changelog_event", features = ["no-entrypoint"] }
+spl-account-compression = { version = "0.1.2", git = "https://github.com/solana-labs/solana-program-library", features = ["no-entrypoint"] }
 spl-noop = { version = "0.1.2", features = ["no-entrypoint"] }
-mpl-bubblegum = { version = "0.1.2", features = ["no-entrypoint"], git ="https://github.com/metaplex-foundation/metaplex-program-library", branch = "danenbm/update_bubblegum_events" }
+mpl-bubblegum = { version = "0.1.2", features = ["no-entrypoint"], git ="https://github.com/metaplex-foundation/metaplex-program-library" }
 mpl-candy-guard = { git = "https://github.com/metaplex-foundation/candy-guard", branch = "stranzhay/read-api", features = ["no-entrypoint"] }
 mpl-candy-machine-core = { version = "0.0.3", git = "https://github.com/metaplex-foundation/metaplex-program-library", branch = "stranzhay/read-api", features = ["no-entrypoint"] }
 mpl-token-metadata = { version = "1.4.1", git = "https://github.com/metaplex-foundation/metaplex-program-library", branch = "stranzhay/read-api", features = ["no-entrypoint", "serde-feature"] }

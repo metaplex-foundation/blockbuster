@@ -9,6 +9,8 @@ pub enum BlockbusterError {
     IOError(String),
     #[error("Could not deserialize data")]
     DeserializationError,
+    #[error("Missing Bubblegum event data")]
+    MissingBubblegumEventData,
     #[error("Data length is invalid.")]
     InvalidDataLength,
     #[error("Unknown anchor account discriminator.")]

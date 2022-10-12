@@ -8,7 +8,7 @@ use blockbuster::{
     programs::{bubblegum::BubblegumParser, ProgramParseResult},
 };
 use flatbuffers::FlatBufferBuilder;
-pub use mpl_bubblegum::{id as program_id, state::AccountType};
+pub use mpl_bubblegum::{id as program_id, state::BubblegumEventType};
 
 use mpl_bubblegum::state::leaf_schema::{LeafSchema, Version};
 use plerkle_serialization::Pubkey;
@@ -39,7 +39,7 @@ fn test_basic_success_parsing() {
     };
 
     let lse = mpl_bubblegum::state::leaf_schema::LeafSchemaEvent {
-        account_type: AccountType::LeafSchemaEvent,
+        event_type: BubblegumEventType::LeafSchemaEvent,
         version: Version::V1,
         schema: LeafSchema::V1 {
             id: random_pubkey(),

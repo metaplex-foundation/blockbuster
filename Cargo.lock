@@ -423,7 +423,7 @@ dependencies = [
  "rand 0.8.5",
  "solana-geyser-plugin-interface",
  "solana-sdk",
- "spl-account-compression 0.1.2 (git+https://github.com/danenbm/solana-program-library?branch=danenbm/changelog_event)",
+ "spl-account-compression 0.1.2 (git+https://github.com/solana-labs/solana-program-library)",
  "spl-concurrent-merkle-tree 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "spl-noop 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "spl-token",
@@ -1574,7 +1574,7 @@ dependencies = [
 [[package]]
 name = "mpl-bubblegum"
 version = "0.1.2"
-source = "git+https://github.com/metaplex-foundation/metaplex-program-library?branch=danenbm/update_bubblegum_events#b638e663f36b473ae24d8c0b0ea4095712ba3d7d"
+source = "git+https://github.com/metaplex-foundation/metaplex-program-library#7eb010f5fd60f32d2f3dad45f022ad2908d65a28"
 dependencies = [
  "anchor-lang",
  "bytemuck",
@@ -2933,12 +2933,12 @@ dependencies = [
 [[package]]
 name = "spl-account-compression"
 version = "0.1.2"
-source = "git+https://github.com/danenbm/solana-program-library?branch=danenbm/changelog_event#f3de3e5c07ba6aaacf521dc0f3b1ff0647cd83cc"
+source = "git+https://github.com/solana-labs/solana-program-library#1e2579f8e84e62bbc70904d2d44d95679f567514"
 dependencies = [
  "anchor-lang",
  "bytemuck",
- "spl-concurrent-merkle-tree 0.1.1 (git+https://github.com/danenbm/solana-program-library?branch=danenbm/changelog_event)",
- "spl-noop 0.1.2 (git+https://github.com/danenbm/solana-program-library?branch=danenbm/changelog_event)",
+ "spl-concurrent-merkle-tree 0.1.1 (git+https://github.com/solana-labs/solana-program-library)",
+ "spl-noop 0.1.2 (git+https://github.com/solana-labs/solana-program-library)",
 ]
 
 [[package]]
@@ -2971,7 +2971,7 @@ dependencies = [
 [[package]]
 name = "spl-concurrent-merkle-tree"
 version = "0.1.1"
-source = "git+https://github.com/danenbm/solana-program-library?branch=danenbm/changelog_event#f3de3e5c07ba6aaacf521dc0f3b1ff0647cd83cc"
+source = "git+https://github.com/solana-labs/solana-program-library#1e2579f8e84e62bbc70904d2d44d95679f567514"
 dependencies = [
  "bytemuck",
  "solana-program",
@@ -2999,7 +2999,7 @@ dependencies = [
 [[package]]
 name = "spl-noop"
 version = "0.1.2"
-source = "git+https://github.com/danenbm/solana-program-library?branch=danenbm/changelog_event#f3de3e5c07ba6aaacf521dc0f3b1ff0647cd83cc"
+source = "git+https://github.com/solana-labs/solana-program-library#1e2579f8e84e62bbc70904d2d44d95679f567514"
 dependencies = [
  "solana-program",
 ]
