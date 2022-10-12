@@ -112,9 +112,7 @@ impl ProgramParser for BubblegumParser {
                                     return Err(BlockbusterError::DeserializationError);
                                 };
 
-                                let event_type =
-                                    BubblegumEventType::try_from_slice(event_type_byte)?;
-                                match event_type {
+                                match BubblegumEventType::try_from_slice(event_type_byte)? {
                                     BubblegumEventType::Uninitialized => {
                                         return Err(BlockbusterError::MissingBubblegumEventData);
                                     }

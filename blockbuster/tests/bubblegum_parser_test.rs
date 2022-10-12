@@ -12,7 +12,12 @@ pub use mpl_bubblegum::{id as program_id, state::BubblegumEventType};
 
 use mpl_bubblegum::state::leaf_schema::{LeafSchema, Version};
 use plerkle_serialization::Pubkey;
-use spl_account_compression::{events::ChangeLogEvent, state::PathNode};
+use spl_account_compression::{
+    events::{
+        AccountCompressionEvent, ApplicationDataEvent, ApplicationDataEventV1, ChangeLogEvent,
+    },
+    state::PathNode,
+};
 
 mod helpers;
 
@@ -52,6 +57,13 @@ fn test_basic_success_parsing() {
         leaf_hash: [0; 32],
     };
 
+    let lse_versioned = ApplicationDataEventV1 {
+        application_data: lse.try_to_vec().unwrap(),
+    };
+
+    let lse_event =
+        AccountCompressionEvent::ApplicationData(ApplicationDataEvent::V1(lse_versioned));
+
     let cs = ChangeLogEvent::new(
         random_pubkey(),
         vec![PathNode {
@@ -62,10 +74,12 @@ fn test_basic_success_parsing() {
         0,
     );
 
+    let cs_event = AccountCompressionEvent::ChangeLog(cs);
+
     let mut fbb = FlatBufferBuilder::new(); // I really REALLLY hate this
     let outer_ix = build_instruction(&mut fbb, &ix.data(), &account_indexes).unwrap();
     let mut fbb = FlatBufferBuilder::new();
-    let lse = lse.try_to_vec().unwrap();
+    let lse = lse_event.try_to_vec().unwrap();
     let noop_bgum = spl_noop::instruction(lse).data;
     let noop_bgum_ix = (
         Pubkey(spl_noop::id().to_bytes()),
@@ -78,7 +92,7 @@ fn test_basic_success_parsing() {
         build_instruction(&mut fbb, &[0; 0], &account_indexes).unwrap(),
     );
     let mut fbb = FlatBufferBuilder::new();
-    let cs = cs.try_to_vec().unwrap();
+    let cs = cs_event.try_to_vec().unwrap();
     let noop_compression = spl_noop::instruction(cs).data;
     let noop_compression_ix = (
         Pubkey(spl_noop::id().to_bytes()),
