@@ -1,18 +1,17 @@
 extern crate core;
 
 use crate::helpers::{build_instruction, random_list_of, random_pubkey};
-use anchor_lang::{prelude::*, InstructionData};
+use anchor_lang::{Event, InstructionData};
 use blockbuster::{
     instruction::{InstructionBundle, IxPair},
     program_handler::ProgramParser,
     programs::{bubblegum::BubblegumParser, ProgramParseResult},
 };
 use flatbuffers::FlatBufferBuilder;
-pub use mpl_bubblegum::{id as program_id, state::AccountType};
-
+pub use mpl_bubblegum::id as program_id;
 use mpl_bubblegum::state::leaf_schema::{LeafSchema, Version};
 use plerkle_serialization::Pubkey;
-use spl_account_compression::{events::ChangeLogEvent, state::PathNode};
+use spl_account_compression::state::PathNode;
 
 mod helpers;
 
@@ -39,7 +38,6 @@ fn test_basic_success_parsing() {
     };
 
     let lse = mpl_bubblegum::state::leaf_schema::LeafSchemaEvent {
-        account_type: AccountType::LeafSchemaEvent,
         version: Version::V1,
         schema: LeafSchema::V1 {
             id: random_pubkey(),
@@ -52,21 +50,20 @@ fn test_basic_success_parsing() {
         leaf_hash: [0; 32],
     };
 
-    let cs = ChangeLogEvent::new(
-        random_pubkey(),
-        vec![PathNode {
+    let cs = spl_account_compression::events::ChangeLogEvent {
+        id: random_pubkey(),
+        path: vec![PathNode {
             node: [0; 32],
             index: 0,
         }],
-        0,
-        0,
-    );
+        seq: 0,
+        index: 0,
+    };
 
     let mut fbb = FlatBufferBuilder::new(); // I really REALLLY hate this
     let outer_ix = build_instruction(&mut fbb, &ix.data(), &account_indexes).unwrap();
     let mut fbb = FlatBufferBuilder::new();
-    let lse = lse.try_to_vec().unwrap();
-    let noop_bgum = spl_noop::instruction(lse).data;
+    let noop_bgum = spl_noop::instruction(lse.data()).data;
     let noop_bgum_ix = (
         Pubkey(spl_noop::id().to_bytes()),
         build_instruction(&mut fbb, &noop_bgum, &account_indexes).unwrap(),
@@ -78,8 +75,7 @@ fn test_basic_success_parsing() {
         build_instruction(&mut fbb, &[0; 0], &account_indexes).unwrap(),
     );
     let mut fbb = FlatBufferBuilder::new();
-    let cs = cs.try_to_vec().unwrap();
-    let noop_compression = spl_noop::instruction(cs).data;
+    let noop_compression = spl_noop::instruction(cs.data()).data;
     let noop_compression_ix = (
         Pubkey(spl_noop::id().to_bytes()),
         build_instruction(&mut fbb, &noop_compression, &account_indexes).unwrap(),

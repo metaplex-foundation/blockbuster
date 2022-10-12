@@ -9,9 +9,9 @@ edition = "2021"
 readme = "../README.md"
 
 [dependencies]
-spl-account-compression = { version = "0.1.2", git = "https://github.com/danenbm/solana-program-library", branch = "danenbm/changelog_event", features = ["no-entrypoint"] }
+spl-account-compression = { version = "0.1.2", features = ["no-entrypoint"] }
 spl-noop = { version = "0.1.2", features = ["no-entrypoint"] }
-mpl-bubblegum = { version = "0.1.2", features = ["no-entrypoint"], git ="https://github.com/metaplex-foundation/metaplex-program-library", branch = "danenbm/update_bubblegum_events" }
+mpl-bubblegum = { version = "0.1.2", features = ["no-entrypoint"], git ="https://github.com/metaplex-foundation/metaplex-program-library", branch = "stranzhay/read-api" }
 mpl-candy-guard = { git = "https://github.com/metaplex-foundation/candy-guard", branch = "stranzhay/read-api", features = ["no-entrypoint"] }
 mpl-candy-machine-core = { version = "0.0.3", git = "https://github.com/metaplex-foundation/metaplex-program-library", branch = "stranzhay/read-api", features = ["no-entrypoint"] }
 mpl-token-metadata = { version = "1.4.1", git = "https://github.com/metaplex-foundation/metaplex-program-library", branch = "stranzhay/read-api", features = ["no-entrypoint", "serde-feature"] }
@@ -29,6 +29,5 @@ solana-sdk = "1.10.38"
 rand = "0.8.5"
 solana-geyser-plugin-interface = { version = ">=1.10" }
 solana-sdk = ">=1.10"
-spl-concurrent-merkle-tree = "0.1.1"
 
 
