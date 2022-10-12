@@ -423,7 +423,7 @@ dependencies = [
  "rand 0.8.5",
  "solana-geyser-plugin-interface",
  "solana-sdk",
- "spl-account-compression 0.1.2 (git+https://github.com/solana-labs/solana-program-library)",
+ "spl-account-compression 0.1.2 (git+https://github.com/solana-labs/solana-program-library?rev=1e2579f)",
  "spl-concurrent-merkle-tree 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "spl-noop 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "spl-token",
@@ -2933,12 +2933,12 @@ dependencies = [
 [[package]]
 name = "spl-account-compression"
 version = "0.1.2"
-source = "git+https://github.com/solana-labs/solana-program-library#1e2579f8e84e62bbc70904d2d44d95679f567514"
+source = "git+https://github.com/solana-labs/solana-program-library?rev=1e2579f#1e2579f8e84e62bbc70904d2d44d95679f567514"
 dependencies = [
  "anchor-lang",
  "bytemuck",
- "spl-concurrent-merkle-tree 0.1.1 (git+https://github.com/solana-labs/solana-program-library)",
- "spl-noop 0.1.2 (git+https://github.com/solana-labs/solana-program-library)",
+ "spl-concurrent-merkle-tree 0.1.1 (git+https://github.com/solana-labs/solana-program-library?rev=1e2579f)",
+ "spl-noop 0.1.2 (git+https://github.com/solana-labs/solana-program-library?rev=1e2579f)",
 ]
 
 [[package]]
@@ -2971,7 +2971,7 @@ dependencies = [
 [[package]]
 name = "spl-concurrent-merkle-tree"
 version = "0.1.1"
-source = "git+https://github.com/solana-labs/solana-program-library#1e2579f8e84e62bbc70904d2d44d95679f567514"
+source = "git+https://github.com/solana-labs/solana-program-library?rev=1e2579f#1e2579f8e84e62bbc70904d2d44d95679f567514"
 dependencies = [
  "bytemuck",
  "solana-program",
@@ -2999,7 +2999,7 @@ dependencies = [
 [[package]]
 name = "spl-noop"
 version = "0.1.2"
-source = "git+https://github.com/solana-labs/solana-program-library#1e2579f8e84e62bbc70904d2d44d95679f567514"
+source = "git+https://github.com/solana-labs/solana-program-library?rev=1e2579f#1e2579f8e84e62bbc70904d2d44d95679f567514"
 dependencies = [
  "solana-program",
 ]
