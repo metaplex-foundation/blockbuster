@@ -96,7 +96,10 @@ fn test_basic_success_parsing() {
         slot: 0,
     };
     let result = subject.handle_instruction(&bundle);
-    assert!(result.is_ok());
+    if let Err(err) = result {
+        panic!("Error {}", err);
+    }
+
     if let ProgramParseResult::Bubblegum(b) = result.unwrap().result_type() {
         assert!(b.payload.is_none());
         let matched = match b.instruction {
