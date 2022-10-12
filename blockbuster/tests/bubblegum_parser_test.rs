@@ -8,9 +8,11 @@ use blockbuster::{
     programs::{bubblegum::BubblegumParser, ProgramParseResult},
 };
 use flatbuffers::FlatBufferBuilder;
-pub use mpl_bubblegum::{id as program_id, state::BubblegumEventType};
-
-use mpl_bubblegum::state::leaf_schema::{LeafSchema, Version};
+pub use mpl_bubblegum::id as program_id;
+use mpl_bubblegum::state::{
+    leaf_schema::{LeafSchema, Version},
+    BubblegumEventType,
+};
 use plerkle_serialization::Pubkey;
 use spl_account_compression::{
     events::{
