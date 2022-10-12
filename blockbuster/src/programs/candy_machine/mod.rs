@@ -7,7 +7,6 @@ use crate::{
         ProgramParseResult,
     },
 };
-use borsh::BorshDeserialize;
 use plerkle_serialization::AccountInfo;
 use solana_sdk::{borsh::try_from_slice_unchecked, pubkey::Pubkey, pubkeys};
 use std::convert::TryInto;
