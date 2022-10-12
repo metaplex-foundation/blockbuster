@@ -8,7 +8,7 @@ use crate::{program_handler::NotUsed, programs::ProgramParseResult};
 use borsh::de::BorshDeserialize;
 use mpl_bubblegum::{
     get_instruction_type,
-    state::{metaplex_adapter::MetadataArgs, AccountType},
+    state::{metaplex_adapter::MetadataArgs, BubblegumEventType},
 };
 pub use mpl_bubblegum::{
     id as program_id,
@@ -106,22 +106,20 @@ impl ProgramParser for BubblegumParser {
                                 let ApplicationDataEvent::V1(app_data) = app_data;
                                 let app_data = app_data.application_data;
 
-                                let account_type_byte = if !app_data.is_empty() {
+                                let event_type_byte = if !app_data.is_empty() {
                                     &app_data[0..1]
                                 } else {
                                     return Err(BlockbusterError::DeserializationError);
                                 };
 
-                                let account_type = AccountType::try_from_slice(account_type_byte)?;
-                                match account_type {
-                                    AccountType::Uninitialized => (), //TODO error
-                                    AccountType::NewNFTEvent => (),   //TODO
-                                    AccountType::LeafSchemaEvent => {
+                                match BubblegumEventType::try_from_slice(event_type_byte)? {
+                                    BubblegumEventType::Uninitialized => {
+                                        return Err(BlockbusterError::MissingBubblegumEventData);
+                                    }
+                                    BubblegumEventType::LeafSchemaEvent => {
                                         b_inst.leaf_update =
                                             Some(LeafSchemaEvent::try_from_slice(&app_data)?);
                                     }
-                                    AccountType::NodeEvent => (), //TODO
-                                    AccountType::NFTDecompressionEvent => (),
                                 }
                             }
                         }
