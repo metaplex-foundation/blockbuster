@@ -1573,7 +1573,7 @@ dependencies = [
 [[package]]
 name = "mpl-bubblegum"
 version = "0.1.2"
-source = "git+https://github.com/metaplex-foundation/metaplex-program-library?branch=stranzhay/read-api#dedcd5e5f5b2d00d2ec3c1794155904bb2d109ff"
+source = "git+https://github.com/metaplex-foundation/metaplex-program-library?branch=stranzhay/read-api#1cdda598cfaccbeb5dfcfb5e7c09579bdede42e6"
 dependencies = [
  "anchor-lang",
  "bytemuck",
@@ -1586,8 +1586,8 @@ dependencies = [
 
 [[package]]
 name = "mpl-candy-guard"
-version = "0.0.1"
-source = "git+https://github.com/metaplex-foundation/candy-guard?branch=stranzhay/read-api#5f9a2f8128c97e2c2f9db48a57663600f3e36ba7"
+version = "0.1.0"
+source = "git+https://github.com/metaplex-foundation/candy-guard?branch=stranzhay/read-api#2487fe3cfb36f6074fa836d53acfd46fe8d7384d"
 dependencies = [
  "anchor-lang",
  "arrayref",
@@ -1602,8 +1602,8 @@ dependencies = [
 
 [[package]]
 name = "mpl-candy-guard-derive"
-version = "0.0.1"
-source = "git+https://github.com/metaplex-foundation/candy-guard?branch=stranzhay/read-api#5f9a2f8128c97e2c2f9db48a57663600f3e36ba7"
+version = "0.1.0"
+source = "git+https://github.com/metaplex-foundation/candy-guard?branch=stranzhay/read-api#2487fe3cfb36f6074fa836d53acfd46fe8d7384d"
 dependencies = [
  "quote",
  "syn",
@@ -1611,8 +1611,8 @@ dependencies = [
 
 [[package]]
 name = "mpl-candy-machine-core"
-version = "0.0.3"
-source = "git+https://github.com/metaplex-foundation/metaplex-program-library?branch=stranzhay/read-api#dedcd5e5f5b2d00d2ec3c1794155904bb2d109ff"
+version = "0.1.0"
+source = "git+https://github.com/metaplex-foundation/metaplex-program-library?branch=stranzhay/read-api#1cdda598cfaccbeb5dfcfb5e7c09579bdede42e6"
 dependencies = [
  "anchor-lang",
  "arrayref",
@@ -1643,7 +1643,7 @@ dependencies = [
 [[package]]
 name = "mpl-token-metadata"
 version = "1.4.3"
-source = "git+https://github.com/metaplex-foundation/metaplex-program-library?branch=stranzhay/read-api#dedcd5e5f5b2d00d2ec3c1794155904bb2d109ff"
+source = "git+https://github.com/metaplex-foundation/metaplex-program-library?branch=stranzhay/read-api#1cdda598cfaccbeb5dfcfb5e7c09579bdede42e6"
 dependencies = [
  "arrayref",
  "borsh",
