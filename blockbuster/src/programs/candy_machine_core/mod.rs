@@ -4,10 +4,9 @@ use crate::{
     program_handler::{NotUsed, ParseResult, ProgramParser},
     programs::ProgramParseResult,
 };
-use borsh::BorshDeserialize;
 use mpl_candy_machine_core::CandyMachine;
 use plerkle_serialization::AccountInfo;
-use solana_sdk::{pubkey::Pubkey, pubkeys};
+use solana_sdk::{pubkey::Pubkey, pubkeys, borsh::try_from_slice_unchecked};
 use std::convert::TryInto;
 
 pubkeys!(
@@ -59,7 +58,7 @@ impl ProgramParser for CandyMachineParser {
 
         let account_type = match discriminator {
             CANDY_MACHINE_DISCRIMINATOR => {
-                let candy_machine = CandyMachine::try_from_slice(&account_data[8..])?;
+                let candy_machine = try_from_slice_unchecked(&account_data[8..])?;
                 CandyMachineCoreAccountData::CandyMachineCore(candy_machine)
             }
             _ => return Err(BlockbusterError::UnknownAccountDiscriminator),
