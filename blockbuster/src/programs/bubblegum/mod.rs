@@ -17,7 +17,7 @@ pub use mpl_bubblegum::{
 };
 use plerkle_serialization::AccountInfo;
 use solana_sdk::pubkey::Pubkey;
-use spl_account_compression::events::{
+pub use spl_account_compression::events::{
     AccountCompressionEvent::{self, ApplicationData, ChangeLog},
     ApplicationDataEvent, ChangeLogEvent, ChangeLogEventV1
 };
