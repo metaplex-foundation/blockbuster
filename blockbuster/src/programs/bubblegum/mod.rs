@@ -19,7 +19,7 @@ use plerkle_serialization::AccountInfo;
 use solana_sdk::pubkey::Pubkey;
 use spl_account_compression::events::{
     AccountCompressionEvent::{self, ApplicationData, ChangeLog},
-    ApplicationDataEvent, ChangeLogEvent, ChangeLogEventV1,
+    ApplicationDataEvent, ChangeLogEvent, ChangeLogEventV1
 };
 use spl_noop;
 

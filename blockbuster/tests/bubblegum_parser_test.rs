@@ -20,6 +20,7 @@ use spl_account_compression::{
     },
     state::PathNode,
 };
+use borsh::ser::BorshSerialize;
 
 mod helpers;
 
