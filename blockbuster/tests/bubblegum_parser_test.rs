@@ -1,7 +1,7 @@
 extern crate core;
 
 use crate::helpers::{build_instruction, random_list_of, random_pubkey};
-use anchor_lang::{Event, InstructionData};
+use anchor_lang::{prelude::*, InstructionData};
 use blockbuster::{
     instruction::{InstructionBundle, IxPair},
     program_handler::ProgramParser,
@@ -9,9 +9,18 @@ use blockbuster::{
 };
 use flatbuffers::FlatBufferBuilder;
 pub use mpl_bubblegum::id as program_id;
-use mpl_bubblegum::state::leaf_schema::{LeafSchema, Version};
+use mpl_bubblegum::state::{
+    leaf_schema::{LeafSchema, Version},
+    BubblegumEventType,
+};
 use plerkle_serialization::Pubkey;
-use spl_account_compression::state::PathNode;
+use spl_account_compression::{
+    events::{
+        AccountCompressionEvent, ApplicationDataEvent, ApplicationDataEventV1, ChangeLogEvent,
+    },
+    state::PathNode,
+};
+use borsh::ser::BorshSerialize;
 
 mod helpers;
 
@@ -38,6 +47,7 @@ fn test_basic_success_parsing() {
     };
 
     let lse = mpl_bubblegum::state::leaf_schema::LeafSchemaEvent {
+        event_type: BubblegumEventType::LeafSchemaEvent,
         version: Version::V1,
         schema: LeafSchema::V1 {
             id: random_pubkey(),
@@ -50,20 +60,30 @@ fn test_basic_success_parsing() {
         leaf_hash: [0; 32],
     };
 
-    let cs = spl_account_compression::events::ChangeLogEvent {
-        id: random_pubkey(),
-        path: vec![PathNode {
+    let lse_versioned = ApplicationDataEventV1 {
+        application_data: lse.try_to_vec().unwrap(),
+    };
+
+    let lse_event =
+        AccountCompressionEvent::ApplicationData(ApplicationDataEvent::V1(lse_versioned));
+
+    let cs = ChangeLogEvent::new(
+        random_pubkey(),
+        vec![PathNode {
             node: [0; 32],
             index: 0,
         }],
-        seq: 0,
-        index: 0,
-    };
+        0,
+        0,
+    );
+
+    let cs_event = AccountCompressionEvent::ChangeLog(cs);
 
     let mut fbb = FlatBufferBuilder::new(); // I really REALLLY hate this
     let outer_ix = build_instruction(&mut fbb, &ix.data(), &account_indexes).unwrap();
     let mut fbb = FlatBufferBuilder::new();
-    let noop_bgum = spl_noop::instruction(lse.data()).data;
+    let lse = lse_event.try_to_vec().unwrap();
+    let noop_bgum = spl_noop::instruction(lse).data;
     let noop_bgum_ix = (
         Pubkey(spl_noop::id().to_bytes()),
         build_instruction(&mut fbb, &noop_bgum, &account_indexes).unwrap(),
@@ -75,7 +95,8 @@ fn test_basic_success_parsing() {
         build_instruction(&mut fbb, &[0; 0], &account_indexes).unwrap(),
     );
     let mut fbb = FlatBufferBuilder::new();
-    let noop_compression = spl_noop::instruction(cs.data()).data;
+    let cs = cs_event.try_to_vec().unwrap();
+    let noop_compression = spl_noop::instruction(cs).data;
     let noop_compression_ix = (
         Pubkey(spl_noop::id().to_bytes()),
         build_instruction(&mut fbb, &noop_compression, &account_indexes).unwrap(),
@@ -92,7 +113,7 @@ fn test_basic_success_parsing() {
         slot: 0,
     };
     let result = subject.handle_instruction(&bundle);
-    assert!(result.is_ok());
+
     if let ProgramParseResult::Bubblegum(b) = result.unwrap().result_type() {
         assert!(b.payload.is_none());
         let matched = match b.instruction {

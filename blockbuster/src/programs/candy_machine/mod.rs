@@ -7,9 +7,8 @@ use crate::{
         ProgramParseResult,
     },
 };
-use borsh::BorshDeserialize;
 use plerkle_serialization::AccountInfo;
-use solana_sdk::{pubkey::Pubkey, pubkeys};
+use solana_sdk::{borsh::try_from_slice_unchecked, pubkey::Pubkey, pubkeys};
 use std::convert::TryInto;
 
 pub mod state;
@@ -25,12 +24,18 @@ pub const COLLECTION_PDA_DISCRIMINATOR: [u8; 8] = [203, 128, 119, 125, 234, 89, 
 pub const FREEZE_PDA_DISCRIMINATOR: [u8; 8] = [154, 58, 148, 24, 101, 200, 243, 127];
 
 pub enum CandyMachineAccountData {
-    CandyMachine(Box<CandyMachine>),
+    CandyMachine(CandyMachine),
     CollectionPDA(CollectionPDA),
     FreezePDA(FreezePDA),
 }
 
 impl ParseResult for CandyMachineAccountData {
+    fn result(&self) -> &Self
+    where
+        Self: Sized,
+    {
+        self
+    }
     fn result_type(&self) -> ProgramParseResult {
         ProgramParseResult::CandyMachine(self)
     }
@@ -50,7 +55,7 @@ impl ProgramParser for CandyMachineParser {
     fn handle_account(
         &self,
         account_info: &AccountInfo,
-    ) -> Result<Box<dyn ParseResult>, BlockbusterError> {
+    ) -> Result<Box<dyn ParseResult + 'static>, BlockbusterError> {
         let account_data = if let Some(account_info) = account_info.data() {
             account_info
         } else {
@@ -61,15 +66,15 @@ impl ProgramParser for CandyMachineParser {
 
         let account_type = match discriminator {
             CANDY_MACHINE_DISCRIMINATOR => {
-                let candy_machine = CandyMachine::try_from_slice(&account_data[8..])?;
-                CandyMachineAccountData::CandyMachine(Box::new(candy_machine))
+                let candy_machine = try_from_slice_unchecked(&account_data[8..])?;
+                CandyMachineAccountData::CandyMachine(candy_machine)
             }
             COLLECTION_PDA_DISCRIMINATOR => {
-                let collection_pda = CollectionPDA::try_from_slice(&account_data[8..])?;
+                let collection_pda = try_from_slice_unchecked(&account_data[8..])?;
                 CandyMachineAccountData::CollectionPDA(collection_pda)
             }
             FREEZE_PDA_DISCRIMINATOR => {
-                let freeze_pda = FreezePDA::try_from_slice(&account_data[8..])?;
+                let freeze_pda = try_from_slice_unchecked(&account_data[8..])?;
                 CandyMachineAccountData::FreezePDA(freeze_pda)
             }
             _ => return Err(BlockbusterError::UnknownAccountDiscriminator),

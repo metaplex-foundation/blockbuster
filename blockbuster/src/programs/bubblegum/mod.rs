@@ -5,9 +5,11 @@ use crate::{
 };
 
 use crate::{program_handler::NotUsed, programs::ProgramParseResult};
-use anchor_lang::Discriminator;
 use borsh::de::BorshDeserialize;
-use mpl_bubblegum::{get_instruction_type, state::metaplex_adapter::MetadataArgs};
+use mpl_bubblegum::{
+    get_instruction_type,
+    state::{metaplex_adapter::MetadataArgs, BubblegumEventType},
+};
 pub use mpl_bubblegum::{
     id as program_id,
     state::leaf_schema::{LeafSchema, LeafSchemaEvent},
@@ -15,7 +17,10 @@ pub use mpl_bubblegum::{
 };
 use plerkle_serialization::AccountInfo;
 use solana_sdk::pubkey::Pubkey;
-pub use spl_account_compression::events::ChangeLogEvent;
+use spl_account_compression::events::{
+    AccountCompressionEvent::{self, ApplicationData, ChangeLog},
+    ApplicationDataEvent, ChangeLogEvent, ChangeLogEventV1
+};
 use spl_noop;
 
 #[derive(Eq, PartialEq)]
@@ -30,7 +35,7 @@ pub enum Payload {
 
 pub struct BubblegumInstruction {
     pub instruction: InstructionName,
-    pub tree_update: Option<ChangeLogEvent>,
+    pub tree_update: Option<ChangeLogEventV1>,
     pub leaf_update: Option<LeafSchemaEvent>,
     pub payload: Option<Payload>,
 }
@@ -87,21 +92,36 @@ impl ProgramParser for BubblegumParser {
         } = bundle;
         let ix_type = get_instruction_type(instruction.data().unwrap());
         let mut b_inst = BubblegumInstruction::new(ix_type);
-        let leaf_event: &[u8] = &LeafSchemaEvent::discriminator();
-        let change_log_event: &[u8] = &ChangeLogEvent::discriminator();
         if let Some(ixs) = inner_ix {
             for ix in ixs {
                 if ix.0 .0 == spl_noop::id().to_bytes() {
                     let cix = ix.1;
                     if let Some(data) = cix.data() {
-                        let disc = &data[0..8];
-                        if disc == leaf_event {
-                            let event = LeafSchemaEvent::try_from_slice(&data[8..])?;
-                            b_inst.leaf_update = Some(event)
-                        }
-                        if disc == change_log_event {
-                            let event = ChangeLogEvent::try_from_slice(&data[8..])?;
-                            b_inst.tree_update = Some(event)
+                        match AccountCompressionEvent::try_from_slice(data)? {
+                            ChangeLog(changelog_event) => {
+                                let ChangeLogEvent::V1(changelog_event) = changelog_event;
+                                b_inst.tree_update = Some(changelog_event);
+                            }
+                            ApplicationData(app_data) => {
+                                let ApplicationDataEvent::V1(app_data) = app_data;
+                                let app_data = app_data.application_data;
+
+                                let event_type_byte = if !app_data.is_empty() {
+                                    &app_data[0..1]
+                                } else {
+                                    return Err(BlockbusterError::DeserializationError);
+                                };
+
+                                match BubblegumEventType::try_from_slice(event_type_byte)? {
+                                    BubblegumEventType::Uninitialized => {
+                                        return Err(BlockbusterError::MissingBubblegumEventData);
+                                    }
+                                    BubblegumEventType::LeafSchemaEvent => {
+                                        b_inst.leaf_update =
+                                            Some(LeafSchemaEvent::try_from_slice(&app_data)?);
+                                    }
+                                }
+                            }
                         }
                     }
                 }
