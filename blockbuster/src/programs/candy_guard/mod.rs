@@ -43,7 +43,13 @@ impl ProgramParser for CandyGuardParser {
     fn key_match(&self, key: &Pubkey) -> bool {
         key == &candy_guard_id()
     }
+    fn handles_account_updates(&self) -> bool {
+        true
+    }
 
+    fn handles_instructions(&self) -> bool {
+        false
+    }
     fn handle_account(
         &self,
         account_info: &AccountInfo,

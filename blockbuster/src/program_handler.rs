@@ -38,6 +38,8 @@ impl ParseResult for NotUsed {
 pub trait ProgramParser: Sync + Send {
     fn key(&self) -> Pubkey;
     fn key_match(&self, key: &Pubkey) -> bool;
+    fn handles_instructions(&self) -> bool;
+    fn handles_account_updates(&self) -> bool;
     fn handle_account(
         &self,
         account_info: &AccountInfo,

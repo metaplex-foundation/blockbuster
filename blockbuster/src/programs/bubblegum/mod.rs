@@ -73,6 +73,13 @@ impl ProgramParser for BubblegumParser {
     fn key_match(&self, key: &Pubkey) -> bool {
         key == &program_id()
     }
+    fn handles_account_updates(&self) -> bool {
+        false
+    }
+
+    fn handles_instructions(&self) -> bool {
+        true
+    }
     fn handle_account(
         &self,
         _account_info: &AccountInfo,
@@ -94,31 +101,33 @@ impl ProgramParser for BubblegumParser {
         let mut b_inst = BubblegumInstruction::new(ix_type);
         if let Some(ixs) = inner_ix {
             for ix in ixs {
-                if ix.0 .0 == spl_noop::id().to_bytes() {
+                if ix.0.0 == spl_noop::id().to_bytes() {
                     let cix = ix.1;
                     if let Some(data) = cix.data() {
-                        match AccountCompressionEvent::try_from_slice(data)? {
-                            ChangeLog(changelog_event) => {
-                                let ChangeLogEvent::V1(changelog_event) = changelog_event;
-                                b_inst.tree_update = Some(changelog_event);
-                            }
-                            ApplicationData(app_data) => {
-                                let ApplicationDataEvent::V1(app_data) = app_data;
-                                let app_data = app_data.application_data;
+                        if !data.is_empty() {
+                            match AccountCompressionEvent::try_from_slice(data)? {
+                                ChangeLog(changelog_event) => {
+                                    let ChangeLogEvent::V1(changelog_event) = changelog_event;
+                                    b_inst.tree_update = Some(changelog_event);
+                                }
+                                ApplicationData(app_data) => {
+                                    let ApplicationDataEvent::V1(app_data) = app_data;
+                                    let app_data = app_data.application_data;
 
-                                let event_type_byte = if !app_data.is_empty() {
-                                    &app_data[0..1]
-                                } else {
-                                    return Err(BlockbusterError::DeserializationError);
-                                };
+                                    let event_type_byte = if !app_data.is_empty() {
+                                        &app_data[0..1]
+                                    } else {
+                                        return Err(BlockbusterError::DeserializationError);
+                                    };
 
-                                match BubblegumEventType::try_from_slice(event_type_byte)? {
-                                    BubblegumEventType::Uninitialized => {
-                                        return Err(BlockbusterError::MissingBubblegumEventData);
-                                    }
-                                    BubblegumEventType::LeafSchemaEvent => {
-                                        b_inst.leaf_update =
-                                            Some(LeafSchemaEvent::try_from_slice(&app_data)?);
+                                    match BubblegumEventType::try_from_slice(event_type_byte)? {
+                                        BubblegumEventType::Uninitialized => {
+                                            return Err(BlockbusterError::MissingBubblegumEventData);
+                                        }
+                                        BubblegumEventType::LeafSchemaEvent => {
+                                            b_inst.leaf_update =
+                                                Some(LeafSchemaEvent::try_from_slice(&app_data)?);
+                                        }
                                     }
                                 }
                             }

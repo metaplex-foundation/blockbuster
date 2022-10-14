@@ -11,7 +11,6 @@ pub mod candy_machine;
 pub mod candy_machine_core;
 pub mod token_account;
 pub mod token_metadata;
-// pub mod gummyroll;
 
 pub enum ProgramParseResult<'a> {
     Bubblegum(&'a BubblegumInstruction),
