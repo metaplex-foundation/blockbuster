@@ -4,18 +4,17 @@ use crate::{
     program_handler::{NotUsed, ParseResult, ProgramParser},
     programs::ProgramParseResult,
 };
-use borsh::BorshDeserialize;
 use mpl_candy_guard::{
     guards::MintCounter,
     state::{CandyGuard, CandyGuardData, DATA_OFFSET},
 };
 use plerkle_serialization::AccountInfo;
-use solana_sdk::{pubkey::Pubkey, pubkeys};
+use solana_sdk::{borsh::try_from_slice_unchecked, pubkey::Pubkey, pubkeys};
 use std::convert::TryInto;
 
 pubkeys!(
     candy_guard_id,
-    "CnDYGRdU51FsSyLnVgSd19MCFxA4YHT5h3nacvCKMPUJ"
+    "Guard1JwRhJkVH6XZhzoYxeBVQe872VH6QggF4BWmS9g"
 );
 
 // Anchor account discriminators.
@@ -64,13 +63,13 @@ impl ProgramParser for CandyGuardParser {
 
         let account_type = match discriminator {
             CANDY_GUARD_DISCRIMINATOR => {
-                let candy_guard = CandyGuard::try_from_slice(&account_data[8..])?;
+                let candy_guard = try_from_slice_unchecked(&account_data[8..])?;
                 let candy_guard_data = CandyGuardData::load(&account_data[DATA_OFFSET..])
                     .map_err(|_| BlockbusterError::CandyGuardDataCustomDeserError)?;
                 CandyGuardAccountData::CandyGuard(candy_guard, candy_guard_data)
             }
             MINT_COUNTER_DISCRIMINATOR => {
-                let mint_counter = MintCounter::try_from_slice(&account_data[8..])?;
+                let mint_counter = try_from_slice_unchecked(&account_data[8..])?;
                 CandyGuardAccountData::MintCounter(mint_counter)
             }
             _ => return Err(BlockbusterError::UnknownAccountDiscriminator),
