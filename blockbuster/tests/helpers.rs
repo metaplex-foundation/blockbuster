@@ -3,7 +3,11 @@
 
 extern crate core;
 
+use blockbuster::instruction::{InstructionBundle, IxPair};
+use borsh::ser::BorshSerialize;
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
+pub use mpl_bubblegum::id as program_id;
+use mpl_bubblegum::state::leaf_schema::LeafSchemaEvent;
 use plerkle_serialization::{
     root_as_account_info, root_as_compiled_instruction, AccountInfo, AccountInfoArgs,
     CompiledInstruction, CompiledInstructionBuilder, InnerInstructionsBuilder, Pubkey as FBPubkey,
@@ -12,6 +16,10 @@ use plerkle_serialization::{
 use rand::Rng;
 use solana_geyser_plugin_interface::geyser_plugin_interface::ReplicaAccountInfo;
 use solana_sdk::pubkey::Pubkey;
+use spl_account_compression::events::{
+    AccountCompressionEvent, ApplicationDataEvent, ApplicationDataEventV1, ChangeLogEvent,
+    ChangeLogEventV1,
+};
 
 pub fn random_program() -> Pubkey {
     Pubkey::new_unique()
@@ -53,8 +61,8 @@ pub fn random_list(size: usize, elem_max: u8) -> Vec<u8> {
 }
 
 pub fn random_list_of<FN, T>(size: usize, fun: FN) -> Vec<T>
-    where
-        FN: Fn(u8) -> T,
+where
+    FN: Fn(u8) -> T,
 {
     let mut s = rand::thread_rng();
     let mut data: Vec<T> = Vec::with_capacity(size);
@@ -184,7 +192,7 @@ pub fn build_account_update<'a>(
 ) -> Result<AccountInfo<'a>, flatbuffers::InvalidFlatbuffer> {
     // Serialize vector data.
     let pubkey = FBPubkey::from(account.pubkey);
-    let owner =  FBPubkey::from(account.owner);
+    let owner = FBPubkey::from(account.owner);
 
     // Don't serialize a zero-length data slice.
     let data = if !account.data.is_empty() {
@@ -234,4 +242,46 @@ pub fn build_random_account_update<'a>(
 
     // Flatbuffer serialize the `ReplicaAccountInfo`.
     build_account_update(fbb, &replica_account_info, 0, false)
+}
+
+pub fn build_bubblegum_bundle<'a>(
+    fbb1: &'a mut FlatBufferBuilder<'a>,
+    fbb2: &'a mut FlatBufferBuilder<'a>,
+    fbb3: &'a mut FlatBufferBuilder<'a>,
+    fbb4: &'a mut FlatBufferBuilder<'a>,
+    accounts: &'a Vec<FBPubkey>,
+    account_indexes: &'a Vec<u8>,
+    ix_data: &'a [u8],
+    lse: LeafSchemaEvent,
+    cs_event: AccountCompressionEvent,
+    ixb: &mut InstructionBundle<'a>,
+) {
+    let lse_versioned = ApplicationDataEventV1 {
+        application_data: lse.try_to_vec().unwrap(),
+    };
+    let lse_event =
+        AccountCompressionEvent::ApplicationData(ApplicationDataEvent::V1(lse_versioned));
+    let outer_ix = build_instruction(fbb1, ix_data, &account_indexes).unwrap();
+    let lse = lse_event.try_to_vec().unwrap();
+    let noop_bgum = spl_noop::instruction(lse).data;
+    let ix = build_instruction(fbb2, &noop_bgum, &account_indexes).unwrap();
+    let noop_bgum_ix: IxPair = (FBPubkey(spl_noop::id().to_bytes()), ix);
+    // The Compression Instruction here doesnt matter only the noop but we add it here to ensure we are validating that one Account compression event is happening after Bubblegum
+    let ix = build_instruction(fbb3, &[0; 0], &account_indexes)
+        .unwrap()
+        .clone();
+    let gummy_roll_ix: IxPair = (FBPubkey(spl_account_compression::id().to_bytes()), ix);
+    let cs = cs_event.try_to_vec().unwrap();
+    let noop_compression = spl_noop::instruction(cs).data;
+    let ix = build_instruction(fbb4, &noop_compression, &account_indexes)
+        .unwrap()
+        .clone();
+    let noop_compression_ix = (FBPubkey(spl_noop::id().to_bytes()), ix);
+
+    let inner_ix = vec![noop_bgum_ix, gummy_roll_ix, noop_compression_ix];
+
+    ixb.program = FBPubkey(program_id().to_bytes());
+    ixb.inner_ix = Some(inner_ix);
+    ixb.keys = accounts.as_slice();
+    ixb.instruction = outer_ix.clone();
 }
