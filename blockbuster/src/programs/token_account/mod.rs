@@ -58,16 +58,14 @@ impl ProgramParser for TokenAccountParser {
 
         let account_type = match account_data.len() {
             165 => {
-                let token_account = TokenAccount::unpack(account_data).map_err(|_|{
-                    BlockbusterError::DeserializationError
-                })?;
+                let token_account = TokenAccount::unpack(account_data)
+                    .map_err(|_| BlockbusterError::DeserializationError)?;
 
                 TokenProgramAccount::TokenAccount(token_account)
             }
             82 => {
-                let mint = Mint::unpack(account_data).map_err(|_|{
-                    BlockbusterError::DeserializationError
-                })?;
+                let mint = Mint::unpack(account_data)
+                    .map_err(|_| BlockbusterError::DeserializationError)?;
 
                 TokenProgramAccount::Mint(mint)
             }

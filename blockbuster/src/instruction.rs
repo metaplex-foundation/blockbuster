@@ -1,4 +1,4 @@
-use flatbuffers::{ForwardsUOffset, Vector};
+use flatbuffers::{ForwardsUOffset, Table, Vector};
 use plerkle_serialization::{CompiledInstruction, InnerInstructions, Pubkey, TransactionInfo};
 use std::collections::{HashSet, VecDeque};
 
@@ -11,6 +11,21 @@ pub struct InstructionBundle<'a> {
     pub inner_ix: Option<Vec<IxPair<'a>>>,
     pub keys: &'a [Pubkey],
     pub slot: u64,
+}
+
+impl<'a> Default for InstructionBundle<'a> {
+    fn default() -> Self {
+        InstructionBundle {
+            txn_id: "",
+            program: Pubkey::new(&[0; 32]),
+            instruction: CompiledInstruction {
+                _tab: Table { buf: &[], loc: 0 },
+            },
+            inner_ix: None,
+            keys: &[],
+            slot: 0,
+        }
+    }
 }
 
 pub fn order_instructions<'a, 'b>(

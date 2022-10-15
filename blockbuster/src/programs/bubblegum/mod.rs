@@ -19,7 +19,7 @@ use plerkle_serialization::AccountInfo;
 use solana_sdk::pubkey::Pubkey;
 pub use spl_account_compression::events::{
     AccountCompressionEvent::{self, ApplicationData, ChangeLog},
-    ApplicationDataEvent, ChangeLogEvent, ChangeLogEventV1
+    ApplicationDataEvent, ChangeLogEvent, ChangeLogEventV1,
 };
 use spl_noop;
 
@@ -97,11 +97,15 @@ impl ProgramParser for BubblegumParser {
             keys,
             ..
         } = bundle;
-        let ix_type = get_instruction_type(instruction.data().unwrap());
+        let data = instruction.data();
+        if data.is_none() {
+            return Err(BlockbusterError::InstructionParsingError);
+        }
+        let ix_type = get_instruction_type(data.unwrap());
         let mut b_inst = BubblegumInstruction::new(ix_type);
         if let Some(ixs) = inner_ix {
             for ix in ixs {
-                if ix.0.0 == spl_noop::id().to_bytes() {
+                if ix.0 .0 == spl_noop::id().to_bytes() {
                     let cix = ix.1;
                     if let Some(data) = cix.data() {
                         if !data.is_empty() {
@@ -122,7 +126,9 @@ impl ProgramParser for BubblegumParser {
 
                                     match BubblegumEventType::try_from_slice(event_type_byte)? {
                                         BubblegumEventType::Uninitialized => {
-                                            return Err(BlockbusterError::MissingBubblegumEventData);
+                                            return Err(
+                                                BlockbusterError::MissingBubblegumEventData,
+                                            );
                                         }
                                         BubblegumEventType::LeafSchemaEvent => {
                                             b_inst.leaf_update =
@@ -132,39 +138,45 @@ impl ProgramParser for BubblegumParser {
                                 }
                             }
                         }
+                    } else {
+                        return Err(BlockbusterError::InstructionParsingError);
                     }
                 }
             }
         }
 
-        if let Some(data) = instruction.data() {
-            match b_inst.instruction {
-                InstructionName::MintV1 => {
-                    let args: MetadataArgs = MetadataArgs::try_from_slice(data)?;
-                    b_inst.payload = Some(Payload::MintV1 { args });
-                }
-                InstructionName::DecompressV1 => {
-                    let args: MetadataArgs = MetadataArgs::try_from_slice(data)?;
-                    b_inst.payload = Some(Payload::Decompress { args });
-                }
-                InstructionName::CancelRedeem => {
-                    let slice: [u8; 32] = data
-                        .try_into()
-                        .map_err(|_e| BlockbusterError::InstructionParsingError)?;
-                    b_inst.payload = Some(Payload::CancelRedeem { root: slice });
-                }
-                InstructionName::VerifyCreator => {
-                    b_inst.payload = Some(Payload::VerifyCreator {
-                        creator: Pubkey::new_from_array(keys.get(3).unwrap().0),
-                    });
-                }
-                InstructionName::UnverifyCreator => {
-                    b_inst.payload = Some(Payload::UnverifyCreator {
-                        creator: Pubkey::new_from_array(keys.get(3).unwrap().0),
-                    });
-                }
-                _ => {}
-            };
+        if let Some(ix_data) = data.map(|d| &d[8..]) {
+            if !ix_data.is_empty() {
+                match b_inst.instruction {
+                    InstructionName::MintV1 => {
+                        let args: MetadataArgs = MetadataArgs::try_from_slice(ix_data)?;
+                        b_inst.payload = Some(Payload::MintV1 { args });
+                    }
+                    InstructionName::DecompressV1 => {
+                        let args: MetadataArgs = MetadataArgs::try_from_slice(ix_data)?;
+                        b_inst.payload = Some(Payload::Decompress { args });
+                    }
+                    InstructionName::CancelRedeem => {
+                        let slice: [u8; 32] = ix_data
+                            .try_into()
+                            .map_err(|_e| BlockbusterError::InstructionParsingError)?;
+                        b_inst.payload = Some(Payload::CancelRedeem { root: slice });
+                    }
+                    InstructionName::VerifyCreator => {
+                        b_inst.payload = Some(Payload::VerifyCreator {
+                            creator: Pubkey::new_from_array(keys.get(3).unwrap().0),
+                        });
+                    }
+                    InstructionName::UnverifyCreator => {
+                        b_inst.payload = Some(Payload::UnverifyCreator {
+                            creator: Pubkey::new_from_array(keys.get(3).unwrap().0),
+                        });
+                    }
+                    _ => {}
+                };
+            }
+        } else {
+            return Err(BlockbusterError::InstructionParsingError);
         }
         Ok(Box::new(b_inst))
     }
