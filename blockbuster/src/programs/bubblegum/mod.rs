@@ -32,7 +32,7 @@ pub enum Payload {
     VerifyCreator { creator: Pubkey },
     UnverifyCreator { creator: Pubkey },
 }
-
+//TODO add more of the parsing here to minimize program transformer code
 pub struct BubblegumInstruction {
     pub instruction: InstructionName,
     pub tree_update: Option<ChangeLogEventV1>,

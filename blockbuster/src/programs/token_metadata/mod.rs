@@ -79,9 +79,10 @@ impl ProgramParser for TokenMetadataParser {
         } else {
             return Err(BlockbusterError::DeserializationError);
         };
-
+        if account_data.is_empty() {
+            return Err(BlockbusterError::InvalidDataLength);
+        }
         let key = Key::try_from_slice(&account_data[0..1])?;
-
         let token_metadata_account_state = match key {
             Key::EditionV1 => {
                 let account: Edition = try_from_slice_unchecked(account_data)?;
