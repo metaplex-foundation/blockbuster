@@ -163,13 +163,16 @@ impl ProgramParser for BubblegumParser {
                         b_inst.payload = Some(Payload::CancelRedeem { root: slice });
                     }
                     InstructionName::VerifyCreator => {
+                       let creator = keys.get(3).ok_or(BlockbusterError::InstructionParsingError)?.0;
+
                         b_inst.payload = Some(Payload::VerifyCreator {
-                            creator: Pubkey::new_from_array(keys.get(3).unwrap().0),
+                            creator: Pubkey::new_from_array(creator),
                         });
                     }
                     InstructionName::UnverifyCreator => {
+                        let creator = keys.get(3).ok_or(BlockbusterError::InstructionParsingError)?.0;
                         b_inst.payload = Some(Payload::UnverifyCreator {
-                            creator: Pubkey::new_from_array(keys.get(3).unwrap().0),
+                            creator: Pubkey::new_from_array(creator),
                         });
                     }
                     _ => {}
