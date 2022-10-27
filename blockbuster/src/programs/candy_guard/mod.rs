@@ -65,7 +65,7 @@ impl ProgramParser for CandyGuardParser {
             CANDY_GUARD_DISCRIMINATOR => {
                 let candy_guard = try_from_slice_unchecked(&account_data[8..])?;
                 let candy_guard_data = CandyGuardData::load(&account_data[DATA_OFFSET..])
-                    .map_err(|_| BlockbusterError::CandyGuardDataCustomDeserError)?;
+                    .map_err(|_| BlockbusterError::CustomDeserializationError("Candy Guard Data Deserialization Error".to_string()))?;
                 CandyGuardAccountData::CandyGuard(candy_guard, candy_guard_data)
             }
             MINT_COUNTER_DISCRIMINATOR => {
