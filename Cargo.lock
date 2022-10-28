@@ -1647,9 +1647,9 @@ dependencies = [
 
 [[package]]
 name = "mpl-bubblegum"
-version = "0.2.1"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1d5dc77cc456a0ce950aa3e977b0e85ab872a2a9d9462bdab8c42719d94d6e5c"
+checksum = "b1e283f25eb1f7cb949cbece4d847443bbe7c19eb8f60a0b2e459539b831ec1a"
 dependencies = [
  "anchor-lang",
  "bytemuck",
