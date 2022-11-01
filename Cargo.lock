@@ -408,7 +408,11 @@ checksum = "8d696c370c750c948ada61c69a0ee2cbbb9c50b1019ddb86d9317157a99c2cae"
 
 [[package]]
 name = "blockbuster"
+<<<<<<< HEAD
 version = "0.5.5"
+=======
+version = "0.5.6"
+>>>>>>> origin/main
 dependencies = [
  "anchor-lang",
  "async-trait",
@@ -1703,9 +1707,9 @@ dependencies = [
 
 [[package]]
 name = "mpl-token-metadata"
-version = "1.5.0"
+version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f36ab16f4c83f2f18e136f53157a8c9ab3783d84eaefdec7962bf19c0e4d5548"
+checksum = "d7bd6c4b74cfb4977653388285b1569ba055b3e131ba8f4ee8a4ed8435091965"
 dependencies = [
  "arrayref",
  "borsh",

@@ -159,6 +159,9 @@ impl ProgramParser for TokenMetadataParser {
             Key::Uninitialized => {
                 return Err(BlockbusterError::UninitializedAccount);
             }
+            _ => {
+                return Err(BlockbusterError::AccountTypeNotImplemented);
+            }
         };
 
         Ok(Box::new(token_metadata_account_state))

@@ -21,8 +21,10 @@ pub enum BlockbusterError {
     FailedToDeserializeToMasterEdition,
     #[error("Uninitialized account type")]
     UninitializedAccount,
-    #[error("Could not custom deserialize candy guards")]
-    CandyGuardDataCustomDeserError,
+    #[error("Account Type Not implemented")]
+    AccountTypeNotImplemented,
+    #[error("Could not deserialize data: {0}")]
+    CustomDeserializationError(String),
 }
 
 impl From<std::io::Error> for BlockbusterError {
