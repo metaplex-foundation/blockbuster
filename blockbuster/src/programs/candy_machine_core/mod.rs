@@ -6,7 +6,7 @@ use crate::{
 };
 use mpl_candy_machine_core::CandyMachine;
 use plerkle_serialization::AccountInfo;
-use solana_sdk::{pubkey::Pubkey, pubkeys, borsh::try_from_slice_unchecked};
+use solana_sdk::{borsh::try_from_slice_unchecked, pubkey::Pubkey, pubkeys};
 use std::convert::TryInto;
 
 pubkeys!(

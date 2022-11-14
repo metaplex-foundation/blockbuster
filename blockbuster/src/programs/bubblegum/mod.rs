@@ -31,7 +31,7 @@ pub enum Payload {
     CancelRedeem { root: [u8; 32] },
     VerifyCreator { creator: Pubkey },
     UnverifyCreator { creator: Pubkey },
-    SetAndVerifyCollection { collection: Pubkey }
+    SetAndVerifyCollection { collection: Pubkey },
 }
 //TODO add more of the parsing here to minimize program transformer code
 pub struct BubblegumInstruction {
@@ -164,13 +164,19 @@ impl ProgramParser for BubblegumParser {
                         b_inst.payload = Some(Payload::CancelRedeem { root: slice });
                     }
                     InstructionName::VerifyCreator => {
-                       let creator = keys.get(5).ok_or(BlockbusterError::InstructionParsingError)?.0;
+                        let creator = keys
+                            .get(5)
+                            .ok_or(BlockbusterError::InstructionParsingError)?
+                            .0;
                         b_inst.payload = Some(Payload::VerifyCreator {
                             creator: Pubkey::new_from_array(creator),
                         });
                     }
                     InstructionName::UnverifyCreator => {
-                        let creator = keys.get(5).ok_or(BlockbusterError::InstructionParsingError)?.0;
+                        let creator = keys
+                            .get(5)
+                            .ok_or(BlockbusterError::InstructionParsingError)?
+                            .0;
                         b_inst.payload = Some(Payload::UnverifyCreator {
                             creator: Pubkey::new_from_array(creator),
                         });
@@ -181,7 +187,7 @@ impl ProgramParser for BubblegumParser {
                         // Deserializing this to get to the second argument encoded in the slice,
                         // which is the collection address. Is there a (safe) way to get to that
                         // directly?
-                        let _args :MetadataArgs = MetadataArgs::try_from_slice(ix_data)?;
+                        let _args: MetadataArgs = MetadataArgs::try_from_slice(ix_data)?;
                         let collection: Pubkey = Pubkey::try_from_slice(ix_data)?;
                         b_inst.payload = Some(Payload::SetAndVerifyCollection { collection });
                     }
