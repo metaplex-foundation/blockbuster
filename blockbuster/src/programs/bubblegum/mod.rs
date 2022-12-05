@@ -98,19 +98,25 @@ impl ProgramParser for BubblegumParser {
             keys,
             ..
         } = bundle;
-        let data = instruction.data();
-        if data.is_none() {
-            return Err(BlockbusterError::InstructionParsingError);
-        }
-        let ix_type = get_instruction_type(data.unwrap());
+        let outer_ix_data = match instruction {
+            Some(compiled_ix) if compiled_ix.data().is_some() => {
+                let data = compiled_ix.data().unwrap();
+                data.iter().collect::<Vec<_>>()
+            }
+            _ => {
+                return Err(BlockbusterError::DeserializationError);
+            }
+        };
+        let ix_type = get_instruction_type(&outer_ix_data);
         let mut b_inst = BubblegumInstruction::new(ix_type);
         if let Some(ixs) = inner_ix {
             for ix in ixs {
                 if ix.0 .0 == spl_noop::id().to_bytes() {
                     let cix = ix.1;
-                    if let Some(data) = cix.data() {
-                        if !data.is_empty() {
-                            match AccountCompressionEvent::try_from_slice(data)? {
+                    if let Some(inner_ix_data) = cix.data() {
+                        let inner_ix_data = inner_ix_data.iter().collect::<Vec<_>>();
+                        if !inner_ix_data.is_empty() {
+                            match AccountCompressionEvent::try_from_slice(&inner_ix_data)? {
                                 ChangeLog(changelog_event) => {
                                     let ChangeLogEvent::V1(changelog_event) = changelog_event;
                                     b_inst.tree_update = Some(changelog_event);
@@ -146,7 +152,8 @@ impl ProgramParser for BubblegumParser {
             }
         }
 
-        if let Some(ix_data) = data.map(|d| &d[8..]) {
+        if outer_ix_data.len() >= 8 {
+            let ix_data = &outer_ix_data[8..];
             if !ix_data.is_empty() {
                 match b_inst.instruction {
                     InstructionName::MintV1 => {
@@ -191,12 +198,12 @@ impl ProgramParser for BubblegumParser {
                         let collection: Pubkey = Pubkey::try_from_slice(ix_data)?;
                         b_inst.payload = Some(Payload::SetAndVerifyCollection { collection });
                     }
+                    InstructionName::Unknown => {}
                     _ => {}
                 };
             }
-        } else {
-            return Err(BlockbusterError::InstructionParsingError);
         }
+
         Ok(Box::new(b_inst))
     }
 }

@@ -137,6 +137,7 @@ pub fn get_programs(txn_info: TransactionInfo) -> Vec<Pubkey> {
                 &txn_info
                     .account_keys()
                     .unwrap()
+                    .iter().collect::<Vec<_>>()
                     .get(ix.program_id_index() as usize)
                     .unwrap()
                     .0,
@@ -154,6 +155,7 @@ pub fn get_programs(txn_info: TransactionInfo) -> Vec<Pubkey> {
                     &txn_info
                         .account_keys()
                         .unwrap()
+                        .iter().collect::<Vec<_>>()
                         .get(p.program_id_index() as usize)
                         .unwrap()
                         .0,
@@ -283,5 +285,5 @@ pub fn build_bubblegum_bundle<'a>(
     ixb.program = FBPubkey(program_id().to_bytes());
     ixb.inner_ix = Some(inner_ix);
     ixb.keys = accounts.as_slice();
-    ixb.instruction = outer_ix.clone();
+    ixb.instruction = Some(outer_ix.clone());
 }

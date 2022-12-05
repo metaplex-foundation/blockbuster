@@ -125,7 +125,7 @@ fn test_unused_instruction_parsing() {
     let bundle = InstructionBundle {
         txn_id: "",
         program: plerkle_serialization::Pubkey(random_pubkey().to_bytes()),
-        instruction: outer_ix,
+        instruction: Some(outer_ix),
         inner_ix: None,
         keys: &[plerkle_serialization::Pubkey(random_pubkey().to_bytes())],
         slot: 0,

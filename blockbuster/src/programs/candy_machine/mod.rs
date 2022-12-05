@@ -63,7 +63,7 @@ impl ProgramParser for CandyMachineParser {
         account_info: &AccountInfo,
     ) -> Result<Box<dyn ParseResult + 'static>, BlockbusterError> {
         let account_data = if let Some(account_info) = account_info.data() {
-            account_info
+            account_info.iter().collect::<Vec<_>>()
         } else {
             return Err(BlockbusterError::DeserializationError);
         };

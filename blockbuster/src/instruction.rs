@@ -1,5 +1,6 @@
-use flatbuffers::{ForwardsUOffset, Table, Vector};
-use plerkle_serialization::{CompiledInstruction, InnerInstructions, Pubkey, TransactionInfo};
+use flatbuffers::{ForwardsUOffset, Table, Vector, FlatBufferBuilder};
+use mpl_candy_guard::instructions::unwrap;
+use plerkle_serialization::{CompiledInstruction, InnerInstructions, Pubkey, TransactionInfo, CompiledInstructionBuilder, root_as_compiled_instruction, CompiledInstructionArgs};
 use std::collections::{HashSet, VecDeque};
 
 pub type IxPair<'a> = (Pubkey, CompiledInstruction<'a>);
@@ -7,7 +8,7 @@ pub type IxPair<'a> = (Pubkey, CompiledInstruction<'a>);
 pub struct InstructionBundle<'a> {
     pub txn_id: &'a str,
     pub program: Pubkey,
-    pub instruction: CompiledInstruction<'a>,
+    pub instruction: Option<CompiledInstruction<'a>>,
     pub inner_ix: Option<Vec<IxPair<'a>>>,
     pub keys: &'a [Pubkey],
     pub slot: u64,
@@ -18,9 +19,7 @@ impl<'a> Default for InstructionBundle<'a> {
         InstructionBundle {
             txn_id: "",
             program: Pubkey::new(&[0; 32]),
-            instruction: CompiledInstruction {
-                _tab: Table { buf: &[], loc: 0 },
-            },
+            instruction: None,
             inner_ix: None,
             keys: &[],
             slot: 0,
@@ -51,11 +50,11 @@ pub fn order_instructions<'a, 'b>(
             println!("account_keys deserialization error");
             return ordered_ixs;
         }
-        Some(keys) => keys,
+        Some(keys) => keys.iter().collect::<Vec<_>>(),
     };
     for (i, instruction) in outer_instructions.iter().enumerate() {
         let program_id = keys.get(instruction.program_id_index() as usize).unwrap();
-        let outer: IxPair = (*program_id, instruction);
+        let outer: IxPair = (**program_id, instruction);
 
         let inner: Option<Vec<IxPair>> = get_inner_ixs(inner_ix_list, i).map(|inner_ixs| {
             let mut inner_list: VecDeque<IxPair> = VecDeque::new();
@@ -63,12 +62,12 @@ pub fn order_instructions<'a, 'b>(
                 let inner_program_id = keys
                     .get(inner_ix_instance.program_id_index() as usize)
                     .unwrap();
-                inner_list.push_front((*inner_program_id, inner_ix_instance));
+                inner_list.push_front((**inner_program_id, inner_ix_instance));
                 if programs.get(inner_program_id.0.as_ref()).is_some() {
                     println!("\t\t added {:?}", inner_program_id);
                     let mut new_inner_list = inner_list.clone();
                     new_inner_list.pop_front();
-                    let inner = (*inner_program_id, inner_ix_instance);
+                    let inner = (**inner_program_id, inner_ix_instance);
                     ordered_ixs.push_back((inner, Some(new_inner_list.into())));
                 }
             }

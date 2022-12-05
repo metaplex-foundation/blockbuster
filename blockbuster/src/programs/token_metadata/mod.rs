@@ -75,7 +75,7 @@ impl ProgramParser for TokenMetadataParser {
         account_info: &AccountInfo,
     ) -> Result<Box<(dyn ParseResult + 'static)>, BlockbusterError> {
         let account_data = if let Some(account_info) = account_info.data() {
-            account_info
+            account_info.iter().collect::<Vec<_>>()
         } else {
             return Err(BlockbusterError::DeserializationError);
         };
@@ -85,7 +85,7 @@ impl ProgramParser for TokenMetadataParser {
         let key = Key::try_from_slice(&account_data[0..1])?;
         let token_metadata_account_state = match key {
             Key::EditionV1 => {
-                let account: Edition = try_from_slice_unchecked(account_data)?;
+                let account: Edition = try_from_slice_unchecked(&account_data)?;
 
                 TokenMetadataAccountState {
                     key: account.key,
@@ -93,7 +93,7 @@ impl ProgramParser for TokenMetadataParser {
                 }
             }
             Key::MasterEditionV1 => {
-                let account: MasterEditionV2 = try_from_slice_unchecked(account_data)?;
+                let account: MasterEditionV2 = try_from_slice_unchecked(&account_data)?;
 
                 TokenMetadataAccountState {
                     key: account.key,
@@ -101,7 +101,7 @@ impl ProgramParser for TokenMetadataParser {
                 }
             }
             Key::MasterEditionV2 => {
-                let account: MasterEditionV1 = try_from_slice_unchecked(account_data)?;
+                let account: MasterEditionV1 = try_from_slice_unchecked(&account_data)?;
 
                 TokenMetadataAccountState {
                     key: account.key,
@@ -109,7 +109,7 @@ impl ProgramParser for TokenMetadataParser {
                 }
             }
             Key::UseAuthorityRecord => {
-                let account: UseAuthorityRecord = try_from_slice_unchecked(account_data)?;
+                let account: UseAuthorityRecord = try_from_slice_unchecked(&account_data)?;
 
                 TokenMetadataAccountState {
                     key: account.key,
@@ -117,7 +117,7 @@ impl ProgramParser for TokenMetadataParser {
                 }
             }
             Key::EditionMarker => {
-                let account: EditionMarker = try_from_slice_unchecked(account_data)?;
+                let account: EditionMarker = try_from_slice_unchecked(&account_data)?;
 
                 TokenMetadataAccountState {
                     key: account.key,
@@ -125,7 +125,7 @@ impl ProgramParser for TokenMetadataParser {
                 }
             }
             Key::CollectionAuthorityRecord => {
-                let account: CollectionAuthorityRecord = try_from_slice_unchecked(account_data)?;
+                let account: CollectionAuthorityRecord = try_from_slice_unchecked(&account_data)?;
 
                 TokenMetadataAccountState {
                     key: account.key,
@@ -133,7 +133,7 @@ impl ProgramParser for TokenMetadataParser {
                 }
             }
             Key::MetadataV1 => {
-                let account: Metadata = try_from_slice_unchecked(account_data)?;
+                let account: Metadata = try_from_slice_unchecked(&account_data)?;
 
                 TokenMetadataAccountState {
                     key: account.key,
@@ -141,7 +141,7 @@ impl ProgramParser for TokenMetadataParser {
                 }
             }
             Key::ReservationListV1 => {
-                let account: ReservationListV1 = try_from_slice_unchecked(account_data)?;
+                let account: ReservationListV1 = try_from_slice_unchecked(&account_data)?;
 
                 TokenMetadataAccountState {
                     key: account.key,
@@ -149,7 +149,7 @@ impl ProgramParser for TokenMetadataParser {
                 }
             }
             Key::ReservationListV2 => {
-                let account: ReservationListV2 = try_from_slice_unchecked(account_data)?;
+                let account: ReservationListV2 = try_from_slice_unchecked(&account_data)?;
 
                 TokenMetadataAccountState {
                     key: account.key,

@@ -408,7 +408,7 @@ checksum = "8d696c370c750c948ada61c69a0ee2cbbb9c50b1019ddb86d9317157a99c2cae"
 
 [[package]]
 name = "blockbuster"
-version = "0.5.9"
+version = "0.6.0"
 dependencies = [
  "anchor-lang",
  "async-trait",
@@ -1016,13 +1016,12 @@ dependencies = [
 
 [[package]]
 name = "flatbuffers"
-version = "2.1.2"
+version = "22.10.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "86b428b715fdbdd1c364b84573b5fdc0f84f8e423661b9f398735278bc7f2b6a"
+checksum = "d2ba319fc85cd1d8994d42c95b13cdf051786b35f9e401b1c03bff1c67efd899"
 dependencies = [
  "bitflags",
- "smallvec",
- "thiserror",
+ "rustc_version",
 ]
 
 [[package]]
@@ -1890,9 +1889,9 @@ checksum = "6ac9a59f73473f1b8d852421e59e64809f025994837ef743615c6d0c5b305160"
 
 [[package]]
 name = "plerkle_serialization"
-version = "0.5.3"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ac053579842c6d916c54d4afb446d92d3ee5a5f67ccda7372b5eacc9594201e0"
+checksum = "85969b923cfd4c2b888e473e08ed92c54b63a17d19e7659f39a1e39f4bbe8690"
 dependencies = [
  "chrono",
  "flatbuffers",

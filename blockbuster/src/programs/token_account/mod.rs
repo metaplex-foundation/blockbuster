@@ -51,20 +51,20 @@ impl ProgramParser for TokenAccountParser {
         account_info: &AccountInfo,
     ) -> Result<Box<(dyn ParseResult + 'static)>, BlockbusterError> {
         let account_data = if let Some(account_info) = account_info.data() {
-            account_info
+            account_info.iter().collect::<Vec<_>>()
         } else {
             return Err(BlockbusterError::DeserializationError);
         };
 
         let account_type = match account_data.len() {
             165 => {
-                let token_account = TokenAccount::unpack(account_data)
+                let token_account = TokenAccount::unpack(&account_data)
                     .map_err(|_| BlockbusterError::DeserializationError)?;
 
                 TokenProgramAccount::TokenAccount(token_account)
             }
             82 => {
-                let mint = Mint::unpack(account_data)
+                let mint = Mint::unpack(&account_data)
                     .map_err(|_| BlockbusterError::DeserializationError)?;
 
                 TokenProgramAccount::Mint(mint)
