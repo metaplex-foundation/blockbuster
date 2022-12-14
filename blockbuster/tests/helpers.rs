@@ -1,28 +1,33 @@
 // Workaround since this module is only used for testing.
 #![allow(dead_code)]
-
-extern crate core;
-
-use blockbuster::instruction::{InstructionBundle, IxPair};
+use blockbuster::{
+    error::BlockbusterError,
+    instruction::{InstructionBundle, IxPair},
+};
 use borsh::ser::BorshSerialize;
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
 pub use mpl_bubblegum::id as program_id;
 use mpl_bubblegum::state::leaf_schema::LeafSchemaEvent;
 use plerkle_serialization::{
     root_as_account_info, root_as_compiled_instruction, AccountInfo, AccountInfoArgs,
-    CompiledInstruction, CompiledInstructionBuilder, InnerInstructionsBuilder, Pubkey as FBPubkey,
-    TransactionInfo, TransactionInfoBuilder,
+    CompiledInstruction, CompiledInstructionArgs, CompiledInstructionBuilder, InnerInstructions,
+    InnerInstructionsArgs, InnerInstructionsBuilder, Pubkey as FBPubkey, TransactionInfo,
+    TransactionInfoArgs, TransactionInfoBuilder,
 };
 use rand::Rng;
 use solana_geyser_plugin_interface::geyser_plugin_interface::ReplicaAccountInfo;
-use solana_sdk::pubkey::Pubkey;
-use solana_transaction_status::EncodedConfirmedTransactionWithStatusMeta;
+use solana_sdk::{bs58, pubkey::Pubkey, transaction::VersionedTransaction};
+use solana_transaction_status::{
+    option_serializer::OptionSerializer, EncodableWithMeta,
+    EncodedConfirmedTransactionWithStatusMeta, UiInstruction, UiTransactionStatusMeta,
+};
 use spl_account_compression::events::{
     AccountCompressionEvent, ApplicationDataEvent, ApplicationDataEventV1, ChangeLogEvent,
     ChangeLogEventV1,
 };
 use std::fs::File;
 use std::io::BufReader;
+use std::str::FromStr;
 pub fn random_program() -> Pubkey {
     Pubkey::new_unique()
 }
@@ -250,10 +255,147 @@ pub fn build_random_account_update<'a>(
     build_account_update(fbb, &replica_account_info, 0, false)
 }
 
-pub fn build_txn_from_fixture<'a>(fixture_name: String, fbb: &'a mut FlatBufferBuilder<'a>) -> Result<, flatbuffers::InvalidFlatbuffer> {
-    let file = File::open(format!("tests/fixtures/{}", fixture_name)).unwrap();
+fn serialize_transaction<'a>(
+    mut builder: &mut FlatBufferBuilder<'a>,
+    tx: EncodedConfirmedTransactionWithStatusMeta,
+) -> Result<(), BlockbusterError> {
+    let meta: UiTransactionStatusMeta = tx.transaction.meta.unwrap();
+    // Get `UiTransaction` out of `EncodedTransactionWithStatusMeta`.
+    let ui_transaction: VersionedTransaction = tx.transaction.transaction.decode().unwrap();
+    let ui_transaction = ui_transaction.json_encode();
+    let ui_transaction = match ui_transaction {
+        solana_transaction_status::EncodedTransaction::Json(ui) => ui,
+        _ => {
+            return Err(BlockbusterError::IOError("EncodedTransaction".to_string()));
+        }
+    };
+    let ui_raw_message = match &ui_transaction.message {
+        solana_transaction_status::UiMessage::Raw(ui_raw_message) => ui_raw_message,
+        _ => {
+            return Err(BlockbusterError::IOError("UiMessage".to_string()));
+        }
+    };
+
+    let sig = ui_transaction.signatures[0].to_string();
+
+    // Serialize account keys.
+    let account_keys_len = ui_raw_message.account_keys.len();
+
+    let account_keys = if account_keys_len > 0 {
+        let mut account_keys_fb_vec = Vec::with_capacity(account_keys_len);
+        for key in ui_raw_message.account_keys.iter() {
+            let key =
+                Pubkey::from_str(key).map_err(|e| BlockbusterError::IOError(e.to_string()))?;
+            account_keys_fb_vec.push(FBPubkey(key.to_bytes()));
+        }
+        Some(builder.create_vector(&account_keys_fb_vec))
+    } else {
+        None
+    };
+
+    // Serialize log messages.
+    // We dont use them for now.
+    let log_messages = None;
+
+    // Serialize inner instructions.
+    let inner_instructions = if let OptionSerializer::Some(inner_instructions_vec) =
+        meta.inner_instructions.as_ref()
+    {
+        let mut overall_fb_vec = Vec::with_capacity(inner_instructions_vec.len());
+        for inner_instructions in inner_instructions_vec.iter() {
+            let index = inner_instructions.index;
+            let mut instructions_fb_vec = Vec::with_capacity(inner_instructions.instructions.len());
+            for ui_instruction in inner_instructions.instructions.iter() {
+                if let UiInstruction::Compiled(ui_compiled_instruction) = ui_instruction {
+                    let program_id_index = ui_compiled_instruction.program_id_index;
+                    let accounts = Some(builder.create_vector(&ui_compiled_instruction.accounts));
+                    let data = bs58::decode(&ui_compiled_instruction.data)
+                        .into_vec()
+                        .map_err(|e| BlockbusterError::IOError(e.to_string()))?;
+                    let data = Some(builder.create_vector(&data));
+                    instructions_fb_vec.push(CompiledInstruction::create(
+                        &mut builder,
+                        &CompiledInstructionArgs {
+                            program_id_index,
+                            accounts,
+                            data,
+                        },
+                    ));
+                }
+            }
+
+            let instructions = Some(builder.create_vector(&instructions_fb_vec));
+            overall_fb_vec.push(InnerInstructions::create(
+                &mut builder,
+                &InnerInstructionsArgs {
+                    index,
+                    instructions,
+                },
+            ))
+        }
+
+        Some(builder.create_vector(&overall_fb_vec))
+    } else {
+        None
+    };
+
+    // Serialize outer instructions.
+    let outer_instructions = &ui_raw_message.instructions;
+    let outer_instructions = if !outer_instructions.is_empty() {
+        let mut instructions_fb_vec = Vec::with_capacity(outer_instructions.len());
+        for ui_compiled_instruction in outer_instructions.iter() {
+            let program_id_index = ui_compiled_instruction.program_id_index;
+            let accounts = Some(builder.create_vector(&ui_compiled_instruction.accounts));
+            let data = bs58::decode(&ui_compiled_instruction.data)
+                .into_vec()
+                .map_err(|e| BlockbusterError::IOError(e.to_string()))?;
+            let data = Some(builder.create_vector(&data));
+            instructions_fb_vec.push(CompiledInstruction::create(
+                &mut builder,
+                &CompiledInstructionArgs {
+                    program_id_index,
+                    accounts,
+                    data,
+                },
+            ));
+        }
+        Some(builder.create_vector(&instructions_fb_vec))
+    } else {
+        None
+    };
+
+    // Serialize everything into Transaction Info table.
+
+    let sig_db = builder.create_string(&sig);
+    let transaction_info = TransactionInfo::create(
+        &mut builder,
+        &TransactionInfoArgs {
+            is_vote: false,
+            account_keys,
+            log_messages,
+            inner_instructions,
+            outer_instructions,
+            slot: tx.slot,
+            seen_at: 1000000,
+            slot_index: None,
+            signature: Some(sig_db),
+        },
+    );
+
+    // Finalize buffer and return to caller.
+    builder.finish(transaction_info, None);
+    Ok(())
+}
+
+pub fn build_txn_from_fixture<'a>(
+    fixture_name: String,
+    mut fbb: FlatBufferBuilder<'a>,
+) -> Result<FlatBufferBuilder, BlockbusterError> {
+    let file = File::open(format!("tests/fixtures/{}.json", fixture_name)).unwrap();
     let reader = BufReader::new(file);
-    let ectxn = serde_json::from_reader(reader)?;
+    let ectxn: EncodedConfirmedTransactionWithStatusMeta = serde_json::from_reader(reader).unwrap();
+    serialize_transaction(&mut fbb, ectxn)?;
+    Ok(fbb)
 }
 
 pub fn build_bubblegum_bundle<'a>(

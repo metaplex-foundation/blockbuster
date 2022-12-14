@@ -1,8 +1,4 @@
-extern crate core;
-
-use crate::helpers::{
-    build_random_account_update, build_random_instruction, random_list, random_pubkey,
-};
+#[cfg(test)]
 use blockbuster::{
     error::BlockbusterError,
     instruction::InstructionBundle,
@@ -24,6 +20,7 @@ use blockbuster::{
         ProgramParseResult,
     },
 };
+use helpers::{build_random_account_update, build_random_instruction, random_list, random_pubkey};
 use plerkle_serialization::root_as_compiled_instruction;
 
 use borsh::BorshSerialize;

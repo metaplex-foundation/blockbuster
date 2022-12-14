@@ -1,6 +1,4 @@
-extern crate core;
-
-use crate::helpers::{build_bubblegum_bundle, build_instruction, random_list_of, random_pubkey};
+#[cfg(test)]
 use anchor_lang::{prelude::*, InstructionData};
 use blockbuster::{
     instruction::{InstructionBundle, IxPair},
@@ -9,6 +7,7 @@ use blockbuster::{
 };
 use borsh::ser::BorshSerialize;
 use flatbuffers::FlatBufferBuilder;
+use helpers::{build_bubblegum_bundle, build_txn_from_fixture, random_list_of, random_pubkey};
 pub use mpl_bubblegum::id as program_id;
 use mpl_bubblegum::state::{
     leaf_schema::{LeafSchema, Version},
@@ -22,7 +21,7 @@ use spl_account_compression::{
     },
     state::PathNode,
 };
-
+use std::fs;
 mod helpers;
 
 #[test]

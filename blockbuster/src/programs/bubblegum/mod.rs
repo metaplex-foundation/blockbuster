@@ -109,6 +109,12 @@ impl ProgramParser for BubblegumParser {
         };
         let ix_type = get_instruction_type(&outer_ix_data);
         let mut b_inst = BubblegumInstruction::new(ix_type);
+        println!(
+            "Bubblegum bundle: {:?} {:?} \n\n{:?}",
+            bs58::encode(bundle.program.0).into_string(),
+            bundle.instruction,
+            bundle.inner_ix
+        );
         if let Some(ixs) = inner_ix {
             for ix in ixs {
                 if ix.0 .0 == spl_noop::id().to_bytes() {
