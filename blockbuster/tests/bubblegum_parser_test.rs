@@ -1,27 +1,27 @@
 #[cfg(test)]
 use anchor_lang::{prelude::*, InstructionData};
 use blockbuster::{
-    instruction::{InstructionBundle, IxPair},
+    instruction::{InstructionBundle},
     program_handler::ProgramParser,
     programs::{bubblegum::BubblegumParser, ProgramParseResult},
 };
 use borsh::ser::BorshSerialize;
 use flatbuffers::FlatBufferBuilder;
-use helpers::{build_bubblegum_bundle, build_txn_from_fixture, random_list_of, random_pubkey};
+use helpers::{build_bubblegum_bundle, random_list_of, random_pubkey};
 pub use mpl_bubblegum::id as program_id;
 use mpl_bubblegum::state::{
     leaf_schema::{LeafSchema, Version},
     metaplex_adapter::{Creator, MetadataArgs, TokenProgramVersion},
     BubblegumEventType,
 };
-use plerkle_serialization::{CompiledInstruction, Pubkey};
+use plerkle_serialization::{Pubkey};
 use spl_account_compression::{
     events::{
         AccountCompressionEvent, ApplicationDataEvent, ApplicationDataEventV1, ChangeLogEvent,
     },
     state::PathNode,
 };
-use std::fs;
+
 mod helpers;
 
 #[test]
@@ -57,7 +57,7 @@ fn test_mint() {
     };
     let ix = mpl_bubblegum::instruction::MintV1 { message };
 
-    let lse = mpl_bubblegum::state::leaf_schema::LeafSchemaEvent {
+    let _lse = mpl_bubblegum::state::leaf_schema::LeafSchemaEvent {
         event_type: BubblegumEventType::LeafSchemaEvent,
         version: Version::V1,
         schema: LeafSchema::V1 {
@@ -81,7 +81,7 @@ fn test_mint() {
         0,
     );
 
-    let cs_event = AccountCompressionEvent::ChangeLog(cs);
+    let _cs_event = AccountCompressionEvent::ChangeLog(cs);
 
     let lse = mpl_bubblegum::state::leaf_schema::LeafSchemaEvent {
         event_type: BubblegumEventType::LeafSchemaEvent,
@@ -101,7 +101,7 @@ fn test_mint() {
         application_data: lse.try_to_vec().unwrap(),
     };
 
-    let lse_event =
+    let _lse_event =
         AccountCompressionEvent::ApplicationData(ApplicationDataEvent::V1(lse_versioned));
 
     let cs = ChangeLogEvent::new(
@@ -185,7 +185,7 @@ fn test_basic_success_parsing() {
         application_data: lse.try_to_vec().unwrap(),
     };
 
-    let lse_event =
+    let _lse_event =
         AccountCompressionEvent::ApplicationData(ApplicationDataEvent::V1(lse_versioned));
 
     let cs = ChangeLogEvent::new(

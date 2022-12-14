@@ -80,18 +80,18 @@ fn helium_nested<'a>(
     slot: u64,
     keys: &[FBPubkey],
 ) {
-    let mut ix = 0;
+    let _ix = 0;
 
     let contains = res
         .iter()
-        .any(|(ib, inner)| ib.0 .0.as_ref() == mpl_bubblegum::id().as_ref());
+        .any(|(ib, _inner)| ib.0 .0.as_ref() == mpl_bubblegum::id().as_ref());
     assert!(contains, "Must containe bgum at hoisted root");
     let subject = BubblegumParser {};
     for (outer_ix, inner_ix) in res.into_iter() {
         let (program, instruction) = outer_ix;
         let ix_accounts = instruction.accounts().unwrap().iter().collect::<Vec<_>>();
         let ix_account_len = ix_accounts.len();
-        let max = ix_accounts.iter().max().copied().unwrap_or(0) as usize;
+        let _max = ix_accounts.iter().max().copied().unwrap_or(0) as usize;
         let ix_accounts =
             ix_accounts
                 .iter()
@@ -117,7 +117,7 @@ fn helium_nested<'a>(
             _ => panic!("Wrong type"),
         };
 
-        if let (Some(le), Some(cl), Some(Payload::MintV1 { args })) = (
+        if let (Some(le), Some(cl), Some(Payload::MintV1 { args: _ })) = (
             &parse_result.leaf_update,
             &parse_result.tree_update,
             &parse_result.payload,

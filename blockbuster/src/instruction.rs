@@ -1,8 +1,7 @@
-use flatbuffers::{FlatBufferBuilder, ForwardsUOffset, Table, Vector};
-use mpl_candy_guard::instructions::unwrap;
+
+
 use plerkle_serialization::{
-    root_as_compiled_instruction, CompiledInstruction, CompiledInstructionArgs,
-    CompiledInstructionBuilder, InnerInstructions, Pubkey, TransactionInfo,
+    CompiledInstruction, InnerInstructions, Pubkey, TransactionInfo,
 };
 use std::collections::{HashSet, VecDeque};
 
@@ -58,7 +57,6 @@ pub fn order_instructions<'a, 'b>(
 
     for (i, instruction) in outer_instructions.iter().enumerate() {
         let program_id = keys.get(instruction.program_id_index() as usize).unwrap();
-        println!("program_id: {:?}", bs58::encode(program_id.0).into_string());
         let outer: IxPair = (**program_id, instruction);
         let inner: Option<Vec<IxPair>> =
             inner_ix_list.and_then(|x| fill_inner(x.iter(), &keys, i as u8));
@@ -67,11 +65,6 @@ pub fn order_instructions<'a, 'b>(
                 let inner_program_id = key;
                 if programs.get(inner_program_id.0.as_ref()).is_some() {
                     let new_inner_list = inner_ix.clone();
-                    println!(
-                        "\t\t hoisted {:?}",
-                        bs58::encode(inner_program_id.0).into_string()
-                    );
-
                     let local_inner = (*inner_program_id, *ix);
                     ordered_ixs.push_back((local_inner, Some(new_inner_list)));
                 }
@@ -95,21 +88,15 @@ fn fill_inner<'a>(
             let inner_program_id = keys
                 .get(inner_ix_instance.program_id_index() as usize)
                 .unwrap();
-            println!(
-                "\t\t inner {:?}",
-                bs58::encode(inner_program_id.0).into_string()
-            );
             inner_list.push_front((**inner_program_id, inner_ix_instance));
         }
         inner_list.into()
     })
 }
 
-fn get_hoisted_instructions() {}
-
 fn get_inner_ixs<'a>(
-    inner_ixs: impl Iterator<Item = InnerInstructions<'a>>,
+    mut inner_ixs: impl Iterator<Item = InnerInstructions<'a>>,
     outer_index: u8,
 ) -> Option<InnerInstructions<'a>> {
-    inner_ixs.filter(|inn| inn.index() == outer_index).next()
+    inner_ixs.find(|inn| inn.index() == outer_index)
 }

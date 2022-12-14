@@ -22,8 +22,7 @@ use solana_transaction_status::{
     EncodedConfirmedTransactionWithStatusMeta, UiInstruction, UiTransactionStatusMeta,
 };
 use spl_account_compression::events::{
-    AccountCompressionEvent, ApplicationDataEvent, ApplicationDataEventV1, ChangeLogEvent,
-    ChangeLogEventV1,
+    AccountCompressionEvent, ApplicationDataEvent, ApplicationDataEventV1,
 };
 use std::fs::File;
 use std::io::BufReader;
@@ -256,7 +255,7 @@ pub fn build_random_account_update<'a>(
 }
 
 fn serialize_transaction<'a>(
-    mut builder: &mut FlatBufferBuilder<'a>,
+    builder: &mut FlatBufferBuilder<'a>,
     tx: EncodedConfirmedTransactionWithStatusMeta,
 ) -> Result<(), BlockbusterError> {
     let meta: UiTransactionStatusMeta = tx.transaction.meta.unwrap();
@@ -314,7 +313,7 @@ fn serialize_transaction<'a>(
                         .map_err(|e| BlockbusterError::IOError(e.to_string()))?;
                     let data = Some(builder.create_vector(&data));
                     instructions_fb_vec.push(CompiledInstruction::create(
-                        &mut builder,
+                        builder,
                         &CompiledInstructionArgs {
                             program_id_index,
                             accounts,
@@ -326,7 +325,7 @@ fn serialize_transaction<'a>(
 
             let instructions = Some(builder.create_vector(&instructions_fb_vec));
             overall_fb_vec.push(InnerInstructions::create(
-                &mut builder,
+                builder,
                 &InnerInstructionsArgs {
                     index,
                     instructions,
@@ -351,7 +350,7 @@ fn serialize_transaction<'a>(
                 .map_err(|e| BlockbusterError::IOError(e.to_string()))?;
             let data = Some(builder.create_vector(&data));
             instructions_fb_vec.push(CompiledInstruction::create(
-                &mut builder,
+                builder,
                 &CompiledInstructionArgs {
                     program_id_index,
                     accounts,
@@ -368,7 +367,7 @@ fn serialize_transaction<'a>(
 
     let sig_db = builder.create_string(&sig);
     let transaction_info = TransactionInfo::create(
-        &mut builder,
+        builder,
         &TransactionInfoArgs {
             is_vote: false,
             account_keys,
@@ -415,21 +414,19 @@ pub fn build_bubblegum_bundle<'a>(
     };
     let lse_event =
         AccountCompressionEvent::ApplicationData(ApplicationDataEvent::V1(lse_versioned));
-    let outer_ix = build_instruction(fbb1, ix_data, &account_indexes).unwrap();
+    let outer_ix = build_instruction(fbb1, ix_data, account_indexes).unwrap();
     let lse = lse_event.try_to_vec().unwrap();
     let noop_bgum = spl_noop::instruction(lse).data;
-    let ix = build_instruction(fbb2, &noop_bgum, &account_indexes).unwrap();
+    let ix = build_instruction(fbb2, &noop_bgum, account_indexes).unwrap();
     let noop_bgum_ix: IxPair = (FBPubkey(spl_noop::id().to_bytes()), ix);
     // The Compression Instruction here doesnt matter only the noop but we add it here to ensure we are validating that one Account compression event is happening after Bubblegum
-    let ix = build_instruction(fbb3, &[0; 0], &account_indexes)
-        .unwrap()
-        .clone();
+    let ix = build_instruction(fbb3, &[0; 0], account_indexes)
+        .unwrap();
     let gummy_roll_ix: IxPair = (FBPubkey(spl_account_compression::id().to_bytes()), ix);
     let cs = cs_event.try_to_vec().unwrap();
     let noop_compression = spl_noop::instruction(cs).data;
-    let ix = build_instruction(fbb4, &noop_compression, &account_indexes)
-        .unwrap()
-        .clone();
+    let ix = build_instruction(fbb4, &noop_compression, account_indexes)
+        .unwrap();
     let noop_compression_ix = (FBPubkey(spl_noop::id().to_bytes()), ix);
 
     let inner_ix = vec![noop_bgum_ix, gummy_roll_ix, noop_compression_ix];
@@ -437,5 +434,5 @@ pub fn build_bubblegum_bundle<'a>(
     ixb.program = FBPubkey(program_id().to_bytes());
     ixb.inner_ix = Some(inner_ix);
     ixb.keys = accounts.as_slice();
-    ixb.instruction = Some(outer_ix.clone());
+    ixb.instruction = Some(outer_ix);
 }
