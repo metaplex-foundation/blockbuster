@@ -35,3 +35,9 @@ fn test_filter() {
     let res = order_instructions(HashSet::new(), &txn);
     assert_eq!(res.len(), 0);
 }
+
+#[test]
+fn test_cpi_nesting() {
+
+    
+}

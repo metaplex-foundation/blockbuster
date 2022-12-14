@@ -16,11 +16,13 @@ use plerkle_serialization::{
 use rand::Rng;
 use solana_geyser_plugin_interface::geyser_plugin_interface::ReplicaAccountInfo;
 use solana_sdk::pubkey::Pubkey;
+use solana_transaction_status::EncodedConfirmedTransactionWithStatusMeta;
 use spl_account_compression::events::{
     AccountCompressionEvent, ApplicationDataEvent, ApplicationDataEventV1, ChangeLogEvent,
     ChangeLogEventV1,
 };
-
+use std::fs::File;
+use std::io::BufReader;
 pub fn random_program() -> Pubkey {
     Pubkey::new_unique()
 }
@@ -137,7 +139,8 @@ pub fn get_programs(txn_info: TransactionInfo) -> Vec<Pubkey> {
                 &txn_info
                     .account_keys()
                     .unwrap()
-                    .iter().collect::<Vec<_>>()
+                    .iter()
+                    .collect::<Vec<_>>()
                     .get(ix.program_id_index() as usize)
                     .unwrap()
                     .0,
@@ -155,7 +158,8 @@ pub fn get_programs(txn_info: TransactionInfo) -> Vec<Pubkey> {
                     &txn_info
                         .account_keys()
                         .unwrap()
-                        .iter().collect::<Vec<_>>()
+                        .iter()
+                        .collect::<Vec<_>>()
                         .get(p.program_id_index() as usize)
                         .unwrap()
                         .0,
@@ -244,6 +248,12 @@ pub fn build_random_account_update<'a>(
 
     // Flatbuffer serialize the `ReplicaAccountInfo`.
     build_account_update(fbb, &replica_account_info, 0, false)
+}
+
+pub fn build_txn_from_fixture<'a>(fixture_name: String, fbb: &'a mut FlatBufferBuilder<'a>) -> Result<, flatbuffers::InvalidFlatbuffer> {
+    let file = File::open(format!("tests/fixtures/{}", fixture_name)).unwrap();
+    let reader = BufReader::new(file);
+    let ectxn = serde_json::from_reader(reader)?;
 }
 
 pub fn build_bubblegum_bundle<'a>(

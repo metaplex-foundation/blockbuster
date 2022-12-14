@@ -156,7 +156,7 @@ impl ProgramParser for BubblegumParser {
             let ix_data = &outer_ix_data[8..];
             if !ix_data.is_empty() {
                 match b_inst.instruction {
-                    InstructionName::MintV1 | InstructionName::VerifyCollection => {
+                    InstructionName::MintV1 | InstructionName::MintToCollectionV1 => {
                         let args: MetadataArgs = MetadataArgs::try_from_slice(ix_data)?;
                         b_inst.payload = Some(Payload::MintV1 { args });
                     }
