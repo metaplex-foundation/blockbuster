@@ -66,7 +66,7 @@ impl ProgramParser for TokenAccountParser {
             }
             82 => {
                 let mint = Mint::unpack(&account_data)
-                    .map_err(|_| BlockbusterError::DeserializationError)?;
+                    .map_err(|_| BlockbusterError::CustomDeserializationError("Token MINT Unpack Failed".to_string()))?;
 
                 TokenProgramAccount::Mint(mint)
             }
