@@ -18,6 +18,7 @@ pub struct TokenAccountParser;
 pub enum TokenProgramAccount {
     Mint(Mint),
     TokenAccount(TokenAccount),
+    EmptyAccount
 }
 
 impl ParseResult for TokenProgramAccount {
@@ -53,13 +54,13 @@ impl ProgramParser for TokenAccountParser {
         let account_data = if let Some(account_info) = account_info.data() {
             account_info.iter().collect::<Vec<_>>()
         } else {
-            return Err(BlockbusterError::DeserializationError);
+            return Ok(Box::new(TokenProgramAccount::EmptyAccount));
         };
 
         let account_type = match account_data.len() {
             165 => {
                 let token_account = TokenAccount::unpack(&account_data)
-                    .map_err(|_| BlockbusterError::DeserializationError)?;
+                    .map_err(|_| BlockbusterError::CustomDeserializationError("Token Account Unpack Failed".to_string()))?;
 
                 TokenProgramAccount::TokenAccount(token_account)
             }

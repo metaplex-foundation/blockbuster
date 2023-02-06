@@ -13,9 +13,12 @@ pub use mpl_bubblegum::{
     state::leaf_schema::{LeafSchema, LeafSchemaEvent},
     InstructionName,
 };
-use mpl_token_metadata::state::{
-    CollectionAuthorityRecord, Edition, EditionMarker, Key, MasterEditionV1, MasterEditionV2,
-    Metadata, ReservationListV1, ReservationListV2, UseAuthorityRecord,
+use mpl_token_metadata::{
+    state::{
+        CollectionAuthorityRecord, Edition, EditionMarker, Key, MasterEditionV1, MasterEditionV2,
+        Metadata, ReservationListV1, ReservationListV2, UseAuthorityRecord,
+    },
+    utils::meta_deser_unchecked,
 };
 
 pubkeys!(
@@ -33,6 +36,7 @@ pub enum TokenMetadataAccountData {
     CollectionAuthorityRecord(CollectionAuthorityRecord),
     ReservationListV2(ReservationListV2),
     ReservationListV1(ReservationListV1),
+    EmptyAccount,
 }
 
 pub struct TokenMetadataAccountState {
@@ -77,10 +81,16 @@ impl ProgramParser for TokenMetadataParser {
         let account_data = if let Some(account_info) = account_info.data() {
             account_info.iter().collect::<Vec<_>>()
         } else {
-            return Err(BlockbusterError::DeserializationError);
+            return Ok(Box::new(TokenMetadataAccountState {
+                key: Key::Uninitialized,
+                data: TokenMetadataAccountData::EmptyAccount,
+            }));
         };
         if account_data.is_empty() {
-            return Err(BlockbusterError::InvalidDataLength);
+            return Ok(Box::new(TokenMetadataAccountState {
+                key: Key::Uninitialized,
+                data: TokenMetadataAccountData::EmptyAccount,
+            }));
         }
         let key = Key::try_from_slice(&account_data[0..1])?;
         let token_metadata_account_state = match key {
@@ -133,7 +143,7 @@ impl ProgramParser for TokenMetadataParser {
                 }
             }
             Key::MetadataV1 => {
-                let account: Metadata = try_from_slice_unchecked(&account_data)?;
+                let account: Metadata = meta_deser_unchecked(&mut account_data.as_slice())?;
 
                 TokenMetadataAccountState {
                     key: account.key,
