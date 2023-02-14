@@ -1,20 +1,22 @@
 #[cfg(test)]
 mod helpers;
+use anchor_lang::AnchorDeserialize;
 use blockbuster::{
     instruction::{order_instructions, InstructionBundle, IxPair},
     program_handler::ProgramParser,
     programs::{
         bubblegum::{BubblegumParser, Payload},
-        ProgramParseResult,
+        ProgramParseResult, token_metadata::LeafSchemaEvent,
     },
 };
 use flatbuffers::FlatBufferBuilder;
 use helpers::*;
-use plerkle_serialization::{root_as_transaction_info, Pubkey as FBPubkey};
+use plerkle_serialization::{root_as_transaction_info, Pubkey as FBPubkey, TransactionInfo};
 use rand::prelude::IteratorRandom;
+use spl_account_compression::events::{AccountCompressionEvent::{self, ApplicationData}, ApplicationDataEvent};
 use std::collections::{HashSet, VecDeque};
-use std::{env, fs};
-
+use std::{env};
+use solana_sdk::pubkey::Pubkey;
 #[test]
 fn test_filter() {
     let mut rng = rand::thread_rng();
@@ -22,7 +24,6 @@ fn test_filter() {
     let fbb = build_random_transaction(fbb);
     let data = fbb.finished_data();
     let txn = root_as_transaction_info(data).expect("TODO: panic message");
-    println!("\t\t accounts {:?}", txn.account_keys());
     let programs = get_programs(txn);
     let chosen_progs = programs.iter().choose_multiple(&mut rng, 3);
     let mut hs = HashSet::new();
@@ -34,7 +35,6 @@ fn test_filter() {
     let hsb = hs.clone();
     let res = order_instructions(hs, &txn);
     for (ib, _inner) in res.iter() {
-        println!("\t\t matching {:?}", ib.0);
         let public_key_matches = hsb.contains(&ib.0 .0.as_ref());
         assert!(public_key_matches);
     }
@@ -43,43 +43,28 @@ fn test_filter() {
     assert_eq!(res.len(), 0);
 }
 
-#[test]
-fn test_fixtures() {
+fn prepare_fixture<'a>(fbb: &'a mut FlatBufferBuilder<'a>, fixture: &'a str) -> TransactionInfo<'a> {
     println!("{:?}", env::current_dir());
-    let files = fs::read_dir("tests/fixtures").unwrap();
-    let fitxtures = files
-        .filter_map(|d| d.ok())
-        .filter(|d| d.path().extension().unwrap() == "json")
-        .map(|d| d.path().file_stem().unwrap().to_owned())
-        .collect::<Vec<_>>();
-
-    for fixture in fitxtures {
-        let fbb = FlatBufferBuilder::new();
-        let name = fixture.into_string().unwrap();
-        let fbb = build_txn_from_fixture(name.clone(), fbb).unwrap();
-
-        let data = fbb.finished_data();
-        let txn = root_as_transaction_info(data).expect("Fail deser");
-        let mut prog = HashSet::new();
-        let id = mpl_bubblegum::id();
-        prog.insert(id.as_ref());
-        let res = order_instructions(prog, &txn);
-        let accounts = txn.account_keys().unwrap();
-        let mut va: Vec<FBPubkey> = Vec::with_capacity(accounts.len());
-        for k in accounts.into_iter() {
-            va.push(*k);
-        }
-        if name == "helium_nested" {
-            helium_nested(res, txn.slot(), &va);
-        }
-    }
+    let name = fixture.to_string();
+    let fbb = build_txn_from_fixture(name.clone(),fbb).unwrap();
+    root_as_transaction_info(fbb.finished_data()).expect("Fail deser")
 }
 
-fn helium_nested<'a>(
-    res: VecDeque<(IxPair<'a>, Option<Vec<IxPair<'a>>>)>,
-    slot: u64,
-    keys: &[FBPubkey],
-) {
+#[test]
+fn helium_nested() {
+    let mut fbb = FlatBufferBuilder::new();
+    let txn = prepare_fixture(&mut fbb, "helium_nested");
+    let mut prog = HashSet::new();
+    let id = mpl_bubblegum::id();
+    let slot = txn.slot();
+    prog.insert(id.as_ref());
+    let res = order_instructions(prog, &txn);
+    let accounts = txn.account_keys().unwrap();
+    let mut keys: Vec<FBPubkey> = Vec::with_capacity(accounts.len());
+    for k in accounts.into_iter() {
+        keys.push(*k);
+    }
+
     let _ix = 0;
 
     let contains = res
@@ -122,9 +107,39 @@ fn helium_nested<'a>(
             &parse_result.tree_update,
             &parse_result.payload,
         ) {
-            println!("{:?} {:?}", le, cl.id);
+            
         } else {
             panic!("Failed to parse instruction");
         }
     }
+}
+
+
+#[test]
+fn test_double_mint() {
+    let mut fbb = FlatBufferBuilder::new();
+    let txn = prepare_fixture(&mut fbb, "double_bubblegum_mint");
+    let mut programs = HashSet::new();
+    let subject = BubblegumParser {}.key();
+    programs.insert(subject.as_ref());
+    let ix = order_instructions(programs, &txn);
+    assert_eq!(ix.len(), 2);
+    for i in ix {
+        let (program, instruction) = i.0;
+        let inner = i.1.unwrap();
+        for ii in &inner {
+            println!("{:?}", Pubkey::new(&ii.0 .0.as_ref()));  
+        }
+        println!("------");  
+        
+        let ace = AccountCompressionEvent::try_from_slice(inner[1].1.data().unwrap().bytes()).unwrap();
+        // let lse = if let AccountCompressionEvent::ApplicationData(ApplicationDataEvent::V1(leaf)) = ace {
+        //     LeafSchemaEvent::try_from_slice(&leaf.application_data.as_slice()).unwrap()
+        // } else  {
+        //     panic!("Failed to parse instruction");
+        // };
+       // println!("{:?}",lse);
+        assert_eq!(inner.len(), 4);
+    }
+
 }

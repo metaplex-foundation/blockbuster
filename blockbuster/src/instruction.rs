@@ -63,6 +63,7 @@ pub fn order_instructions<'a, 'b>(
         if let Some(inner_ix) = &inner {
             for (key, ix) in inner_ix {
                 let inner_program_id = key;
+                //hoist inner ixes if they are in the program list
                 if programs.get(inner_program_id.0.as_ref()).is_some() {
                     let new_inner_list = inner_ix.clone();
                     let local_inner = (*inner_program_id, *ix);
@@ -88,7 +89,7 @@ fn fill_inner<'a>(
             let inner_program_id = keys
                 .get(inner_ix_instance.program_id_index() as usize)
                 .unwrap();
-            inner_list.push_front((**inner_program_id, inner_ix_instance));
+            inner_list.push_back((**inner_program_id, inner_ix_instance));
         }
         inner_list.into()
     })

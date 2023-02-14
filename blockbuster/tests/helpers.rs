@@ -19,7 +19,7 @@ use solana_geyser_plugin_interface::geyser_plugin_interface::ReplicaAccountInfo;
 use solana_sdk::{bs58, pubkey::Pubkey, transaction::VersionedTransaction};
 use solana_transaction_status::{
     option_serializer::OptionSerializer, EncodableWithMeta,
-    EncodedConfirmedTransactionWithStatusMeta, UiInstruction, UiTransactionStatusMeta,
+    EncodedConfirmedTransactionWithStatusMeta, UiInstruction, UiTransactionStatusMeta, EncodedTransaction,
 };
 use spl_account_compression::events::{
     AccountCompressionEvent, ApplicationDataEvent, ApplicationDataEventV1,
@@ -254,7 +254,7 @@ pub fn build_random_account_update<'a>(
     build_account_update(fbb, &replica_account_info, 0, false)
 }
 
-fn serialize_transaction<'a>(
+pub fn  serialize_transaction<'a>(
     builder: &mut FlatBufferBuilder<'a>,
     tx: EncodedConfirmedTransactionWithStatusMeta,
 ) -> Result<(), BlockbusterError> {
@@ -388,12 +388,12 @@ fn serialize_transaction<'a>(
 
 pub fn build_txn_from_fixture<'a>(
     fixture_name: String,
-    mut fbb: FlatBufferBuilder<'a>,
-) -> Result<FlatBufferBuilder, BlockbusterError> {
-    let file = File::open(format!("tests/fixtures/{}.json", fixture_name)).unwrap();
+    fbb: &'a mut FlatBufferBuilder<'a>,
+) -> Result<&'a mut FlatBufferBuilder, BlockbusterError> {
+    let file = File::open(format!("{}/tests/fixtures/{}.json", env!("CARGO_MANIFEST_DIR"), fixture_name)).unwrap();
     let reader = BufReader::new(file);
     let ectxn: EncodedConfirmedTransactionWithStatusMeta = serde_json::from_reader(reader).unwrap();
-    serialize_transaction(&mut fbb, ectxn)?;
+    serialize_transaction(fbb, ectxn)?;
     Ok(fbb)
 }
 
@@ -436,3 +436,5 @@ pub fn build_bubblegum_bundle<'a>(
     ixb.keys = accounts.as_slice();
     ixb.instruction = Some(outer_ix);
 }
+
+

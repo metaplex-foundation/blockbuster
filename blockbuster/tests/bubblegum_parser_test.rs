@@ -1,20 +1,22 @@
+use std::collections::HashSet;
+
 #[cfg(test)]
 use anchor_lang::{prelude::*, InstructionData};
 use blockbuster::{
-    instruction::{InstructionBundle},
+    instruction::{InstructionBundle, order_instructions},
     program_handler::ProgramParser,
     programs::{bubblegum::BubblegumParser, ProgramParseResult},
 };
 use borsh::ser::BorshSerialize;
 use flatbuffers::FlatBufferBuilder;
-use helpers::{build_bubblegum_bundle, random_list_of, random_pubkey};
+use helpers::*;
 pub use mpl_bubblegum::id as program_id;
 use mpl_bubblegum::state::{
     leaf_schema::{LeafSchema, Version},
     metaplex_adapter::{Creator, MetadataArgs, TokenProgramVersion},
     BubblegumEventType,
 };
-use plerkle_serialization::{Pubkey};
+use plerkle_serialization::{Pubkey, root_as_transaction_info};
 use spl_account_compression::{
     events::{
         AccountCompressionEvent, ApplicationDataEvent, ApplicationDataEventV1, ChangeLogEvent,
