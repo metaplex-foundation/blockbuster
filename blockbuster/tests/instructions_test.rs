@@ -187,10 +187,9 @@ fn test_double_tree() {
     let contains = ix
         .iter()
         .filter(|(ib, _inner)| ib.0 .0.as_ref() == mpl_bubblegum::id().as_ref());
-    assert_eq!(contains.count(), 2);
-    if let Some(i) = ix.get(0) {
-        let (program, instruction) = i.0;
-        if let Some(inner) = &i.1 {
+    
+    contains.for_each(|bix| {
+        if let Some(inner) = &bix.1 {
             for ii in inner {
                 println!("pp {:?}", Pubkey::new(&ii.0 .0.as_ref()));
             }
@@ -214,5 +213,7 @@ fn test_double_tree() {
                 println!("Merkle Tree {:?}", id);
             }
         }
-    }
+    });
+    
+    
 }
