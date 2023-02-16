@@ -31,7 +31,7 @@ pub enum Payload {
     CancelRedeem { root: [u8; 32] },
     VerifyCreator { creator: Pubkey },
     UnverifyCreator { creator: Pubkey },
-    SetAndVerifyCollection { collection: Pubkey },
+    SetAndVerifyCollection { collection: Pubkey }
 }
 //TODO add more of the parsing here to minimize program transformer code
 pub struct BubblegumInstruction {

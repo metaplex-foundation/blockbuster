@@ -86,8 +86,9 @@ fn fill_inner<'a>(
     get_inner_ixs(ixes, index).map(|inner_ixs| {
         let mut inner_list: VecDeque<IxPair> = VecDeque::new();
         for inner_ix_instance in inner_ixs.instructions().unwrap() {
+            let i = inner_ix_instance.program_id_index() as usize;
             let inner_program_id = keys
-                .get(inner_ix_instance.program_id_index() as usize)
+                .get(i)
                 .unwrap();
             inner_list.push_back((**inner_program_id, inner_ix_instance));
         }

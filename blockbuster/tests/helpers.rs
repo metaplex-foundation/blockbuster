@@ -24,7 +24,7 @@ use solana_transaction_status::{
 use spl_account_compression::events::{
     AccountCompressionEvent, ApplicationDataEvent, ApplicationDataEventV1,
 };
-use std::fs::File;
+use std::{fs::File, collections::HashSet};
 use std::io::BufReader;
 use std::str::FromStr;
 pub fn random_program() -> Pubkey {
@@ -258,40 +258,46 @@ pub fn  serialize_transaction<'a>(
     builder: &mut FlatBufferBuilder<'a>,
     tx: EncodedConfirmedTransactionWithStatusMeta,
 ) -> Result<(), BlockbusterError> {
-    let meta: UiTransactionStatusMeta = tx.transaction.meta.unwrap();
+    let meta: UiTransactionStatusMeta = tx.transaction.meta.unwrap();    
     // Get `UiTransaction` out of `EncodedTransactionWithStatusMeta`.
     let ui_transaction: VersionedTransaction = tx.transaction.transaction.decode().unwrap();
-    let ui_transaction = ui_transaction.json_encode();
-    let ui_transaction = match ui_transaction {
-        solana_transaction_status::EncodedTransaction::Json(ui) => ui,
-        _ => {
-            return Err(BlockbusterError::IOError("EncodedTransaction".to_string()));
-        }
-    };
-    let ui_raw_message = match &ui_transaction.message {
-        solana_transaction_status::UiMessage::Raw(ui_raw_message) => ui_raw_message,
-        _ => {
-            return Err(BlockbusterError::IOError("UiMessage".to_string()));
-        }
-    };
-
+    let msg = ui_transaction.message;
+    let atl_keys = msg.address_table_lookups();
+    let account_keys = msg.static_account_keys();
     let sig = ui_transaction.signatures[0].to_string();
 
-    // Serialize account keys.
-    let account_keys_len = ui_raw_message.account_keys.len();
+   
 
-    let account_keys = if account_keys_len > 0 {
-        let mut account_keys_fb_vec = Vec::with_capacity(account_keys_len);
-        for key in ui_raw_message.account_keys.iter() {
-            let key =
-                Pubkey::from_str(key).map_err(|e| BlockbusterError::IOError(e.to_string()))?;
+    let account_keys = {
+        let mut account_keys_fb_vec = vec![];
+        for key in account_keys.iter() {
             account_keys_fb_vec.push(FBPubkey(key.to_bytes()));
         }
-        Some(builder.create_vector(&account_keys_fb_vec))
-    } else {
-        None
+        if atl_keys.is_some() {
+            if let OptionSerializer::Some(ad) = meta.loaded_addresses {
+                for i in ad.writable {
+                    let mut output: [u8;32] = [0; 32];
+                    bs58::decode(i).into(&mut output).unwrap();
+                    let pubkey = FBPubkey(output);
+                    account_keys_fb_vec.push(pubkey);
+                }
+                
+                for i in ad.readonly {
+                    let mut output: [u8;32] = [0; 32];
+                    bs58::decode(i).into(&mut output).unwrap();
+                    let pubkey = FBPubkey(output);
+                    account_keys_fb_vec.push(pubkey);
+                }
+                
+            }
+        }
+        if account_keys_fb_vec.len() > 0 {
+            Some(builder.create_vector(&account_keys_fb_vec))
+        } else {
+            None
+        }
     };
-
+   
     // Serialize log messages.
     // We dont use them for now.
     let log_messages = None;
@@ -339,16 +345,14 @@ pub fn  serialize_transaction<'a>(
     };
 
     // Serialize outer instructions.
-    let outer_instructions = &ui_raw_message.instructions;
+    let outer_instructions = &msg.instructions();
     let outer_instructions = if !outer_instructions.is_empty() {
         let mut instructions_fb_vec = Vec::with_capacity(outer_instructions.len());
         for ui_compiled_instruction in outer_instructions.iter() {
             let program_id_index = ui_compiled_instruction.program_id_index;
             let accounts = Some(builder.create_vector(&ui_compiled_instruction.accounts));
-            let data = bs58::decode(&ui_compiled_instruction.data)
-                .into_vec()
-                .map_err(|e| BlockbusterError::IOError(e.to_string()))?;
-            let data = Some(builder.create_vector(&data));
+                
+            let data = Some(builder.create_vector(&ui_compiled_instruction.data));
             instructions_fb_vec.push(CompiledInstruction::create(
                 builder,
                 &CompiledInstructionArgs {

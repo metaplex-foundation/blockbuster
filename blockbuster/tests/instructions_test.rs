@@ -6,17 +6,21 @@ use blockbuster::{
     program_handler::ProgramParser,
     programs::{
         bubblegum::{BubblegumParser, Payload},
-        ProgramParseResult, token_metadata::LeafSchemaEvent,
+        token_metadata::{LeafSchema, LeafSchemaEvent},
+        ProgramParseResult,
     },
 };
 use flatbuffers::FlatBufferBuilder;
 use helpers::*;
 use plerkle_serialization::{root_as_transaction_info, Pubkey as FBPubkey, TransactionInfo};
 use rand::prelude::IteratorRandom;
-use spl_account_compression::events::{AccountCompressionEvent::{self, ApplicationData}, ApplicationDataEvent};
-use std::collections::{HashSet, VecDeque};
-use std::{env};
 use solana_sdk::pubkey::Pubkey;
+use spl_account_compression::events::{
+    AccountCompressionEvent::{self, ApplicationData},
+    ApplicationDataEvent, ApplicationDataEventV1, ChangeLogEvent, ChangeLogEventV1,
+};
+use std::collections::{HashSet, VecDeque};
+use std::env;
 #[test]
 fn test_filter() {
     let mut rng = rand::thread_rng();
@@ -43,10 +47,13 @@ fn test_filter() {
     assert_eq!(res.len(), 0);
 }
 
-fn prepare_fixture<'a>(fbb: &'a mut FlatBufferBuilder<'a>, fixture: &'a str) -> TransactionInfo<'a> {
+fn prepare_fixture<'a>(
+    fbb: &'a mut FlatBufferBuilder<'a>,
+    fixture: &'a str,
+) -> TransactionInfo<'a> {
     println!("{:?}", env::current_dir());
     let name = fixture.to_string();
-    let fbb = build_txn_from_fixture(name.clone(),fbb).unwrap();
+    let fbb = build_txn_from_fixture(name.clone(), fbb).unwrap();
     root_as_transaction_info(fbb.finished_data()).expect("Fail deser")
 }
 
@@ -107,13 +114,11 @@ fn helium_nested() {
             &parse_result.tree_update,
             &parse_result.payload,
         ) {
-            
         } else {
             panic!("Failed to parse instruction");
         }
     }
 }
-
 
 #[test]
 fn test_double_mint() {
@@ -123,23 +128,91 @@ fn test_double_mint() {
     let subject = BubblegumParser {}.key();
     programs.insert(subject.as_ref());
     let ix = order_instructions(programs, &txn);
+    let contains = ix
+        .iter()
+        .filter(|(ib, _inner)| ib.0 .0.as_ref() == mpl_bubblegum::id().as_ref());
+    assert_eq!(contains.count(), 2);
     assert_eq!(ix.len(), 2);
     for i in ix {
         let (program, instruction) = i.0;
         let inner = i.1.unwrap();
         for ii in &inner {
-            println!("{:?}", Pubkey::new(&ii.0 .0.as_ref()));  
+            println!("{:?}", Pubkey::new(&ii.0 .0.as_ref()));
         }
-        println!("------");  
-        
-        let ace = AccountCompressionEvent::try_from_slice(inner[1].1.data().unwrap().bytes()).unwrap();
-        // let lse = if let AccountCompressionEvent::ApplicationData(ApplicationDataEvent::V1(leaf)) = ace {
-        //     LeafSchemaEvent::try_from_slice(&leaf.application_data.as_slice()).unwrap()
-        // } else  {
-        //     panic!("Failed to parse instruction");
-        // };
-       // println!("{:?}",lse);
+        let ace =
+            AccountCompressionEvent::try_from_slice(inner[1].1.data().unwrap().bytes()).unwrap();
+        if let AccountCompressionEvent::ApplicationData(ApplicationDataEvent::V1(
+            ApplicationDataEventV1 {
+                application_data, ..
+            },
+        )) = ace
+        {
+            let lse = LeafSchemaEvent::try_from_slice(&application_data).unwrap();
+            let LeafSchema::V1 {
+                id,
+                owner,
+                delegate,
+                nonce,
+                data_hash,
+                creator_hash,
+            } = lse.schema;
+
+            println!("Nonce {}", nonce);
+        } else {
+            panic!("Failed to parse instruction");
+        }
+        let cle =
+            AccountCompressionEvent::try_from_slice(inner[3].1.data().unwrap().bytes()).unwrap();
+        if let AccountCompressionEvent::ChangeLog(ChangeLogEvent::V1(ChangeLogEventV1 {
+            id, ..
+        })) = cle
+        {
+            println!("ID {:?}", id);
+        } else {
+            panic!("Failed to parse instruction");
+        }
+
         assert_eq!(inner.len(), 4);
     }
+}
 
+#[test]
+fn test_double_tree() {
+    let mut fbb = FlatBufferBuilder::new();
+    let txn = prepare_fixture(&mut fbb, "helium_mint_double_tree");
+    let mut programs = HashSet::new();
+    let subject = BubblegumParser {}.key();
+    programs.insert(subject.as_ref());
+    let ix = order_instructions(programs, &txn);
+    let contains = ix
+        .iter()
+        .filter(|(ib, _inner)| ib.0 .0.as_ref() == mpl_bubblegum::id().as_ref());
+    assert_eq!(contains.count(), 2);
+    if let Some(i) = ix.get(0) {
+        let (program, instruction) = i.0;
+        if let Some(inner) = &i.1 {
+            for ii in inner {
+                println!("pp {:?}", Pubkey::new(&ii.0 .0.as_ref()));
+            }
+            println!("------");
+            let cl = AccountCompressionEvent::try_from_slice(inner[8].1.data().unwrap().bytes())
+                .unwrap();
+            if let AccountCompressionEvent::ChangeLog(ChangeLogEvent::V1(ChangeLogEventV1 {
+                id,
+                ..
+            })) = cl
+            {
+                println!("Merkle Tree {:?}", id);
+            }
+            let cl = AccountCompressionEvent::try_from_slice(inner[16].1.data().unwrap().bytes())
+                .unwrap();
+            if let AccountCompressionEvent::ChangeLog(ChangeLogEvent::V1(ChangeLogEventV1 {
+                id,
+                ..
+            })) = cl
+            {
+                println!("Merkle Tree {:?}", id);
+            }
+        }
+    }
 }
