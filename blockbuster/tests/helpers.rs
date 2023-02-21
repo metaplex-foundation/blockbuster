@@ -1,26 +1,33 @@
 // Workaround since this module is only used for testing.
 #![allow(dead_code)]
-
-extern crate core;
-
-use blockbuster::instruction::{InstructionBundle, IxPair};
+use blockbuster::{
+    error::BlockbusterError,
+    instruction::{InstructionBundle, IxPair},
+};
 use borsh::ser::BorshSerialize;
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
 pub use mpl_bubblegum::id as program_id;
 use mpl_bubblegum::state::leaf_schema::LeafSchemaEvent;
 use plerkle_serialization::{
     root_as_account_info, root_as_compiled_instruction, AccountInfo, AccountInfoArgs,
-    CompiledInstruction, CompiledInstructionBuilder, InnerInstructionsBuilder, Pubkey as FBPubkey,
-    TransactionInfo, TransactionInfoBuilder,
+    serializer::seralize_encoded_transaction_with_status,
+    CompiledInstruction, CompiledInstructionArgs, CompiledInstructionBuilder, InnerInstructions,
+    InnerInstructionsArgs, InnerInstructionsBuilder, Pubkey as FBPubkey, TransactionInfo,
+    TransactionInfoArgs, TransactionInfoBuilder,
 };
 use rand::Rng;
 use solana_geyser_plugin_interface::geyser_plugin_interface::ReplicaAccountInfo;
-use solana_sdk::pubkey::Pubkey;
-use spl_account_compression::events::{
-    AccountCompressionEvent, ApplicationDataEvent, ApplicationDataEventV1, ChangeLogEvent,
-    ChangeLogEventV1,
+use solana_sdk::{bs58, pubkey::Pubkey, transaction::VersionedTransaction};
+use solana_transaction_status::{
+    option_serializer::OptionSerializer, EncodableWithMeta,
+    EncodedConfirmedTransactionWithStatusMeta, UiInstruction, UiTransactionStatusMeta, EncodedTransaction,
 };
-
+use spl_account_compression::events::{
+    AccountCompressionEvent, ApplicationDataEvent, ApplicationDataEventV1,
+};
+use std::{fs::File, collections::HashSet};
+use std::io::BufReader;
+use std::str::FromStr;
 pub fn random_program() -> Pubkey {
     Pubkey::new_unique()
 }
@@ -137,7 +144,8 @@ pub fn get_programs(txn_info: TransactionInfo) -> Vec<Pubkey> {
                 &txn_info
                     .account_keys()
                     .unwrap()
-                    .iter().collect::<Vec<_>>()
+                    .iter()
+                    .collect::<Vec<_>>()
                     .get(ix.program_id_index() as usize)
                     .unwrap()
                     .0,
@@ -155,7 +163,8 @@ pub fn get_programs(txn_info: TransactionInfo) -> Vec<Pubkey> {
                     &txn_info
                         .account_keys()
                         .unwrap()
-                        .iter().collect::<Vec<_>>()
+                        .iter()
+                        .collect::<Vec<_>>()
                         .get(p.program_id_index() as usize)
                         .unwrap()
                         .0,
@@ -246,6 +255,17 @@ pub fn build_random_account_update<'a>(
     build_account_update(fbb, &replica_account_info, 0, false)
 }
 
+pub fn build_txn_from_fixture<'a>(
+    fixture_name: String,
+    fbb: FlatBufferBuilder<'a>,
+) -> Result<FlatBufferBuilder<'a>, BlockbusterError> {
+    let file = File::open(format!("{}/tests/fixtures/{}.json", env!("CARGO_MANIFEST_DIR"), fixture_name)).unwrap();
+    let reader = BufReader::new(file);
+    let ectxn: EncodedConfirmedTransactionWithStatusMeta = serde_json::from_reader(reader).unwrap();
+    seralize_encoded_transaction_with_status(fbb, ectxn)
+    .map_err(Into::into)
+}
+
 pub fn build_bubblegum_bundle<'a>(
     fbb1: &'a mut FlatBufferBuilder<'a>,
     fbb2: &'a mut FlatBufferBuilder<'a>,
@@ -263,21 +283,19 @@ pub fn build_bubblegum_bundle<'a>(
     };
     let lse_event =
         AccountCompressionEvent::ApplicationData(ApplicationDataEvent::V1(lse_versioned));
-    let outer_ix = build_instruction(fbb1, ix_data, &account_indexes).unwrap();
+    let outer_ix = build_instruction(fbb1, ix_data, account_indexes).unwrap();
     let lse = lse_event.try_to_vec().unwrap();
     let noop_bgum = spl_noop::instruction(lse).data;
-    let ix = build_instruction(fbb2, &noop_bgum, &account_indexes).unwrap();
+    let ix = build_instruction(fbb2, &noop_bgum, account_indexes).unwrap();
     let noop_bgum_ix: IxPair = (FBPubkey(spl_noop::id().to_bytes()), ix);
     // The Compression Instruction here doesnt matter only the noop but we add it here to ensure we are validating that one Account compression event is happening after Bubblegum
-    let ix = build_instruction(fbb3, &[0; 0], &account_indexes)
-        .unwrap()
-        .clone();
+    let ix = build_instruction(fbb3, &[0; 0], account_indexes)
+        .unwrap();
     let gummy_roll_ix: IxPair = (FBPubkey(spl_account_compression::id().to_bytes()), ix);
     let cs = cs_event.try_to_vec().unwrap();
     let noop_compression = spl_noop::instruction(cs).data;
-    let ix = build_instruction(fbb4, &noop_compression, &account_indexes)
-        .unwrap()
-        .clone();
+    let ix = build_instruction(fbb4, &noop_compression, account_indexes)
+        .unwrap();
     let noop_compression_ix = (FBPubkey(spl_noop::id().to_bytes()), ix);
 
     let inner_ix = vec![noop_bgum_ix, gummy_roll_ix, noop_compression_ix];
@@ -285,5 +303,7 @@ pub fn build_bubblegum_bundle<'a>(
     ixb.program = FBPubkey(program_id().to_bytes());
     ixb.inner_ix = Some(inner_ix);
     ixb.keys = accounts.as_slice();
-    ixb.instruction = Some(outer_ix.clone());
+    ixb.instruction = Some(outer_ix);
 }
+
+

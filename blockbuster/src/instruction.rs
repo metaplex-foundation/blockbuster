@@ -1,7 +1,11 @@
-use flatbuffers::{ForwardsUOffset, Table, Vector, FlatBufferBuilder};
-use mpl_candy_guard::instructions::unwrap;
-use plerkle_serialization::{CompiledInstruction, InnerInstructions, Pubkey, TransactionInfo, CompiledInstructionBuilder, root_as_compiled_instruction, CompiledInstructionArgs};
-use std::collections::{HashSet, VecDeque};
+use plerkle_serialization::{
+    CompiledInnerInstructions, CompiledInstruction, InnerInstructions, Pubkey, TransactionInfo,
+};
+
+use std::{
+    cell::RefCell,
+    collections::{HashSet, VecDeque},
+};
 
 pub type IxPair<'a> = (Pubkey, CompiledInstruction<'a>);
 
@@ -32,9 +36,6 @@ pub fn order_instructions<'a, 'b>(
     transaction_info: &'a TransactionInfo<'a>,
 ) -> VecDeque<(IxPair<'a>, Option<Vec<IxPair<'a>>>)> {
     let mut ordered_ixs: VecDeque<(IxPair, Option<Vec<IxPair>>)> = VecDeque::new();
-    // Get inner instructions.
-    let inner_ix_list = transaction_info.inner_instructions();
-
     // Get outer instructions.
     let outer_instructions = match transaction_info.outer_instructions() {
         None => {
@@ -44,56 +45,112 @@ pub fn order_instructions<'a, 'b>(
         Some(instructions) => instructions,
     };
 
+    if transaction_info.account_keys().is_none() {
+        return ordered_ixs;
+    }
     // Get account keys.
-    let keys = match transaction_info.account_keys() {
-        None => {
-            println!("account_keys deserialization error");
-            return ordered_ixs;
-        }
-        Some(keys) => keys.iter().collect::<Vec<_>>(),
-    };
-    for (i, instruction) in outer_instructions.iter().enumerate() {
-        let program_id = keys.get(instruction.program_id_index() as usize).unwrap();
-        let outer: IxPair = (**program_id, instruction);
+    let keys = RefCell::new(
+        transaction_info
+            .account_keys()
+            .iter()
+            .flatten()
+            .collect::<Vec<_>>(),
+    );
 
-        let inner: Option<Vec<IxPair>> = get_inner_ixs(inner_ix_list, i).map(|inner_ixs| {
-            let mut inner_list: VecDeque<IxPair> = VecDeque::new();
-            for inner_ix_instance in inner_ixs.instructions().unwrap() {
-                let inner_program_id = keys
-                    .get(inner_ix_instance.program_id_index() as usize)
-                    .unwrap();
-                inner_list.push_front((**inner_program_id, inner_ix_instance));
-                if programs.get(inner_program_id.0.as_ref()).is_some() {
-                    println!("\t\t added {:?}", inner_program_id);
-                    let mut new_inner_list = inner_list.clone();
-                    new_inner_list.pop_front();
-                    let inner = (**inner_program_id, inner_ix_instance);
-                    ordered_ixs.push_back((inner, Some(new_inner_list.into())));
-                }
+    // Get inner instructions.
+    let legacy_inner_ix_list = transaction_info.inner_instructions();
+    let compiled_inner_instructions = transaction_info.compiled_inner_instructions();
+    for (outer_instruction_index, outer_instruction) in outer_instructions.iter().enumerate() {
+        let non_hoisted_inner_instruction =
+            if let Some(inner_instructions) = compiled_inner_instructions {
+                inner_instructions
+                    .iter()
+                    .filter(|x| x.index() == outer_instruction_index as u8)
+                    .flat_map(|x| {
+                        if let Some(ixes) = x.instructions() {
+                            ixes.iter()
+                                .filter_map(|ix| ix.compiled_instruction())
+                                .map(|ix| {
+                                    let kb = keys.borrow();
+                                    (*kb[ix.program_id_index() as usize], ix)
+                                })
+                                .collect::<Vec<IxPair>>()
+                        } else {
+                            Vec::new()
+                        }
+                    })
+                    .collect::<Vec<IxPair>>()
+            } else {
+                // legacy no stack height list must exist if no compiled or no processing will be done
+                let inner_instructions = legacy_inner_ix_list.unwrap();
+                inner_instructions
+                    .iter()
+                    .filter(|x| x.index() == outer_instruction_index as u8)
+                    .flat_map(|x| {
+                        if let Some(ixes) = x.instructions() {
+                            ixes.iter()
+                                .map(|ix| {
+                                    let kb = keys.borrow();
+                                    (*kb[ix.program_id_index() as usize], ix)
+                                })
+                                .collect::<Vec<IxPair>>()
+                        } else {
+                            Vec::new()
+                        }
+                    })
+                    .collect::<Vec<IxPair>>()
+            };
+
+        let hoister = non_hoisted_inner_instruction.clone();
+        let hoisted = hoist_known_programs(&programs, hoister);
+        
+        for h in hoisted {
+            ordered_ixs.push_back(h);
+        }
+
+        {
+            let kb = keys.borrow();
+            let outer_ix_program_id_index = outer_instruction.program_id_index() as usize;
+            let outer_program_id = kb.get(outer_ix_program_id_index);
+            if outer_program_id.is_none() {
+                eprintln!("outer program id deserialization error");
+                continue;
             }
-            inner_list.into()
-        });
-        if programs.get(program_id.0.as_ref()).is_some() {
-            ordered_ixs.push_back((outer, inner));
+            let outer_program_id = *outer_program_id.unwrap().clone();
+            if programs.get(outer_program_id.0.as_ref()).is_some() {
+                ordered_ixs.push_back((
+                    (outer_program_id, outer_instruction),
+                    Some(non_hoisted_inner_instruction),
+                ));
+            }
         }
     }
-
     ordered_ixs
 }
 
-fn get_inner_ixs<'a>(
-    inner_ixs: Option<Vector<'a, ForwardsUOffset<InnerInstructions<'_>>>>,
-    outer_index: usize,
-) -> Option<InnerInstructions<'a>> {
-    match inner_ixs {
-        Some(inner_ix_list) => {
-            for inner_ixs in inner_ix_list {
-                if inner_ixs.index() == (outer_index as u8) {
-                    return Some(inner_ixs);
+fn hoist_known_programs<'a, 'b>(
+    programs: &'b HashSet<&'b [u8]>,
+    instructions: Vec<(Pubkey, CompiledInstruction<'a>)>,
+) -> Vec<(IxPair<'a>, Option<Vec<IxPair<'a>>>)> {
+    let mut hoist = Vec::new();
+    // there must be a safe and less copy way to do this, I should only need to move CI, and copy the found nodes matching predicate on 172
+    for (index, (pid, ci)) in instructions.iter().enumerate() {
+        let clone_for_inner = instructions.clone();
+
+        if programs.get(pid.0.as_ref()).is_some() {
+            let mut inner_copy = vec![];
+            for new_inner_elem in clone_for_inner
+                .into_iter()
+                .skip(index + 1) {
+                    if pid.0 != new_inner_elem.0 .0 {
+                        inner_copy.push(new_inner_elem);
+                    } else {
+                        break;
+                    }
                 }
-            }
-            None
+                
+            hoist.push(((*pid, *ci), Some(inner_copy)));
         }
-        None => None,
     }
+    hoist
 }

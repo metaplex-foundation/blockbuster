@@ -31,7 +31,7 @@ pub enum Payload {
     CancelRedeem { root: [u8; 32] },
     VerifyCreator { creator: Pubkey },
     UnverifyCreator { creator: Pubkey },
-    SetAndVerifyCollection { collection: Pubkey },
+    SetAndVerifyCollection { collection: Pubkey }
 }
 //TODO add more of the parsing here to minimize program transformer code
 pub struct BubblegumInstruction {
@@ -156,8 +156,15 @@ impl ProgramParser for BubblegumParser {
             let ix_data = &outer_ix_data[8..];
             if !ix_data.is_empty() {
                 match b_inst.instruction {
-                    InstructionName::MintV1 | InstructionName::VerifyCollection => {
+                    InstructionName::MintV1 => {
                         let args: MetadataArgs = MetadataArgs::try_from_slice(ix_data)?;
+                        b_inst.payload = Some(Payload::MintV1 { args });
+                    }
+                    InstructionName::MintToCollectionV1 => {
+                        let mut args: MetadataArgs = MetadataArgs::try_from_slice(ix_data)?;
+                        if let Some(ref mut col) = args.collection {
+                            col.verified = true;
+                        }
                         b_inst.payload = Some(Payload::MintV1 { args });
                     }
                     InstructionName::DecompressV1 => {
@@ -207,3 +214,4 @@ impl ProgramParser for BubblegumParser {
         Ok(Box::new(b_inst))
     }
 }
+    
