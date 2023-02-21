@@ -1,7 +1,7 @@
 use crate::{
     error::BlockbusterError, instruction::InstructionBundle, programs::ProgramParseResult,
 };
-use plerkle_serialization::AccountInfo;
+use plerkle_serialization::{AccountInfo, TransactionInfo};
 use solana_sdk::pubkey::Pubkey;
 
 pub trait ParseResult: Sync + Send {
@@ -47,5 +47,7 @@ pub trait ProgramParser: Sync + Send {
     fn handle_instruction(
         &self,
         bundle: &InstructionBundle,
-    ) -> Result<Box<dyn ParseResult>, BlockbusterError>;
+    ) -> Result<Box<dyn ParseResult>, BlockbusterError> {
+        Ok(Box::new(NotUsed::new()))
+    }
 }

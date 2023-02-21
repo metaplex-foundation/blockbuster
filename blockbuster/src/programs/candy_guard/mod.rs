@@ -8,7 +8,7 @@ use mpl_candy_guard::{
     guards::MintCounter,
     state::{CandyGuard, CandyGuardData, DATA_OFFSET},
 };
-use plerkle_serialization::AccountInfo;
+use plerkle_serialization::{AccountInfo, TransactionInfo};
 use solana_sdk::{borsh::try_from_slice_unchecked, pubkey::Pubkey, pubkeys};
 use std::convert::TryInto;
 
@@ -80,12 +80,5 @@ impl ProgramParser for CandyGuardParser {
         };
 
         Ok(Box::new(account_type))
-    }
-
-    fn handle_instruction(
-        &self,
-        _bundle: &InstructionBundle,
-    ) -> Result<Box<dyn ParseResult>, BlockbusterError> {
-        Ok(Box::new(NotUsed::new()))
     }
 }

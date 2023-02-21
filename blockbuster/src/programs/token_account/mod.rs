@@ -78,10 +78,4 @@ impl ProgramParser for TokenAccountParser {
         Ok(Box::new(account_type))
     }
 
-    fn handle_instruction(
-        &self,
-        _bundle: &InstructionBundle,
-    ) -> Result<Box<(dyn ParseResult + 'static)>, BlockbusterError> {
-        Ok(Box::new(NotUsed::new()))
-    }
 }

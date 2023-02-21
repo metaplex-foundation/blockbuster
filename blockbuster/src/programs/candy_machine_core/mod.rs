@@ -66,11 +66,4 @@ impl ProgramParser for CandyMachineParser {
 
         Ok(Box::new(account_type))
     }
-
-    fn handle_instruction(
-        &self,
-        _bundle: &InstructionBundle,
-    ) -> Result<Box<dyn ParseResult>, BlockbusterError> {
-        Ok(Box::new(NotUsed::new()))
-    }
 }

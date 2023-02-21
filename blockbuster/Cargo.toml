@@ -15,12 +15,12 @@ mpl-bubblegum = { version = "0.7.0", features = ["no-entrypoint"] }
 mpl-candy-guard = { version="0.3.0", features = ["no-entrypoint"] }
 mpl-candy-machine-core = { version = "0.2.0", features = ["no-entrypoint"] }
 mpl-token-metadata = { version = "1.7.0",  features = ["no-entrypoint", "serde-feature"] }
-plerkle_serialization = { version = "1.1.0"}
+plerkle_serialization = { version = "1.5.0", path = "/media/austbot/development1/digital-asset-validator-plugin/plerkle_serialization" }
 spl-token = { version = "3", features = ["no-entrypoint"] }
 async-trait = "0.1.57"
 bs58="0.4.0"
 lazy_static = "1.4.0"
-flatbuffers = "22.10.26"
+flatbuffers = "23.1.21"
 borsh = "0.9.3"
 thiserror = "1.0.32"
 solana-sdk = "~1.14"

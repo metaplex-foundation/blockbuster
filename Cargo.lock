@@ -1224,9 +1224,9 @@ checksum = "835a3dc7d1ec9e75e2b5fb4ba75396837112d2060b03f7d43bc1897c7f7211da"
 
 [[package]]
 name = "flatbuffers"
-version = "22.12.6"
+version = "23.1.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5ae1bfc84d904f75e7ef6f8796b020c606a9e8e271e2004c0a74f7edeedba45f"
+checksum = "77f5399c2c9c50ae9418e522842ad362f61ee48b346ac106807bd355a8a7c619"
 dependencies = [
  "bitflags",
  "rustc_version",
@@ -2300,15 +2300,15 @@ checksum = "6ac9a59f73473f1b8d852421e59e64809f025994837ef743615c6d0c5b305160"
 
 [[package]]
 name = "plerkle_serialization"
-version = "1.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f29283a320c04eca82e8d83d91cd2b273af52202f7248bc3a3805012fb67f2ae"
+version = "1.5.0"
 dependencies = [
+ "bs58 0.4.0",
  "chrono",
  "flatbuffers",
  "serde",
  "solana-sdk",
  "solana-transaction-status",
+ "thiserror",
 ]
 
 [[package]]

@@ -177,10 +177,4 @@ impl ProgramParser for TokenMetadataParser {
         Ok(Box::new(token_metadata_account_state))
     }
 
-    fn handle_instruction(
-        &self,
-        _bundle: &InstructionBundle,
-    ) -> Result<Box<(dyn ParseResult + 'static)>, BlockbusterError> {
-        Ok(Box::new(NotUsed::new()))
-    }
 }

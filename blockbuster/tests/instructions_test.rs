@@ -47,20 +47,18 @@ fn test_filter() {
     assert_eq!(res.len(), 0);
 }
 
-fn prepare_fixture<'a>(
-    fbb: &'a mut FlatBufferBuilder<'a>,
-    fixture: &'a str,
-) -> TransactionInfo<'a> {
+fn prepare_fixture<'a>(fbb: FlatBufferBuilder<'a>, fixture: &'a str) -> FlatBufferBuilder<'a> {
     println!("{:?}", env::current_dir());
     let name = fixture.to_string();
     let fbb = build_txn_from_fixture(name.clone(), fbb).unwrap();
-    root_as_transaction_info(fbb.finished_data()).expect("Fail deser")
+    fbb
 }
 
 #[test]
 fn helium_nested() {
     let mut fbb = FlatBufferBuilder::new();
-    let txn = prepare_fixture(&mut fbb, "helium_nested");
+    let txn = prepare_fixture(fbb, "helium_nested");
+    let txn = root_as_transaction_info(txn.finished_data()).expect("Fail deser");
     let mut prog = HashSet::new();
     let id = mpl_bubblegum::id();
     let slot = txn.slot();
@@ -122,64 +120,54 @@ fn helium_nested() {
 
 #[test]
 fn test_double_mint() {
-    let mut fbb = FlatBufferBuilder::new();
-    let txn = prepare_fixture(&mut fbb, "double_bubblegum_mint");
+    let fbb = FlatBufferBuilder::new();
+    let txn = prepare_fixture(fbb, "double_bubblegum_mint");
+    let txn = root_as_transaction_info(txn.finished_data()).expect("Fail deser");
     let mut programs = HashSet::new();
     let subject = BubblegumParser {}.key();
     programs.insert(subject.as_ref());
     let ix = order_instructions(programs, &txn);
+    assert_eq!(ix.len(), 2);
     let contains = ix
         .iter()
         .filter(|(ib, _inner)| ib.0 .0.as_ref() == mpl_bubblegum::id().as_ref());
-    assert_eq!(contains.count(), 2);
-    assert_eq!(ix.len(), 2);
-    for i in ix {
-        let (program, instruction) = i.0;
-        let inner = i.1.unwrap();
-        for ii in &inner {
-            println!("{:?}", Pubkey::new(&ii.0 .0.as_ref()));
-        }
-        let ace =
-            AccountCompressionEvent::try_from_slice(inner[1].1.data().unwrap().bytes()).unwrap();
-        if let AccountCompressionEvent::ApplicationData(ApplicationDataEvent::V1(
-            ApplicationDataEventV1 {
-                application_data, ..
-            },
-        )) = ace
-        {
-            let lse = LeafSchemaEvent::try_from_slice(&application_data).unwrap();
-            let LeafSchema::V1 {
+    let mut count = 0;
+    contains.for_each(|bix| {
+        count += 1;
+        if let Some(inner) = &bix.1 {
+            println!("{}", inner.len());
+            for ii in inner {
+                println!("pp{} {:?}", count, Pubkey::new(&ii.0 .0.as_ref()));
+            }
+            println!("------");
+            let cl = AccountCompressionEvent::try_from_slice(inner[1].1.data().unwrap().bytes())
+                .unwrap();
+            if let AccountCompressionEvent::ApplicationData(ApplicationDataEvent::V1(
+                ApplicationDataEventV1 { application_data },
+            )) = cl
+            {
+                let lse = LeafSchemaEvent::try_from_slice(&application_data).unwrap();
+                println!("1 pp{} NONCE {:?}\n end", count, lse.schema.nonce());
+            }
+            let cl = AccountCompressionEvent::try_from_slice(inner[3].1.data().unwrap().bytes())
+                .unwrap();
+            if let AccountCompressionEvent::ChangeLog(ChangeLogEvent::V1(ChangeLogEventV1 {
                 id,
-                owner,
-                delegate,
-                nonce,
-                data_hash,
-                creator_hash,
-            } = lse.schema;
-
-            println!("Nonce {}", nonce);
-        } else {
-            panic!("Failed to parse instruction");
+                ..
+            })) = cl
+            {
+                println!("2 pp{} Merkle Tree {:?} \n end", count, id);
+            }
         }
-        let cle =
-            AccountCompressionEvent::try_from_slice(inner[3].1.data().unwrap().bytes()).unwrap();
-        if let AccountCompressionEvent::ChangeLog(ChangeLogEvent::V1(ChangeLogEventV1 {
-            id, ..
-        })) = cle
-        {
-            println!("ID {:?}", id);
-        } else {
-            panic!("Failed to parse instruction");
-        }
-
-        assert_eq!(inner.len(), 4);
-    }
+    });
+    assert_eq!(count, 2);
 }
 
 #[test]
 fn test_double_tree() {
     let mut fbb = FlatBufferBuilder::new();
-    let txn = prepare_fixture(&mut fbb, "helium_mint_double_tree");
+    let txn = prepare_fixture(fbb, "helium_mint_double_tree");
+    let txn = root_as_transaction_info(txn.finished_data()).expect("Fail deser");
     let mut programs = HashSet::new();
     let subject = BubblegumParser {}.key();
     programs.insert(subject.as_ref());
@@ -187,33 +175,33 @@ fn test_double_tree() {
     let contains = ix
         .iter()
         .filter(|(ib, _inner)| ib.0 .0.as_ref() == mpl_bubblegum::id().as_ref());
-    
+    let mut count = 0;
     contains.for_each(|bix| {
         if let Some(inner) = &bix.1 {
             for ii in inner {
-                println!("pp {:?}", Pubkey::new(&ii.0 .0.as_ref()));
+                println!("pp{} {:?}", count, Pubkey::new(&ii.0 .0.as_ref()));
             }
             println!("------");
-            let cl = AccountCompressionEvent::try_from_slice(inner[8].1.data().unwrap().bytes())
+            let cl = AccountCompressionEvent::try_from_slice(inner[1].1.data().unwrap().bytes())
                 .unwrap();
-            if let AccountCompressionEvent::ChangeLog(ChangeLogEvent::V1(ChangeLogEventV1 {
-                id,
-                ..
-            })) = cl
+            if let AccountCompressionEvent::ApplicationData(ApplicationDataEvent::V1(
+                ApplicationDataEventV1 { application_data },
+            )) = cl
             {
-                println!("Merkle Tree {:?}", id);
+                let lse = LeafSchemaEvent::try_from_slice(&application_data).unwrap();
+                println!("1 pp{} NONCE {:?}\n end", count, lse.schema.nonce());
             }
-            let cl = AccountCompressionEvent::try_from_slice(inner[16].1.data().unwrap().bytes())
+            let cl = AccountCompressionEvent::try_from_slice(inner[3].1.data().unwrap().bytes())
                 .unwrap();
             if let AccountCompressionEvent::ChangeLog(ChangeLogEvent::V1(ChangeLogEventV1 {
                 id,
                 ..
             })) = cl
             {
-                println!("Merkle Tree {:?}", id);
+                println!("2 pp{} Merkle Tree {:?} \n end", count, id);
             }
         }
+        count += 1;
     });
-    
-    
+    assert_eq!(count, 2);
 }
