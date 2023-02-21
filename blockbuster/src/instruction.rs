@@ -142,8 +142,6 @@ fn hoist_known_programs<'a, 'b>(
             for new_inner_elem in clone_for_inner
                 .into_iter()
                 .skip(index + 1) {
-
-                    print!("{:?} != {:?} ", pid.0, new_inner_elem.0 .0);
                     if pid.0 != new_inner_elem.0 .0 {
                         inner_copy.push(new_inner_elem);
                     } else {
