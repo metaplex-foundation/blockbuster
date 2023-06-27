@@ -1,7 +1,6 @@
 use crate::{
     error::BlockbusterError,
-    instruction::InstructionBundle,
-    program_handler::{NotUsed, ParseResult, ProgramParser},
+    program_handler::{ParseResult, ProgramParser},
     programs::ProgramParseResult,
 };
 use borsh::BorshDeserialize;
@@ -26,6 +25,7 @@ pubkeys!(
     "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
 );
 
+#[allow(clippy::large_enum_variant)]
 pub enum TokenMetadataAccountData {
     EditionV1(Edition),
     MasterEditionV1(MasterEditionV1),
@@ -176,5 +176,4 @@ impl ProgramParser for TokenMetadataParser {
 
         Ok(Box::new(token_metadata_account_state))
     }
-
 }

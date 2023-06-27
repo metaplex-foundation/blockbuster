@@ -1,6 +1,4 @@
-use plerkle_serialization::{
-    CompiledInnerInstructions, CompiledInstruction, InnerInstructions, Pubkey, TransactionInfo,
-};
+use plerkle_serialization::{CompiledInstruction, Pubkey, TransactionInfo};
 
 use std::{
     cell::RefCell,
@@ -103,7 +101,7 @@ pub fn order_instructions<'a, 'b>(
 
         let hoister = non_hoisted_inner_instruction.clone();
         let hoisted = hoist_known_programs(&programs, hoister);
-        
+
         for h in hoisted {
             ordered_ixs.push_back(h);
         }
@@ -116,7 +114,7 @@ pub fn order_instructions<'a, 'b>(
                 eprintln!("outer program id deserialization error");
                 continue;
             }
-            let outer_program_id = *outer_program_id.unwrap().clone();
+            let outer_program_id = **outer_program_id.unwrap();
             if programs.get(outer_program_id.0.as_ref()).is_some() {
                 ordered_ixs.push_back((
                     (outer_program_id, outer_instruction),
@@ -139,16 +137,14 @@ fn hoist_known_programs<'a, 'b>(
 
         if programs.get(pid.0.as_ref()).is_some() {
             let mut inner_copy = vec![];
-            for new_inner_elem in clone_for_inner
-                .into_iter()
-                .skip(index + 1) {
-                    if pid.0 != new_inner_elem.0 .0 {
-                        inner_copy.push(new_inner_elem);
-                    } else {
-                        break;
-                    }
+            for new_inner_elem in clone_for_inner.into_iter().skip(index + 1) {
+                if pid.0 != new_inner_elem.0 .0 {
+                    inner_copy.push(new_inner_elem);
+                } else {
+                    break;
                 }
-                
+            }
+
             hoist.push(((*pid, *ci), Some(inner_copy)));
         }
     }

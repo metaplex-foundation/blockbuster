@@ -2,24 +2,24 @@
 mod helpers;
 use anchor_lang::AnchorDeserialize;
 use blockbuster::{
-    instruction::{order_instructions, InstructionBundle, IxPair},
+    instruction::{order_instructions, InstructionBundle},
     program_handler::ProgramParser,
     programs::{
         bubblegum::{BubblegumParser, Payload},
-        token_metadata::{LeafSchema, LeafSchemaEvent},
+        token_metadata::{LeafSchemaEvent},
         ProgramParseResult,
     },
 };
 use flatbuffers::FlatBufferBuilder;
 use helpers::*;
-use plerkle_serialization::{root_as_transaction_info, Pubkey as FBPubkey, TransactionInfo};
+use plerkle_serialization::{root_as_transaction_info, Pubkey as FBPubkey};
 use rand::prelude::IteratorRandom;
 use solana_sdk::pubkey::Pubkey;
 use spl_account_compression::events::{
-    AccountCompressionEvent::{self, ApplicationData},
+    AccountCompressionEvent::{self},
     ApplicationDataEvent, ApplicationDataEventV1, ChangeLogEvent, ChangeLogEventV1,
 };
-use std::collections::{HashSet, VecDeque};
+use std::collections::{HashSet};
 use std::env;
 #[test]
 fn test_filter() {
@@ -50,13 +50,13 @@ fn test_filter() {
 fn prepare_fixture<'a>(fbb: FlatBufferBuilder<'a>, fixture: &'a str) -> FlatBufferBuilder<'a> {
     println!("{:?}", env::current_dir());
     let name = fixture.to_string();
-    let fbb = build_txn_from_fixture(name.clone(), fbb).unwrap();
+    let fbb = build_txn_from_fixture(name, fbb).unwrap();
     fbb
 }
 
 #[test]
 fn helium_nested() {
-    let mut fbb = FlatBufferBuilder::new();
+    let fbb = FlatBufferBuilder::new();
     let txn = prepare_fixture(fbb, "helium_nested");
     let txn = root_as_transaction_info(txn.finished_data()).expect("Fail deser");
     let mut prog = HashSet::new();
@@ -107,7 +107,7 @@ fn helium_nested() {
             _ => panic!("Wrong type"),
         };
 
-        if let (Some(le), Some(cl), Some(Payload::MintV1 { args: _ })) = (
+        if let (Some(_le), Some(_cl), Some(Payload::MintV1 { args: _ })) = (
             &parse_result.leaf_update,
             &parse_result.tree_update,
             &parse_result.payload,
@@ -137,7 +137,7 @@ fn test_double_mint() {
         if let Some(inner) = &bix.1 {
             println!("{}", inner.len());
             for ii in inner {
-                println!("pp{} {:?}", count, Pubkey::new(&ii.0 .0.as_ref()));
+                println!("pp{} {:?}", count, Pubkey::new(ii.0 .0.as_ref()));
             }
             println!("------");
             let cl = AccountCompressionEvent::try_from_slice(inner[1].1.data().unwrap().bytes())
@@ -165,7 +165,7 @@ fn test_double_mint() {
 
 #[test]
 fn test_double_tree() {
-    let mut fbb = FlatBufferBuilder::new();
+    let fbb = FlatBufferBuilder::new();
     let txn = prepare_fixture(fbb, "helium_mint_double_tree");
     let txn = root_as_transaction_info(txn.finished_data()).expect("Fail deser");
     let mut programs = HashSet::new();
@@ -179,7 +179,7 @@ fn test_double_tree() {
     contains.for_each(|bix| {
         if let Some(inner) = &bix.1 {
             for ii in inner {
-                println!("pp{} {:?}", count, Pubkey::new(&ii.0 .0.as_ref()));
+                println!("pp{} {:?}", count, Pubkey::new(ii.0 .0.as_ref()));
             }
             println!("------");
             let cl = AccountCompressionEvent::try_from_slice(inner[1].1.data().unwrap().bytes())
