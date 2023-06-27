@@ -11,23 +11,20 @@ use mpl_bubblegum::state::leaf_schema::LeafSchemaEvent;
 use plerkle_serialization::{
     root_as_account_info, root_as_compiled_instruction, AccountInfo, AccountInfoArgs,
     serializer::seralize_encoded_transaction_with_status,
-    CompiledInstruction, CompiledInstructionArgs, CompiledInstructionBuilder, InnerInstructions,
-    InnerInstructionsArgs, InnerInstructionsBuilder, Pubkey as FBPubkey, TransactionInfo,
-    TransactionInfoArgs, TransactionInfoBuilder,
+    CompiledInstruction, CompiledInstructionBuilder, InnerInstructionsBuilder, Pubkey as FBPubkey, TransactionInfo, TransactionInfoBuilder,
 };
 use rand::Rng;
 use solana_geyser_plugin_interface::geyser_plugin_interface::ReplicaAccountInfo;
-use solana_sdk::{bs58, pubkey::Pubkey, transaction::VersionedTransaction};
+use solana_sdk::{pubkey::Pubkey};
 use solana_transaction_status::{
-    option_serializer::OptionSerializer, EncodableWithMeta,
-    EncodedConfirmedTransactionWithStatusMeta, UiInstruction, UiTransactionStatusMeta, EncodedTransaction,
+    EncodedConfirmedTransactionWithStatusMeta,
 };
 use spl_account_compression::events::{
     AccountCompressionEvent, ApplicationDataEvent, ApplicationDataEventV1,
 };
-use std::{fs::File, collections::HashSet};
+use std::{fs::File};
 use std::io::BufReader;
-use std::str::FromStr;
+
 pub fn random_program() -> Pubkey {
     Pubkey::new_unique()
 }

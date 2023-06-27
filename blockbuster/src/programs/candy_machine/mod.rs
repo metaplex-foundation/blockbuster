@@ -1,7 +1,6 @@
 use crate::{
     error::BlockbusterError,
-    instruction::InstructionBundle,
-    program_handler::{NotUsed, ParseResult, ProgramParser},
+    program_handler::{ParseResult, ProgramParser},
     programs::{
         candy_machine::state::{CandyMachine, CollectionPDA, FreezePDA},
         ProgramParseResult,
@@ -23,6 +22,7 @@ pub const CANDY_MACHINE_DISCRIMINATOR: [u8; 8] = [51, 173, 177, 113, 25, 241, 10
 pub const COLLECTION_PDA_DISCRIMINATOR: [u8; 8] = [203, 128, 119, 125, 234, 89, 232, 157];
 pub const FREEZE_PDA_DISCRIMINATOR: [u8; 8] = [154, 58, 148, 24, 101, 200, 243, 127];
 
+#[allow(clippy::large_enum_variant)]
 pub enum CandyMachineAccountData {
     CandyMachine(CandyMachine),
     CollectionPDA(CollectionPDA),
@@ -88,5 +88,4 @@ impl ProgramParser for CandyMachineParser {
 
         Ok(Box::new(account_type))
     }
-
 }
