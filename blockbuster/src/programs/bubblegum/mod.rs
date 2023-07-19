@@ -31,7 +31,9 @@ pub enum Payload {
     CancelRedeem { root: [u8; 32] },
     VerifyCreator { creator: Pubkey },
     UnverifyCreator { creator: Pubkey },
-    SetAndVerifyCollection { collection: Pubkey }
+    SetAndVerifyCollection { collection: Pubkey },
+    VerifyCollection { collection: Pubkey },
+    UnverifyCollection { collection: Pubkey },
 }
 //TODO add more of the parsing here to minimize program transformer code
 pub struct BubblegumInstruction {
@@ -201,9 +203,41 @@ impl ProgramParser for BubblegumParser {
                         // Deserializing this to get to the second argument encoded in the slice,
                         // which is the collection address. Is there a (safe) way to get to that
                         // directly?
-                        let _args: MetadataArgs = MetadataArgs::try_from_slice(ix_data)?;
-                        let collection: Pubkey = Pubkey::try_from_slice(ix_data)?;
-                        b_inst.payload = Some(Payload::SetAndVerifyCollection { collection });
+                        //let _args: MetadataArgs = MetadataArgs::try_from_slice(ix_data)?;
+                        //let collection: Pubkey = Pubkey::try_from_slice(ix_data)?;
+                        let collection = keys
+                            .get(8)
+                            .ok_or(BlockbusterError::InstructionParsingError)?
+                            .0;
+                        b_inst.payload = Some(Payload::SetAndVerifyCollection {
+                            collection: Pubkey::new_from_array(collection),
+                        });
+                    }
+                    InstructionName::VerifyCollection => {
+                        // OTHER WAY FOR VERIFY/UNVERIFY
+                        // let args: MetadataArgs = MetadataArgs::try_from_slice(ix_data)?;
+                        // let collection = args
+                        //     .collection
+                        //     .ok_or(BlockbusterError::InstructionParsingError)?;
+                        // b_inst.payload = Some(Payload::VerifyCollection {
+                        //     collection: collection.key,
+                        // });
+                        let collection = keys
+                            .get(8)
+                            .ok_or(BlockbusterError::InstructionParsingError)?
+                            .0;
+                        b_inst.payload = Some(Payload::VerifyCollection {
+                            collection: Pubkey::new_from_array(collection),
+                        });
+                    }
+                    InstructionName::UnverifyCollection => {
+                        let collection = keys
+                            .get(8)
+                            .ok_or(BlockbusterError::InstructionParsingError)?
+                            .0;
+                        b_inst.payload = Some(Payload::VerifyCollection {
+                            collection: Pubkey::new_from_array(collection),
+                        });
                     }
                     InstructionName::Unknown => {}
                     _ => {}
@@ -214,4 +248,3 @@ impl ProgramParser for BubblegumParser {
         Ok(Box::new(b_inst))
     }
 }
-    
