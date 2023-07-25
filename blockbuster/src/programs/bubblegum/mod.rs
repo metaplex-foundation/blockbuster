@@ -26,12 +26,25 @@ use spl_noop;
 #[derive(Eq, PartialEq)]
 pub enum Payload {
     Unknown,
-    MintV1 { args: MetadataArgs },
-    Decompress { args: MetadataArgs },
-    CancelRedeem { root: [u8; 32] },
-    VerifyCreator { creator: Pubkey },
-    UnverifyCreator { creator: Pubkey },
-    SetAndVerifyCollection { collection: Pubkey }
+    MintV1 {
+        args: MetadataArgs,
+    },
+    Decompress {
+        args: MetadataArgs,
+    },
+    CancelRedeem {
+        root: [u8; 32],
+    },
+    CreatorVerification {
+        creator: Pubkey,
+        verify: bool,
+        creator_hash: [u8; 32],
+        data_hash: [u8; 32],
+        args: MetadataArgs,
+    },
+    SetAndVerifyCollection {
+        collection: Pubkey,
+    },
 }
 //TODO add more of the parsing here to minimize program transformer code
 pub struct BubblegumInstruction {
@@ -178,22 +191,12 @@ impl ProgramParser for BubblegumParser {
                         b_inst.payload = Some(Payload::CancelRedeem { root: slice });
                     }
                     InstructionName::VerifyCreator => {
-                        let creator = keys
-                            .get(5)
-                            .ok_or(BlockbusterError::InstructionParsingError)?
-                            .0;
-                        b_inst.payload = Some(Payload::VerifyCreator {
-                            creator: Pubkey::new_from_array(creator),
-                        });
+                        b_inst.payload =
+                            Some(build_creator_verification_payload(keys, ix_data, true)?);
                     }
                     InstructionName::UnverifyCreator => {
-                        let creator = keys
-                            .get(5)
-                            .ok_or(BlockbusterError::InstructionParsingError)?
-                            .0;
-                        b_inst.payload = Some(Payload::UnverifyCreator {
-                            creator: Pubkey::new_from_array(creator),
-                        });
+                        let payload = build_creator_verification_payload(keys, ix_data, false)?;
+                        b_inst.payload = Some(payload);
                     }
                     // We don't extract any additional info w.r.t. verify and unverify
                     // collection ops for now.
@@ -214,4 +217,38 @@ impl ProgramParser for BubblegumParser {
         Ok(Box::new(b_inst))
     }
 }
-    
+
+// See Bubblegum documentation for offsets and positions:
+// https://github.com/metaplex-foundation/mpl-bubblegum/blob/main/programs/bubblegum/README.md#-verify_creator-and-unverify_creator
+fn build_creator_verification_payload(
+    keys: &[plerkle_serialization::Pubkey],
+    ix_data: &[u8],
+    verify: bool,
+) -> Result<Payload, BlockbusterError> {
+    let creator = keys
+        .get(5)
+        .ok_or(BlockbusterError::InstructionParsingError)?
+        .0;
+    let creator_hash = keys
+        .get(2)
+        .ok_or(BlockbusterError::InstructionParsingError)?
+        .0;
+    let data_hash = keys
+        .get(1)
+        .ok_or(BlockbusterError::InstructionParsingError)?
+        .0;
+
+    let metadata_offset = 108;
+    if ix_data.len() < metadata_offset {
+        return Err(BlockbusterError::InstructionParsingError);
+    }
+    let args_raw = ix_data[metadata_offset..].to_vec();
+    let args = MetadataArgs::try_from_slice(&args_raw)?;
+    Ok(Payload::CreatorVerification {
+        creator: Pubkey::new_from_array(creator),
+        verify,
+        creator_hash,
+        data_hash,
+        args,
+    })
+}
