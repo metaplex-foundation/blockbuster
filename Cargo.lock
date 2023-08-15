@@ -631,7 +631,7 @@ checksum = "8d696c370c750c948ada61c69a0ee2cbbb9c50b1019ddb86d9317157a99c2cae"
 
 [[package]]
 name = "blockbuster"
-version = "0.7.3"
+version = "0.8.0"
 dependencies = [
  "anchor-lang",
  "async-trait",
@@ -653,7 +653,7 @@ dependencies = [
  "spl-account-compression",
  "spl-concurrent-merkle-tree",
  "spl-noop 0.1.3",
- "spl-token 4.0.0",
+ "spl-token 3.5.0",
  "thiserror",
 ]
 
