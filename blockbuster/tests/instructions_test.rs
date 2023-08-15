@@ -6,7 +6,7 @@ use blockbuster::{
     program_handler::ProgramParser,
     programs::{
         bubblegum::{BubblegumParser, Payload},
-        token_metadata::{LeafSchemaEvent},
+        token_metadata::LeafSchemaEvent,
         ProgramParseResult,
     },
 };
@@ -19,7 +19,7 @@ use spl_account_compression::events::{
     AccountCompressionEvent::{self},
     ApplicationDataEvent, ApplicationDataEventV1, ChangeLogEvent, ChangeLogEventV1,
 };
-use std::collections::{HashSet};
+use std::collections::HashSet;
 use std::env;
 #[test]
 fn test_filter() {
@@ -137,7 +137,11 @@ fn test_double_mint() {
         if let Some(inner) = &bix.1 {
             println!("{}", inner.len());
             for ii in inner {
-                println!("pp{} {:?}", count, Pubkey::new(ii.0 .0.as_ref()));
+                println!(
+                    "pp{} {:?}",
+                    count,
+                    Pubkey::try_from(ii.0 .0.as_ref()).unwrap()
+                );
             }
             println!("------");
             let cl = AccountCompressionEvent::try_from_slice(inner[1].1.data().unwrap().bytes())
@@ -179,7 +183,11 @@ fn test_double_tree() {
     contains.for_each(|bix| {
         if let Some(inner) = &bix.1 {
             for ii in inner {
-                println!("pp{} {:?}", count, Pubkey::new(ii.0 .0.as_ref()));
+                println!(
+                    "pp{} {:?}",
+                    count,
+                    Pubkey::try_from(ii.0 .0.as_ref()).unwrap()
+                );
             }
             println!("------");
             let cl = AccountCompressionEvent::try_from_slice(inner[1].1.data().unwrap().bytes())
