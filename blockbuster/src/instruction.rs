@@ -29,8 +29,8 @@ impl<'a> Default for InstructionBundle<'a> {
     }
 }
 
-pub fn order_instructions<'a, 'b>(
-    programs: HashSet<&'b [u8]>,
+pub fn order_instructions<'a>(
+    programs: HashSet<&[u8]>,
     transaction_info: &'a TransactionInfo<'a>,
 ) -> VecDeque<(IxPair<'a>, Option<Vec<IxPair<'a>>>)> {
     let mut ordered_ixs: VecDeque<(IxPair, Option<Vec<IxPair>>)> = VecDeque::new();

@@ -9,20 +9,19 @@ use flatbuffers::{FlatBufferBuilder, WIPOffset};
 pub use mpl_bubblegum::id as program_id;
 use mpl_bubblegum::state::leaf_schema::LeafSchemaEvent;
 use plerkle_serialization::{
-    root_as_account_info, root_as_compiled_instruction, AccountInfo, AccountInfoArgs,
-    serializer::seralize_encoded_transaction_with_status,
-    CompiledInstruction, CompiledInstructionBuilder, InnerInstructionsBuilder, Pubkey as FBPubkey, TransactionInfo, TransactionInfoBuilder,
+    root_as_account_info, root_as_compiled_instruction,
+    serializer::seralize_encoded_transaction_with_status, AccountInfo, AccountInfoArgs,
+    CompiledInstruction, CompiledInstructionBuilder, InnerInstructionsBuilder, Pubkey as FBPubkey,
+    TransactionInfo, TransactionInfoBuilder,
 };
 use rand::Rng;
 use solana_geyser_plugin_interface::geyser_plugin_interface::ReplicaAccountInfo;
-use solana_sdk::{pubkey::Pubkey};
-use solana_transaction_status::{
-    EncodedConfirmedTransactionWithStatusMeta,
-};
+use solana_sdk::pubkey::Pubkey;
+use solana_transaction_status::EncodedConfirmedTransactionWithStatusMeta;
 use spl_account_compression::events::{
     AccountCompressionEvent, ApplicationDataEvent, ApplicationDataEventV1,
 };
-use std::{fs::File};
+use std::fs::File;
 use std::io::BufReader;
 
 pub fn random_program() -> Pubkey {
@@ -137,8 +136,8 @@ pub fn get_programs(txn_info: TransactionInfo) -> Vec<Pubkey> {
         .iter()
         .map(|ix| {
             println!("{:?}", txn_info);
-            Pubkey::new(
-                &txn_info
+            Pubkey::new_from_array(
+                txn_info
                     .account_keys()
                     .unwrap()
                     .iter()
@@ -156,8 +155,8 @@ pub fn get_programs(txn_info: TransactionInfo) -> Vec<Pubkey> {
         .iter()
         .fold(&mut inner, |ix, curr| {
             for p in curr.instructions().unwrap() {
-                ix.push(Pubkey::new(
-                    &txn_info
+                ix.push(Pubkey::new_from_array(
+                    txn_info
                         .account_keys()
                         .unwrap()
                         .iter()
@@ -252,24 +251,29 @@ pub fn build_random_account_update<'a>(
     build_account_update(fbb, &replica_account_info, 0, false)
 }
 
-pub fn build_txn_from_fixture<'a>(
+pub fn build_txn_from_fixture(
     fixture_name: String,
-    fbb: FlatBufferBuilder<'a>,
-) -> Result<FlatBufferBuilder<'a>, BlockbusterError> {
-    let file = File::open(format!("{}/tests/fixtures/{}.json", env!("CARGO_MANIFEST_DIR"), fixture_name)).unwrap();
+    fbb: FlatBufferBuilder,
+) -> Result<FlatBufferBuilder, BlockbusterError> {
+    let file = File::open(format!(
+        "{}/tests/fixtures/{}.json",
+        env!("CARGO_MANIFEST_DIR"),
+        fixture_name
+    ))
+    .unwrap();
     let reader = BufReader::new(file);
     let ectxn: EncodedConfirmedTransactionWithStatusMeta = serde_json::from_reader(reader).unwrap();
-    seralize_encoded_transaction_with_status(fbb, ectxn)
-    .map_err(Into::into)
+    seralize_encoded_transaction_with_status(fbb, ectxn).map_err(Into::into)
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn build_bubblegum_bundle<'a>(
     fbb1: &'a mut FlatBufferBuilder<'a>,
     fbb2: &'a mut FlatBufferBuilder<'a>,
     fbb3: &'a mut FlatBufferBuilder<'a>,
     fbb4: &'a mut FlatBufferBuilder<'a>,
     accounts: &'a Vec<FBPubkey>,
-    account_indexes: &'a Vec<u8>,
+    account_indexes: &'a [u8],
     ix_data: &'a [u8],
     lse: LeafSchemaEvent,
     cs_event: AccountCompressionEvent,
@@ -286,13 +290,11 @@ pub fn build_bubblegum_bundle<'a>(
     let ix = build_instruction(fbb2, &noop_bgum, account_indexes).unwrap();
     let noop_bgum_ix: IxPair = (FBPubkey(spl_noop::id().to_bytes()), ix);
     // The Compression Instruction here doesnt matter only the noop but we add it here to ensure we are validating that one Account compression event is happening after Bubblegum
-    let ix = build_instruction(fbb3, &[0; 0], account_indexes)
-        .unwrap();
+    let ix = build_instruction(fbb3, &[0; 0], account_indexes).unwrap();
     let gummy_roll_ix: IxPair = (FBPubkey(spl_account_compression::id().to_bytes()), ix);
     let cs = cs_event.try_to_vec().unwrap();
     let noop_compression = spl_noop::instruction(cs).data;
-    let ix = build_instruction(fbb4, &noop_compression, account_indexes)
-        .unwrap();
+    let ix = build_instruction(fbb4, &noop_compression, account_indexes).unwrap();
     let noop_compression_ix = (FBPubkey(spl_noop::id().to_bytes()), ix);
 
     let inner_ix = vec![noop_bgum_ix, gummy_roll_ix, noop_compression_ix];
@@ -302,5 +304,3 @@ pub fn build_bubblegum_bundle<'a>(
     ixb.keys = accounts.as_slice();
     ixb.instruction = Some(outer_ix);
 }
-
-

@@ -4,7 +4,7 @@ use crate::{
     programs::ProgramParseResult,
 };
 use borsh::BorshDeserialize;
-use solana_sdk::{borsh::try_from_slice_unchecked, pubkey::Pubkey, pubkeys};
+use solana_sdk::{borsh0_10::try_from_slice_unchecked, pubkey::Pubkey, pubkeys};
 
 use plerkle_serialization::AccountInfo;
 

@@ -7,8 +7,8 @@ use mpl_candy_guard::{
     guards::MintCounter,
     state::{CandyGuard, CandyGuardData, DATA_OFFSET},
 };
-use plerkle_serialization::{AccountInfo};
-use solana_sdk::{borsh::try_from_slice_unchecked, pubkey::Pubkey, pubkeys};
+use plerkle_serialization::AccountInfo;
+use solana_sdk::{borsh0_10::try_from_slice_unchecked, pubkey::Pubkey, pubkeys};
 use std::convert::TryInto;
 
 pubkeys!(
