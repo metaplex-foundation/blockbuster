@@ -1933,13 +1933,13 @@ dependencies = [
 
 [[package]]
 name = "mpl-bubblegum"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b751e0658d7414a801b2fee9802d884f508724fdc1d8645405f69e604d348bc1"
+version = "0.9.2"
+source = "git+https://github.com/metaplex-foundation/mpl-bubblegum.git?branch=solana-1.14#50ee3c2b7e85fc930b43d8d9a9987efd3ac564e5"
 dependencies = [
  "anchor-lang",
  "bytemuck",
  "mpl-token-metadata",
+ "num-traits",
  "solana-program",
  "spl-account-compression",
  "spl-associated-token-account",
@@ -1994,7 +1994,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a69803fbfbc4bb0327de86f49d2639692c7c60276cb87d6cced84bb8189f2000"
 dependencies = [
  "borsh",
- "mpl-token-metadata-context-derive",
+ "mpl-token-metadata-context-derive 0.2.1",
  "num-derive",
  "num-traits",
  "rmp-serde",
@@ -2007,14 +2007,14 @@ dependencies = [
 
 [[package]]
 name = "mpl-token-metadata"
-version = "1.8.4"
+version = "1.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "301235b920e1b3a4bf9c3ffd6a16b1db1f3ac5bdcb6b6f201d4bb7a9fd1d94a0"
+checksum = "84e73b5df66f4e6f98606e3fb327cbc6a0dba8df11085246f2e766949acb96bb"
 dependencies = [
  "arrayref",
  "borsh",
  "mpl-token-auth-rules",
- "mpl-token-metadata-context-derive",
+ "mpl-token-metadata-context-derive 0.3.0",
  "mpl-utils",
  "num-derive",
  "num-traits",
@@ -2038,10 +2038,20 @@ dependencies = [
 ]
 
 [[package]]
-name = "mpl-utils"
-version = "0.1.0"
+name = "mpl-token-metadata-context-derive"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7fc48e64c50dba956acb46eec86d6968ef0401ef37031426da479f1f2b592066"
+checksum = "b5a739019e11d93661a64ef5fe108ab17c79b35961e944442ff6efdd460ad01a"
+dependencies = [
+ "quote 1.0.23",
+ "syn 1.0.107",
+]
+
+[[package]]
+name = "mpl-utils"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "822133b6cba8f9a43e5e0e189813be63dd795858f54155c729833be472ffdb51"
 dependencies = [
  "arrayref",
  "borsh",
