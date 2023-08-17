@@ -1934,7 +1934,7 @@ dependencies = [
 [[package]]
 name = "mpl-bubblegum"
 version = "0.9.2"
-source = "git+https://github.com/metaplex-foundation/mpl-bubblegum.git?branch=1.14#3cb3976d816a1cfd8815430052075becf00afeee"
+source = "git+https://github.com/metaplex-foundation/mpl-bubblegum.git?rev=3cb3976d#3cb3976d816a1cfd8815430052075becf00afeee"
 dependencies = [
  "anchor-lang",
  "bytemuck",
