@@ -1933,13 +1933,13 @@ dependencies = [
 
 [[package]]
 name = "mpl-bubblegum"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b751e0658d7414a801b2fee9802d884f508724fdc1d8645405f69e604d348bc1"
+version = "0.9.2"
+source = "git+https://github.com/metaplex-foundation/mpl-bubblegum.git?branch=1.14#3cb3976d816a1cfd8815430052075becf00afeee"
 dependencies = [
  "anchor-lang",
  "bytemuck",
  "mpl-token-metadata",
+ "num-traits",
  "solana-program",
  "spl-account-compression",
  "spl-associated-token-account",
