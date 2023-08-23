@@ -25,6 +25,7 @@ borsh = "0.9.3"
 thiserror = "1.0.32"
 solana-sdk = "~1.14"
 anchor-lang = { version = "0.26.0"} 
+log = "0.4.17"
 
 [dev-dependencies]
 rand = "0.8.5"

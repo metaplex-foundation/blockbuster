@@ -1,3 +1,5 @@
+use log::warn;
+
 use crate::{
     error::BlockbusterError,
     instruction::InstructionBundle,
@@ -21,28 +23,17 @@ pub use spl_account_compression::events::{
     AccountCompressionEvent::{self, ApplicationData, ChangeLog},
     ApplicationDataEvent, ChangeLogEvent, ChangeLogEventV1,
 };
+
 use spl_noop;
 
 #[derive(Eq, PartialEq)]
 pub enum Payload {
     Unknown,
-    MintV1 {
-        args: MetadataArgs,
-    },
-    Decompress {
-        args: MetadataArgs,
-    },
-    CancelRedeem {
-        root: [u8; 32],
-    },
-    CreatorVerification {
-        creator: Pubkey,
-        verify: bool
-    },
-    CollectionVerification {
-        collection: Pubkey,
-        verify: bool
-    },
+    MintV1 { args: MetadataArgs },
+    Decompress { args: MetadataArgs },
+    CancelRedeem { root: [u8; 32] },
+    CreatorVerification { creator: Pubkey, verify: bool },
+    CollectionVerification { collection: Pubkey, verify: bool },
 }
 //TODO add more of the parsing here to minimize program transformer code
 pub struct BubblegumInstruction {
@@ -104,6 +95,7 @@ impl ProgramParser for BubblegumParser {
         bundle: &InstructionBundle,
     ) -> Result<Box<(dyn ParseResult + 'static)>, BlockbusterError> {
         let InstructionBundle {
+            txn_id,
             instruction,
             inner_ix,
             keys,
@@ -127,32 +119,41 @@ impl ProgramParser for BubblegumParser {
                     if let Some(inner_ix_data) = cix.data() {
                         let inner_ix_data = inner_ix_data.iter().collect::<Vec<_>>();
                         if !inner_ix_data.is_empty() {
-                            match AccountCompressionEvent::try_from_slice(&inner_ix_data)? {
-                                ChangeLog(changelog_event) => {
-                                    let ChangeLogEvent::V1(changelog_event) = changelog_event;
-                                    b_inst.tree_update = Some(changelog_event);
-                                }
-                                ApplicationData(app_data) => {
-                                    let ApplicationDataEvent::V1(app_data) = app_data;
-                                    let app_data = app_data.application_data;
+                            match AccountCompressionEvent::try_from_slice(&inner_ix_data) {
+                                Ok(result) => match result {
+                                    ChangeLog(changelog_event) => {
+                                        let ChangeLogEvent::V1(changelog_event) = changelog_event;
+                                        b_inst.tree_update = Some(changelog_event);
+                                    }
+                                    ApplicationData(app_data) => {
+                                        let ApplicationDataEvent::V1(app_data) = app_data;
+                                        let app_data = app_data.application_data;
 
-                                    let event_type_byte = if !app_data.is_empty() {
-                                        &app_data[0..1]
-                                    } else {
-                                        return Err(BlockbusterError::DeserializationError);
-                                    };
+                                        let event_type_byte = if !app_data.is_empty() {
+                                            &app_data[0..1]
+                                        } else {
+                                            return Err(BlockbusterError::DeserializationError);
+                                        };
 
-                                    match BubblegumEventType::try_from_slice(event_type_byte)? {
-                                        BubblegumEventType::Uninitialized => {
-                                            return Err(
-                                                BlockbusterError::MissingBubblegumEventData,
-                                            );
-                                        }
-                                        BubblegumEventType::LeafSchemaEvent => {
-                                            b_inst.leaf_update =
-                                                Some(LeafSchemaEvent::try_from_slice(&app_data)?);
+                                        match BubblegumEventType::try_from_slice(event_type_byte)? {
+                                            BubblegumEventType::Uninitialized => {
+                                                return Err(
+                                                    BlockbusterError::MissingBubblegumEventData,
+                                                );
+                                            }
+                                            BubblegumEventType::LeafSchemaEvent => {
+                                                b_inst.leaf_update = Some(
+                                                    LeafSchemaEvent::try_from_slice(&app_data)?,
+                                                );
+                                            }
                                         }
                                     }
+                                },
+                                Err(e) => {
+                                    warn!(
+                                        "Error while deserializing txn {:?} with noop data: {:?}",
+                                        txn_id, e
+                                    );
                                 }
                             }
                         }
@@ -189,20 +190,16 @@ impl ProgramParser for BubblegumParser {
                         b_inst.payload = Some(Payload::CancelRedeem { root: slice });
                     }
                     InstructionName::VerifyCreator => {
-                        b_inst.payload =
-                            Some(build_creator_verification_payload(keys, true)?);
+                        b_inst.payload = Some(build_creator_verification_payload(keys, true)?);
                     }
                     InstructionName::UnverifyCreator => {
-                        b_inst.payload =
-                            Some(build_creator_verification_payload(keys, false)?);
+                        b_inst.payload = Some(build_creator_verification_payload(keys, false)?);
                     }
                     InstructionName::VerifyCollection | InstructionName::SetAndVerifyCollection => {
-                        b_inst.payload =
-                            Some(build_collection_verification_payload(keys, true)?);
+                        b_inst.payload = Some(build_collection_verification_payload(keys, true)?);
                     }
                     InstructionName::UnverifyCollection => {
-                        b_inst.payload =
-                            Some(build_collection_verification_payload(keys, false)?);
+                        b_inst.payload = Some(build_collection_verification_payload(keys, false)?);
                     }
                     InstructionName::Unknown => {}
                     _ => {}
@@ -226,7 +223,7 @@ fn build_creator_verification_payload(
         .0;
     Ok(Payload::CreatorVerification {
         creator: Pubkey::new_from_array(creator),
-        verify
+        verify,
     })
 }
 
@@ -242,8 +239,5 @@ fn build_collection_verification_payload(
         .ok_or(BlockbusterError::InstructionParsingError)?
         .0;
     let collection: Pubkey = Pubkey::try_from_slice(&collection_raw)?;
-    Ok(Payload::CollectionVerification {
-        collection,
-        verify
-    })
+    Ok(Payload::CollectionVerification { collection, verify })
 }
