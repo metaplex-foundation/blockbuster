@@ -26,12 +26,23 @@ use spl_noop;
 #[derive(Eq, PartialEq)]
 pub enum Payload {
     Unknown,
-    MintV1 { args: MetadataArgs },
-    Decompress { args: MetadataArgs },
-    CancelRedeem { root: [u8; 32] },
-    VerifyCreator { creator: Pubkey },
-    UnverifyCreator { creator: Pubkey },
-    SetAndVerifyCollection { collection: Pubkey }
+    MintV1 {
+        args: MetadataArgs,
+    },
+    Decompress {
+        args: MetadataArgs,
+    },
+    CancelRedeem {
+        root: [u8; 32],
+    },
+    CreatorVerification {
+        creator: Pubkey,
+        verify: bool
+    },
+    CollectionVerification {
+        collection: Pubkey,
+        verify: bool
+    },
 }
 //TODO add more of the parsing here to minimize program transformer code
 pub struct BubblegumInstruction {
@@ -178,32 +189,20 @@ impl ProgramParser for BubblegumParser {
                         b_inst.payload = Some(Payload::CancelRedeem { root: slice });
                     }
                     InstructionName::VerifyCreator => {
-                        let creator = keys
-                            .get(5)
-                            .ok_or(BlockbusterError::InstructionParsingError)?
-                            .0;
-                        b_inst.payload = Some(Payload::VerifyCreator {
-                            creator: Pubkey::new_from_array(creator),
-                        });
+                        b_inst.payload =
+                            Some(build_creator_verification_payload(keys, true)?);
                     }
                     InstructionName::UnverifyCreator => {
-                        let creator = keys
-                            .get(5)
-                            .ok_or(BlockbusterError::InstructionParsingError)?
-                            .0;
-                        b_inst.payload = Some(Payload::UnverifyCreator {
-                            creator: Pubkey::new_from_array(creator),
-                        });
+                        b_inst.payload =
+                            Some(build_creator_verification_payload(keys, false)?);
                     }
-                    // We don't extract any additional info w.r.t. verify and unverify
-                    // collection ops for now.
-                    InstructionName::SetAndVerifyCollection => {
-                        // Deserializing this to get to the second argument encoded in the slice,
-                        // which is the collection address. Is there a (safe) way to get to that
-                        // directly?
-                        let _args: MetadataArgs = MetadataArgs::try_from_slice(ix_data)?;
-                        let collection: Pubkey = Pubkey::try_from_slice(ix_data)?;
-                        b_inst.payload = Some(Payload::SetAndVerifyCollection { collection });
+                    InstructionName::VerifyCollection | InstructionName::SetAndVerifyCollection => {
+                        b_inst.payload =
+                            Some(build_collection_verification_payload(keys, true)?);
+                    }
+                    InstructionName::UnverifyCollection => {
+                        b_inst.payload =
+                            Some(build_collection_verification_payload(keys, false)?);
                     }
                     InstructionName::Unknown => {}
                     _ => {}
@@ -214,4 +213,37 @@ impl ProgramParser for BubblegumParser {
         Ok(Box::new(b_inst))
     }
 }
-    
+
+// See Bubblegum documentation for offsets and positions:
+// https://github.com/metaplex-foundation/mpl-bubblegum/blob/main/programs/bubblegum/README.md#-verify_creator-and-unverify_creator
+fn build_creator_verification_payload(
+    keys: &[plerkle_serialization::Pubkey],
+    verify: bool,
+) -> Result<Payload, BlockbusterError> {
+    let creator = keys
+        .get(5)
+        .ok_or(BlockbusterError::InstructionParsingError)?
+        .0;
+    Ok(Payload::CreatorVerification {
+        creator: Pubkey::new_from_array(creator),
+        verify
+    })
+}
+
+// See Bubblegum for offsets and positions:
+// https://github.com/metaplex-foundation/mpl-bubblegum/blob/main/programs/bubblegum/README.md#-verify_collection-unverify_collection-and-set_and_verify_collection
+// NOTE: Unverfication does not include collection. This needs to be fixed in the README.
+fn build_collection_verification_payload(
+    keys: &[plerkle_serialization::Pubkey],
+    verify: bool,
+) -> Result<Payload, BlockbusterError> {
+    let collection_raw = keys
+        .get(8)
+        .ok_or(BlockbusterError::InstructionParsingError)?
+        .0;
+    let collection: Pubkey = Pubkey::try_from_slice(&collection_raw)?;
+    Ok(Payload::CollectionVerification {
+        collection,
+        verify
+    })
+}
