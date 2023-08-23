@@ -639,6 +639,7 @@ dependencies = [
  "bs58 0.4.0",
  "flatbuffers",
  "lazy_static",
+ "log",
  "mpl-bubblegum",
  "mpl-candy-guard",
  "mpl-candy-machine-core",
