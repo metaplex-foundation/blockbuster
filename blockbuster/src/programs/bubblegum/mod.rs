@@ -197,7 +197,8 @@ impl ProgramParser for BubblegumParser {
                     InstructionName::UnverifyCollection => {
                         b_inst.payload = Some(build_collection_verification_payload(keys, false)?);
                     }
-                    InstructionName::Unknown => {}
+                    InstructionName::UpdateMetadata => {}
+                    InstructionName::Unknown | InstructionName::SetDecompressibleState => {}
                     _ => {}
                 };
             }
