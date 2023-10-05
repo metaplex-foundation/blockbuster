@@ -204,7 +204,6 @@ impl ProgramParser for BubblegumParser {
                         let update_args = args.update_args;
                         b_inst.payload = Some(Payload::UpdateMetadata { update_args });
                     }
-                    InstructionName::Unknown | InstructionName::SetDecompressibleState => {}
                     _ => {}
                 };
             }

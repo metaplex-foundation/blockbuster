@@ -2168,8 +2168,9 @@ dependencies = [
 
 [[package]]
 name = "mpl-bubblegum"
-version = "1.0.0"
-source = "git+https://github.com/metaplex-foundation/mpl-bubblegum.git?rev=c03745be2dbfe142a60abfbb3d98ccf226d2e834#c03745be2dbfe142a60abfbb3d98ccf226d2e834"
+version = "1.0.1-beta.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a151b3b65fc4632bce9c9b93267e1819c15728abd7ef3db5d0174f6becc0645c"
 dependencies = [
  "borsh 0.10.3",
  "kaigan",
