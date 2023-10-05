@@ -10,7 +10,8 @@ use crate::{program_handler::NotUsed, programs::ProgramParseResult};
 use borsh::de::BorshDeserialize;
 use mpl_bubblegum::{
     get_instruction_type,
-    types::{BubblegumEventType, MetadataArgs},
+    instructions::UpdateMetadataInstructionArgs,
+    types::{BubblegumEventType, MetadataArgs, UpdateArgs},
 };
 pub use mpl_bubblegum::{types::LeafSchema, InstructionName, LeafSchemaEvent, ID};
 use plerkle_serialization::AccountInfo;
@@ -30,6 +31,7 @@ pub enum Payload {
     CancelRedeem { root: [u8; 32] },
     CreatorVerification { creator: Pubkey, verify: bool },
     CollectionVerification { collection: Pubkey, verify: bool },
+    UpdateMetadata { update_args: UpdateArgs },
 }
 //TODO add more of the parsing here to minimize program transformer code
 pub struct BubblegumInstruction {
@@ -197,7 +199,11 @@ impl ProgramParser for BubblegumParser {
                     InstructionName::UnverifyCollection => {
                         b_inst.payload = Some(build_collection_verification_payload(keys, false)?);
                     }
-                    InstructionName::UpdateMetadata => {}
+                    InstructionName::UpdateMetadata => {
+                        let args = UpdateMetadataInstructionArgs::try_from_slice(&outer_ix_data)?;
+                        let update_args = args.update_args;
+                        b_inst.payload = Some(Payload::UpdateMetadata { update_args });
+                    }
                     InstructionName::Unknown | InstructionName::SetDecompressibleState => {}
                     _ => {}
                 };
