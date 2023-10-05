@@ -1,7 +1,7 @@
 use crate::{
     error::BlockbusterError, instruction::InstructionBundle, programs::ProgramParseResult,
 };
-use plerkle_serialization::{AccountInfo};
+use plerkle_serialization::AccountInfo;
 use solana_sdk::pubkey::Pubkey;
 
 pub trait ParseResult: Sync + Send {

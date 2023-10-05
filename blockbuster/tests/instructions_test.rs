@@ -60,7 +60,7 @@ fn helium_nested() {
     let txn = prepare_fixture(fbb, "helium_nested");
     let txn = root_as_transaction_info(txn.finished_data()).expect("Fail deser");
     let mut prog = HashSet::new();
-    let id = mpl_bubblegum::id();
+    let id = mpl_bubblegum::ID;
     let slot = txn.slot();
     prog.insert(id.as_ref());
     let res = order_instructions(prog, &txn);
@@ -74,7 +74,7 @@ fn helium_nested() {
 
     let contains = res
         .iter()
-        .any(|(ib, _inner)| ib.0 .0.as_ref() == mpl_bubblegum::id().as_ref());
+        .any(|(ib, _inner)| ib.0 .0.as_ref() == mpl_bubblegum::ID.as_ref());
     assert!(contains, "Must containe bgum at hoisted root");
     let subject = BubblegumParser {};
     for (outer_ix, inner_ix) in res.into_iter() {
@@ -130,7 +130,7 @@ fn test_double_mint() {
     assert_eq!(ix.len(), 2);
     let contains = ix
         .iter()
-        .filter(|(ib, _inner)| ib.0 .0.as_ref() == mpl_bubblegum::id().as_ref());
+        .filter(|(ib, _inner)| ib.0 .0.as_ref() == mpl_bubblegum::ID.as_ref());
     let mut count = 0;
     contains.for_each(|bix| {
         count += 1;
@@ -178,7 +178,7 @@ fn test_double_tree() {
     let ix = order_instructions(programs, &txn);
     let contains = ix
         .iter()
-        .filter(|(ib, _inner)| ib.0 .0.as_ref() == mpl_bubblegum::id().as_ref());
+        .filter(|(ib, _inner)| ib.0 .0.as_ref() == mpl_bubblegum::ID.as_ref());
     let mut count = 0;
     contains.for_each(|bix| {
         if let Some(inner) = &bix.1 {

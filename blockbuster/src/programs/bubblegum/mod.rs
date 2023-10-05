@@ -10,13 +10,9 @@ use crate::{program_handler::NotUsed, programs::ProgramParseResult};
 use borsh::de::BorshDeserialize;
 use mpl_bubblegum::{
     get_instruction_type,
-    state::{metaplex_adapter::MetadataArgs, BubblegumEventType},
+    types::{BubblegumEventType, MetadataArgs},
 };
-pub use mpl_bubblegum::{
-    id as program_id,
-    state::leaf_schema::{LeafSchema, LeafSchemaEvent},
-    InstructionName,
-};
+pub use mpl_bubblegum::{types::LeafSchema, InstructionName, LeafSchemaEvent, ID};
 use plerkle_serialization::AccountInfo;
 use solana_sdk::pubkey::Pubkey;
 pub use spl_account_compression::events::{
@@ -70,11 +66,11 @@ pub struct BubblegumParser;
 
 impl ProgramParser for BubblegumParser {
     fn key(&self) -> Pubkey {
-        program_id()
+        ID
     }
 
     fn key_match(&self, key: &Pubkey) -> bool {
-        key == &program_id()
+        key == &ID
     }
     fn handles_account_updates(&self) -> bool {
         false
