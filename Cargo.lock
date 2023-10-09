@@ -664,7 +664,7 @@ dependencies = [
  "solana-transaction-status",
  "spl-account-compression",
  "spl-concurrent-merkle-tree",
- "spl-noop 0.1.3",
+ "spl-noop",
  "spl-token 4.0.0",
  "thiserror",
 ]
@@ -4298,7 +4298,7 @@ dependencies = [
  "anchor-lang",
  "bytemuck",
  "spl-concurrent-merkle-tree",
- "spl-noop 0.2.0",
+ "spl-noop",
 ]
 
 [[package]]
@@ -4393,15 +4393,6 @@ name = "spl-memo"
 version = "4.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f0f180b03318c3dbab3ef4e1e4d46d5211ae3c780940dd0a28695aba4b59a75a"
-dependencies = [
- "solana-program",
-]
-
-[[package]]
-name = "spl-noop"
-version = "0.1.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "558536c75b5aed018113bfca39cddb414cd7ca77da7658d668e751d977830cda"
 dependencies = [
  "solana-program",
 ]
