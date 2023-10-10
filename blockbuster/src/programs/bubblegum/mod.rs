@@ -10,13 +10,10 @@ use crate::{program_handler::NotUsed, programs::ProgramParseResult};
 use borsh::de::BorshDeserialize;
 use mpl_bubblegum::{
     get_instruction_type,
-    state::{metaplex_adapter::MetadataArgs, BubblegumEventType},
+    instructions::UpdateMetadataInstructionArgs,
+    types::{BubblegumEventType, MetadataArgs, UpdateArgs},
 };
-pub use mpl_bubblegum::{
-    id as program_id,
-    state::leaf_schema::{LeafSchema, LeafSchemaEvent},
-    InstructionName,
-};
+pub use mpl_bubblegum::{types::LeafSchema, InstructionName, LeafSchemaEvent, ID};
 use plerkle_serialization::AccountInfo;
 use solana_sdk::pubkey::Pubkey;
 pub use spl_account_compression::events::{
@@ -34,6 +31,7 @@ pub enum Payload {
     CancelRedeem { root: [u8; 32] },
     CreatorVerification { creator: Pubkey, verify: bool },
     CollectionVerification { collection: Pubkey, verify: bool },
+    UpdateMetadata { update_args: UpdateArgs },
 }
 //TODO add more of the parsing here to minimize program transformer code
 pub struct BubblegumInstruction {
@@ -70,11 +68,11 @@ pub struct BubblegumParser;
 
 impl ProgramParser for BubblegumParser {
     fn key(&self) -> Pubkey {
-        program_id()
+        ID
     }
 
     fn key_match(&self, key: &Pubkey) -> bool {
-        key == &program_id()
+        key == &ID
     }
     fn handles_account_updates(&self) -> bool {
         false
@@ -201,7 +199,11 @@ impl ProgramParser for BubblegumParser {
                     InstructionName::UnverifyCollection => {
                         b_inst.payload = Some(build_collection_verification_payload(keys, false)?);
                     }
-                    InstructionName::Unknown => {}
+                    InstructionName::UpdateMetadata => {
+                        let args = UpdateMetadataInstructionArgs::try_from_slice(&outer_ix_data)?;
+                        let update_args = args.update_args;
+                        b_inst.payload = Some(Payload::UpdateMetadata { update_args });
+                    }
                     _ => {}
                 };
             }
