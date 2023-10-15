@@ -26,12 +26,27 @@ use spl_noop;
 #[derive(Eq, PartialEq)]
 pub enum Payload {
     Unknown,
-    MintV1 { args: MetadataArgs },
-    Decompress { args: MetadataArgs },
-    CancelRedeem { root: [u8; 32] },
-    CreatorVerification { creator: Pubkey, verify: bool },
-    CollectionVerification { collection: Pubkey, verify: bool },
-    UpdateMetadata { update_args: UpdateArgs },
+    MintV1 {
+        args: MetadataArgs,
+    },
+    Decompress {
+        args: MetadataArgs,
+    },
+    CancelRedeem {
+        root: [u8; 32],
+    },
+    CreatorVerification {
+        creator: Pubkey,
+        verify: bool,
+    },
+    CollectionVerification {
+        collection: Pubkey,
+        verify: bool,
+    },
+    UpdateMetadata {
+        current_metadata: MetadataArgs,
+        update_args: UpdateArgs,
+    },
 }
 //TODO add more of the parsing here to minimize program transformer code
 pub struct BubblegumInstruction {
@@ -201,8 +216,10 @@ impl ProgramParser for BubblegumParser {
                     }
                     InstructionName::UpdateMetadata => {
                         let args = UpdateMetadataInstructionArgs::try_from_slice(&outer_ix_data)?;
-                        let update_args = args.update_args;
-                        b_inst.payload = Some(Payload::UpdateMetadata { update_args });
+                        b_inst.payload = Some(Payload::UpdateMetadata {
+                            current_metadata: args.current_metadata,
+                            update_args: args.update_args,
+                        });
                     }
                     _ => {}
                 };
@@ -231,7 +248,7 @@ fn build_creator_verification_payload(
 
 // See Bubblegum for offsets and positions:
 // https://github.com/metaplex-foundation/mpl-bubblegum/blob/main/programs/bubblegum/README.md#-verify_collection-unverify_collection-and-set_and_verify_collection
-// NOTE: Unverfication does not include collection. This needs to be fixed in the README.
+// This uses the account.  The collection is only provided as an argument for `set_and_verify_collection`.
 fn build_collection_verification_payload(
     keys: &[plerkle_serialization::Pubkey],
     verify: bool,
