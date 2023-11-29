@@ -215,7 +215,7 @@ impl ProgramParser for BubblegumParser {
                         b_inst.payload = Some(build_collection_verification_payload(keys, false)?);
                     }
                     InstructionName::UpdateMetadata => {
-                        let args = UpdateMetadataInstructionArgs::try_from_slice(&outer_ix_data)?;
+                        let args = UpdateMetadataInstructionArgs::try_from_slice(ix_data)?;
                         b_inst.payload = Some(Payload::UpdateMetadata {
                             current_metadata: args.current_metadata,
                             update_args: args.update_args,
