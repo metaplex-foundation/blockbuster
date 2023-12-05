@@ -28,6 +28,8 @@ pub enum Payload {
     Unknown,
     MintV1 {
         args: MetadataArgs,
+        authority: [u8; 32],
+        tree_id: [u8; 32],
     },
     Decompress {
         args: MetadataArgs,
@@ -46,6 +48,7 @@ pub enum Payload {
     UpdateMetadata {
         current_metadata: MetadataArgs,
         update_args: UpdateArgs,
+        tree_id: [u8; 32],
     },
 }
 //TODO add more of the parsing here to minimize program transformer code
@@ -182,15 +185,11 @@ impl ProgramParser for BubblegumParser {
             if !ix_data.is_empty() {
                 match b_inst.instruction {
                     InstructionName::MintV1 => {
-                        let args: MetadataArgs = MetadataArgs::try_from_slice(ix_data)?;
-                        b_inst.payload = Some(Payload::MintV1 { args });
+                        b_inst.payload = Some(build_mint_v1_payload(keys, ix_data, false)?);
                     }
+
                     InstructionName::MintToCollectionV1 => {
-                        let mut args: MetadataArgs = MetadataArgs::try_from_slice(ix_data)?;
-                        if let Some(ref mut col) = args.collection {
-                            col.verified = true;
-                        }
-                        b_inst.payload = Some(Payload::MintV1 { args });
+                        b_inst.payload = Some(build_mint_v1_payload(keys, ix_data, true)?);
                     }
                     InstructionName::DecompressV1 => {
                         let args: MetadataArgs = MetadataArgs::try_from_slice(ix_data)?;
@@ -215,11 +214,7 @@ impl ProgramParser for BubblegumParser {
                         b_inst.payload = Some(build_collection_verification_payload(keys, false)?);
                     }
                     InstructionName::UpdateMetadata => {
-                        let args = UpdateMetadataInstructionArgs::try_from_slice(ix_data)?;
-                        b_inst.payload = Some(Payload::UpdateMetadata {
-                            current_metadata: args.current_metadata,
-                            update_args: args.update_args,
-                        });
+                        b_inst.payload = Some(build_update_metadata_payload(keys, ix_data)?);
                     }
                     _ => {}
                 };
@@ -259,4 +254,55 @@ fn build_collection_verification_payload(
         .0;
     let collection: Pubkey = Pubkey::try_from_slice(&collection_raw)?;
     Ok(Payload::CollectionVerification { collection, verify })
+}
+
+// See Bubblegum for offsets and positions:
+// https://github.com/metaplex-foundation/mpl-bubblegum/blob/main/programs/bubblegum/README.md
+fn build_mint_v1_payload(
+    keys: &[plerkle_serialization::Pubkey],
+    ix_data: &[u8],
+    set_verify: bool,
+) -> Result<Payload, BlockbusterError> {
+    let mut args: MetadataArgs = MetadataArgs::try_from_slice(ix_data)?;
+    if set_verify {
+        if let Some(ref mut col) = args.collection {
+            col.verified = true;
+        }
+    }
+
+    let authority = keys
+        .get(0)
+        .ok_or(BlockbusterError::InstructionParsingError)?
+        .0;
+
+    let tree_id = keys
+        .get(3)
+        .ok_or(BlockbusterError::InstructionParsingError)?
+        .0;
+
+    Ok(Payload::MintV1 {
+        args,
+        authority,
+        tree_id,
+    })
+}
+
+// See Bubblegum for offsets and positions:
+// https://github.com/metaplex-foundation/mpl-bubblegum/blob/main/programs/bubblegum/README.md
+fn build_update_metadata_payload(
+    keys: &[plerkle_serialization::Pubkey],
+    ix_data: &[u8],
+) -> Result<Payload, BlockbusterError> {
+    let args = UpdateMetadataInstructionArgs::try_from_slice(ix_data)?;
+
+    let tree_id = keys
+        .get(8)
+        .ok_or(BlockbusterError::InstructionParsingError)?
+        .0;
+
+    Ok(Payload::UpdateMetadata {
+        current_metadata: args.current_metadata,
+        update_args: args.update_args,
+        tree_id,
+    })
 }

@@ -107,7 +107,15 @@ fn helium_nested() {
             _ => panic!("Wrong type"),
         };
 
-        if let (Some(_le), Some(_cl), Some(Payload::MintV1 { args: _ })) = (
+        if let (
+            Some(_le),
+            Some(_cl),
+            Some(Payload::MintV1 {
+                args: _,
+                authority: _,
+                tree_id: _,
+            }),
+        ) = (
             &parse_result.leaf_update,
             &parse_result.tree_update,
             &parse_result.payload,
