@@ -10,7 +10,9 @@ use crate::{program_handler::NotUsed, programs::ProgramParseResult};
 use borsh::de::BorshDeserialize;
 use mpl_bubblegum::{
     get_instruction_type,
-    instructions::UpdateMetadataInstructionArgs,
+    instructions::{
+        UnverifyCreatorInstructionArgs, UpdateMetadataInstructionArgs, VerifyCreatorInstructionArgs,
+    },
     types::{BubblegumEventType, MetadataArgs, UpdateArgs},
 };
 pub use mpl_bubblegum::{types::LeafSchema, InstructionName, LeafSchemaEvent, ID};
@@ -38,6 +40,7 @@ pub enum Payload {
         root: [u8; 32],
     },
     CreatorVerification {
+        metadata: MetadataArgs,
         creator: Pubkey,
         verify: bool,
     },
@@ -202,10 +205,12 @@ impl ProgramParser for BubblegumParser {
                         b_inst.payload = Some(Payload::CancelRedeem { root: slice });
                     }
                     InstructionName::VerifyCreator => {
-                        b_inst.payload = Some(build_creator_verification_payload(keys, true)?);
+                        b_inst.payload =
+                            Some(build_creator_verification_payload(keys, ix_data, true)?);
                     }
                     InstructionName::UnverifyCreator => {
-                        b_inst.payload = Some(build_creator_verification_payload(keys, false)?);
+                        b_inst.payload =
+                            Some(build_creator_verification_payload(keys, ix_data, false)?);
                     }
                     InstructionName::VerifyCollection | InstructionName::SetAndVerifyCollection => {
                         b_inst.payload = Some(build_collection_verification_payload(keys, true)?);
@@ -229,13 +234,22 @@ impl ProgramParser for BubblegumParser {
 // https://github.com/metaplex-foundation/mpl-bubblegum/blob/main/programs/bubblegum/README.md#-verify_creator-and-unverify_creator
 fn build_creator_verification_payload(
     keys: &[plerkle_serialization::Pubkey],
+    ix_data: &[u8],
     verify: bool,
 ) -> Result<Payload, BlockbusterError> {
+    let metadata = if verify {
+        VerifyCreatorInstructionArgs::try_from_slice(ix_data)?.metadata
+    } else {
+        UnverifyCreatorInstructionArgs::try_from_slice(ix_data)?.metadata
+    };
+
     let creator = keys
         .get(5)
         .ok_or(BlockbusterError::InstructionParsingError)?
         .0;
+
     Ok(Payload::CreatorVerification {
+        metadata,
         creator: Pubkey::new_from_array(creator),
         verify,
     })
