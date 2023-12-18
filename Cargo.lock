@@ -665,7 +665,7 @@ dependencies = [
  "spl-account-compression",
  "spl-concurrent-merkle-tree",
  "spl-noop",
- "spl-token 3.5.0",
+ "spl-token 4.0.0",
  "thiserror",
 ]
 
