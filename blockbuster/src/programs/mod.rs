@@ -7,20 +7,19 @@ pub mod token_account;
 pub mod token_metadata;
 
 // Note: `ProgramParseResult` used to contain the following variants that have been deprecated and
-// removed from blockbuster since the `version-1.16` tag of blockbuster:
+// removed from blockbuster since the `version-1.16` tag:
 // CandyGuard(&'a CandyGuardAccountData),
 // CandyMachine(&'a CandyMachineAccountData),
 // CandyMachineCore(&'a CandyMachineCoreAccountData),
 //
-// The reason Candy Machine V3 parsing was removed was because Candy Guard (`mpl-candy-guard`) and
-// Candy Machine V3 (`mpl-candy-machine-core`) were dependent upon a specific Solana version (1.16)
-// at the time, there was no Candy Machine parsing in DAS (`digital-asset-rpc-infrastructure`), and
-// we wanted to use the Rust clients for Token Metadata and Bubblegum so that going forward we could
-// more easily update blockbuster to new Solana versions going forward.
+// Candy Machine V3 parsing was removed because Candy Guard (`mpl-candy-guard`) and
+// Candy Machine Core (`mpl-candy-machine-core`) were dependent upon a specific Solana
+// version (1.16), there was no Candy Machine parsing in DAS (`digital-asset-rpc-infrastructure`),
+// and we wanted to use the Rust clients for Bubblegum and Token Metadata so that going forward we
+// could more easily update blockbuster to new Solana versions.
 //
-// Candy Machine V2 (`mpl-candy-machine`) parsing did not depend on the `mpl-candy-machine` crate
-// as its types were copied, but we removed V2 parsing at the same time as V3 parsing as it was not
-// being used.
+// Candy Machine V2 (`mpl-candy-machine`) parsing was removed at the same time as V3 because even
+// though it did not depend on the `mpl-candy-machine` crate, it was also not being used by DAS.
 pub enum ProgramParseResult<'a> {
     Bubblegum(&'a BubblegumInstruction),
     TokenMetadata(&'a TokenMetadataAccountState),
