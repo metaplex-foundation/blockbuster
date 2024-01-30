@@ -10,11 +10,11 @@ use plerkle_serialization::AccountInfo;
 
 pub use mpl_bubblegum::{types::LeafSchema, InstructionName, LeafSchemaEvent};
 use mpl_token_metadata::{
-    state::{
-        CollectionAuthorityRecord, Edition, EditionMarker, Key, MasterEditionV1, MasterEditionV2,
-        Metadata, ReservationListV1, ReservationListV2, UseAuthorityRecord,
+    accounts::{
+        CollectionAuthorityRecord, DeprecatedMasterEditionV1, Edition, EditionMarker,
+        MasterEdition, Metadata, UseAuthorityRecord,
     },
-    utils::meta_deser_unchecked,
+    types::Key,
 };
 
 pubkeys!(
@@ -25,14 +25,12 @@ pubkeys!(
 #[allow(clippy::large_enum_variant)]
 pub enum TokenMetadataAccountData {
     EditionV1(Edition),
-    MasterEditionV1(MasterEditionV1),
+    MasterEditionV1(DeprecatedMasterEditionV1),
     MetadataV1(Metadata),
-    MasterEditionV2(MasterEditionV2),
+    MasterEditionV2(MasterEdition),
     EditionMarker(EditionMarker),
     UseAuthorityRecord(UseAuthorityRecord),
     CollectionAuthorityRecord(CollectionAuthorityRecord),
-    ReservationListV2(ReservationListV2),
-    ReservationListV1(ReservationListV1),
     EmptyAccount,
 }
 
@@ -100,19 +98,19 @@ impl ProgramParser for TokenMetadataParser {
                 }
             }
             Key::MasterEditionV1 => {
-                let account: MasterEditionV2 = try_from_slice_unchecked(&account_data)?;
-
-                TokenMetadataAccountState {
-                    key: account.key,
-                    data: TokenMetadataAccountData::MasterEditionV2(account),
-                }
-            }
-            Key::MasterEditionV2 => {
-                let account: MasterEditionV1 = try_from_slice_unchecked(&account_data)?;
+                let account: DeprecatedMasterEditionV1 = try_from_slice_unchecked(&account_data)?;
 
                 TokenMetadataAccountState {
                     key: account.key,
                     data: TokenMetadataAccountData::MasterEditionV1(account),
+                }
+            }
+            Key::MasterEditionV2 => {
+                let account: MasterEdition = try_from_slice_unchecked(&account_data)?;
+
+                TokenMetadataAccountState {
+                    key: account.key,
+                    data: TokenMetadataAccountData::MasterEditionV2(account),
                 }
             }
             Key::UseAuthorityRecord => {
@@ -140,27 +138,11 @@ impl ProgramParser for TokenMetadataParser {
                 }
             }
             Key::MetadataV1 => {
-                let account: Metadata = meta_deser_unchecked(&mut account_data.as_slice())?;
+                let account = Metadata::safe_deserialize(&account_data)?;
 
                 TokenMetadataAccountState {
                     key: account.key,
                     data: TokenMetadataAccountData::MetadataV1(account),
-                }
-            }
-            Key::ReservationListV1 => {
-                let account: ReservationListV1 = try_from_slice_unchecked(&account_data)?;
-
-                TokenMetadataAccountState {
-                    key: account.key,
-                    data: TokenMetadataAccountData::ReservationListV1(account),
-                }
-            }
-            Key::ReservationListV2 => {
-                let account: ReservationListV2 = try_from_slice_unchecked(&account_data)?;
-
-                TokenMetadataAccountState {
-                    key: account.key,
-                    data: TokenMetadataAccountData::ReservationListV2(account),
                 }
             }
             Key::Uninitialized => {
