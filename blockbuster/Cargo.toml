@@ -12,7 +12,7 @@ readme = "../README.md"
 spl-account-compression = { version = "0.2.0", features = ["no-entrypoint"] }
 spl-noop = { version = "0.2.0", features = ["no-entrypoint"] }
 mpl-bubblegum = "1.2.0"
-mpl-token-metadata = { version = "4.0.0", features = ["serde"], git = "https://github.com/metaplex-foundation/mpl-token-metadata.git", rev = "59c3e39b4caaf6aff72cf8849a226244f304be7a" }
+mpl-token-metadata = { version = "4.0.2", features = ["serde"] }
 plerkle_serialization = { version = "1.6.0" }
 spl-token = { version = "4.0.0", features = ["no-entrypoint"] }
 async-trait = "0.1.57"

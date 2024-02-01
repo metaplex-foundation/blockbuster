@@ -8,7 +8,6 @@ use solana_sdk::{borsh0_10::try_from_slice_unchecked, pubkey::Pubkey, pubkeys};
 
 use plerkle_serialization::AccountInfo;
 
-pub use mpl_bubblegum::{types::LeafSchema, InstructionName, LeafSchemaEvent};
 use mpl_token_metadata::{
     accounts::{
         CollectionAuthorityRecord, DeprecatedMasterEditionV1, Edition, EditionMarker,
