@@ -5,8 +5,7 @@ use blockbuster::{
     instruction::{order_instructions, InstructionBundle},
     program_handler::ProgramParser,
     programs::{
-        bubblegum::{BubblegumParser, Payload},
-        token_metadata::LeafSchemaEvent,
+        bubblegum::{BubblegumParser, LeafSchemaEvent, Payload},
         ProgramParseResult,
     },
 };

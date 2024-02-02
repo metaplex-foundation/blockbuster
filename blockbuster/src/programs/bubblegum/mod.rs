@@ -15,7 +15,10 @@ use mpl_bubblegum::{
     },
     types::{BubblegumEventType, MetadataArgs, UpdateArgs},
 };
-pub use mpl_bubblegum::{types::LeafSchema, InstructionName, LeafSchemaEvent, ID};
+pub use mpl_bubblegum::{
+    types::{LeafSchema, UseMethod},
+    InstructionName, LeafSchemaEvent, ID,
+};
 use plerkle_serialization::AccountInfo;
 use solana_sdk::pubkey::Pubkey;
 pub use spl_account_compression::events::{
