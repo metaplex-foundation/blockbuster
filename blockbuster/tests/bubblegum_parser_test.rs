@@ -1,26 +1,19 @@
-
-
 #[cfg(test)]
-use anchor_lang::{prelude::*, InstructionData};
 use blockbuster::{
-    instruction::{InstructionBundle},
+    instruction::InstructionBundle,
     program_handler::ProgramParser,
     programs::{bubblegum::BubblegumParser, ProgramParseResult},
 };
-use borsh::ser::BorshSerialize;
 use flatbuffers::FlatBufferBuilder;
 use helpers::*;
-pub use mpl_bubblegum::id as program_id;
-use mpl_bubblegum::state::{
-    leaf_schema::{LeafSchema, Version},
-    metaplex_adapter::{Creator, MetadataArgs, TokenProgramVersion},
-    BubblegumEventType,
+use mpl_bubblegum::{
+    instructions::{MintV1InstructionArgs, TransferInstructionArgs},
+    types::{BubblegumEventType, Creator, LeafSchema, MetadataArgs, TokenProgramVersion, Version},
+    LeafSchemaEvent,
 };
-use plerkle_serialization::{Pubkey};
+use plerkle_serialization::Pubkey;
 use spl_account_compression::{
-    events::{
-        AccountCompressionEvent, ApplicationDataEvent, ApplicationDataEventV1, ChangeLogEvent,
-    },
+    events::{AccountCompressionEvent, ChangeLogEvent},
     state::PathNode,
 };
 
@@ -29,17 +22,26 @@ mod helpers;
 #[test]
 fn test_setup() {
     let subject = BubblegumParser {};
-    assert_eq!(subject.key(), program_id());
-    assert!(subject.key_match(&program_id()));
+    assert_eq!(subject.key(), mpl_bubblegum::ID);
+    assert!(subject.key_match(&mpl_bubblegum::ID));
 }
 
 #[test]
 fn test_mint() {
     let subject = BubblegumParser {};
 
-    let accounts = random_list_of(8, |_i| Pubkey(random_pubkey().to_bytes()));
-    let account_indexes: Vec<u8> = accounts.iter().enumerate().map(|(i, _)| i as u8).collect();
-    let message = MetadataArgs {
+    let accounts = random_list_of(9, |_i| random_pubkey());
+    let fb_accounts: Vec<Pubkey> = accounts
+        .iter()
+        .map(|account| Pubkey(account.to_bytes()))
+        .collect();
+    let fb_account_indexes: Vec<u8> = fb_accounts
+        .iter()
+        .enumerate()
+        .map(|(i, _)| i as u8)
+        .collect();
+
+    let metadata = MetadataArgs {
         name: "test".to_string(),
         symbol: "test".to_string(),
         uri: "www.solana.pos".to_owned(),
@@ -57,9 +59,24 @@ fn test_mint() {
             share: 20,
         }],
     };
-    let ix = mpl_bubblegum::instruction::MintV1 { message };
 
-    let _lse = mpl_bubblegum::state::leaf_schema::LeafSchemaEvent {
+    // We are only using this to get the instruction data, so the accounts don't actually matter
+    // here.
+    let mut accounts_iter = accounts.iter();
+    let ix = mpl_bubblegum::instructions::MintV1 {
+        tree_config: *accounts_iter.next().unwrap(),
+        leaf_owner: *accounts_iter.next().unwrap(),
+        leaf_delegate: *accounts_iter.next().unwrap(),
+        merkle_tree: *accounts_iter.next().unwrap(),
+        payer: *accounts_iter.next().unwrap(),
+        tree_creator_or_delegate: *accounts_iter.next().unwrap(),
+        log_wrapper: *accounts_iter.next().unwrap(),
+        compression_program: *accounts_iter.next().unwrap(),
+        system_program: *accounts_iter.next().unwrap(),
+    };
+    let ix_data = ix.instruction(MintV1InstructionArgs { metadata }).data;
+
+    let lse = LeafSchemaEvent {
         event_type: BubblegumEventType::LeafSchemaEvent,
         version: Version::V1,
         schema: LeafSchema::V1 {
@@ -82,44 +99,9 @@ fn test_mint() {
         0,
         0,
     );
-
-    let _cs_event = AccountCompressionEvent::ChangeLog(cs);
-
-    let lse = mpl_bubblegum::state::leaf_schema::LeafSchemaEvent {
-        event_type: BubblegumEventType::LeafSchemaEvent,
-        version: Version::V1,
-        schema: LeafSchema::V1 {
-            id: random_pubkey(),
-            owner: random_pubkey(),
-            delegate: random_pubkey(),
-            nonce: 0,
-            data_hash: [0; 32],
-            creator_hash: [0; 32],
-        },
-        leaf_hash: [0; 32],
-    };
-
-    let lse_versioned = ApplicationDataEventV1 {
-        application_data: lse.try_to_vec().unwrap(),
-    };
-
-    let _lse_event =
-        AccountCompressionEvent::ApplicationData(ApplicationDataEvent::V1(lse_versioned));
-
-    let cs = ChangeLogEvent::new(
-        random_pubkey(),
-        vec![PathNode {
-            node: [0; 32],
-            index: 0,
-        }],
-        0,
-        0,
-    );
-
     let cs_event = AccountCompressionEvent::ChangeLog(cs);
-    let ix_data = ix.data();
+
     let mut ix_b = InstructionBundle::default();
-    // this is horrifying, we need to re write the flatbuffers sdk
     let mut fbb1 = FlatBufferBuilder::new();
     let mut fbb2 = FlatBufferBuilder::new();
     let mut fbb3 = FlatBufferBuilder::new();
@@ -130,8 +112,8 @@ fn test_mint() {
         &mut fbb2,
         &mut fbb3,
         &mut fbb4,
-        &accounts,
-        &account_indexes,
+        &fb_accounts,
+        &fb_account_indexes,
         &ix_data,
         lse,
         cs_event,
@@ -158,18 +140,41 @@ fn test_mint() {
 fn test_basic_success_parsing() {
     let subject = BubblegumParser {};
 
-    let accounts = random_list_of(8, |_i| Pubkey(random_pubkey().to_bytes()));
-    let account_indexes: Vec<u8> = accounts.iter().enumerate().map(|(i, _)| i as u8).collect();
+    let accounts = random_list_of(8, |_i| random_pubkey());
+    let fb_accounts: Vec<Pubkey> = accounts
+        .iter()
+        .map(|account| Pubkey(account.to_bytes()))
+        .collect();
+    let fb_account_indexes: Vec<u8> = fb_accounts
+        .iter()
+        .enumerate()
+        .map(|(i, _)| i as u8)
+        .collect();
 
-    let ix = mpl_bubblegum::instruction::Transfer {
-        creator_hash: [0; 32],
-        index: 0,
-        data_hash: [0; 32],
-        nonce: 0,
-        root: [0; 32],
+    // We are only using this to get the instruction data, so the accounts don't actually matter
+    // here.
+    let mut accounts_iter = accounts.iter();
+    let ix = mpl_bubblegum::instructions::Transfer {
+        tree_config: *accounts_iter.next().unwrap(),
+        leaf_owner: (*accounts_iter.next().unwrap(), true),
+        leaf_delegate: (*accounts_iter.next().unwrap(), false),
+        merkle_tree: *accounts_iter.next().unwrap(),
+        log_wrapper: *accounts_iter.next().unwrap(),
+        compression_program: *accounts_iter.next().unwrap(),
+        system_program: *accounts_iter.next().unwrap(),
+        new_leaf_owner: *accounts_iter.next().unwrap(),
     };
+    let ix_data = ix
+        .instruction(TransferInstructionArgs {
+            root: [0; 32],
+            data_hash: [0; 32],
+            creator_hash: [0; 32],
+            nonce: 0,
+            index: 0,
+        })
+        .data;
 
-    let lse = mpl_bubblegum::state::leaf_schema::LeafSchemaEvent {
+    let lse = LeafSchemaEvent {
         event_type: BubblegumEventType::LeafSchemaEvent,
         version: Version::V1,
         schema: LeafSchema::V1 {
@@ -183,13 +188,6 @@ fn test_basic_success_parsing() {
         leaf_hash: [0; 32],
     };
 
-    let lse_versioned = ApplicationDataEventV1 {
-        application_data: lse.try_to_vec().unwrap(),
-    };
-
-    let _lse_event =
-        AccountCompressionEvent::ApplicationData(ApplicationDataEvent::V1(lse_versioned));
-
     let cs = ChangeLogEvent::new(
         random_pubkey(),
         vec![PathNode {
@@ -199,11 +197,9 @@ fn test_basic_success_parsing() {
         0,
         0,
     );
-
     let cs_event = AccountCompressionEvent::ChangeLog(cs);
-    let ix_data = ix.data();
+
     let mut ix_b = InstructionBundle::default();
-    // this is horrifying, we need to re write the flatbuffers sdk
     let mut fbb1 = FlatBufferBuilder::new();
     let mut fbb2 = FlatBufferBuilder::new();
     let mut fbb3 = FlatBufferBuilder::new();
@@ -214,8 +210,8 @@ fn test_basic_success_parsing() {
         &mut fbb2,
         &mut fbb3,
         &mut fbb4,
-        &accounts,
-        &account_indexes,
+        &fb_accounts,
+        &fb_account_indexes,
         &ix_data,
         lse,
         cs_event,

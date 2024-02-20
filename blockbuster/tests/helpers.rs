@@ -6,8 +6,7 @@ use blockbuster::{
 };
 use borsh::ser::BorshSerialize;
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
-pub use mpl_bubblegum::id as program_id;
-use mpl_bubblegum::state::leaf_schema::LeafSchemaEvent;
+use mpl_bubblegum::LeafSchemaEvent;
 use plerkle_serialization::{
     root_as_account_info, root_as_compiled_instruction,
     serializer::seralize_encoded_transaction_with_status, AccountInfo, AccountInfoArgs,
@@ -299,7 +298,7 @@ pub fn build_bubblegum_bundle<'a>(
 
     let inner_ix = vec![noop_bgum_ix, gummy_roll_ix, noop_compression_ix];
 
-    ixb.program = FBPubkey(program_id().to_bytes());
+    ixb.program = FBPubkey(mpl_bubblegum::ID.to_bytes());
     ixb.inner_ix = Some(inner_ix);
     ixb.keys = accounts.as_slice();
     ixb.instruction = Some(outer_ix);
