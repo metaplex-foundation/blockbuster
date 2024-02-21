@@ -1,4 +1,3 @@
-use plerkle_serialization::error::PlerkleSerializationError;
 use std::io::Error;
 use thiserror::Error;
 
@@ -30,12 +29,6 @@ pub enum BlockbusterError {
 
 impl From<std::io::Error> for BlockbusterError {
     fn from(err: Error) -> Self {
-        BlockbusterError::IOError(err.to_string())
-    }
-}
-
-impl From<plerkle_serialization::error::PlerkleSerializationError> for BlockbusterError {
-    fn from(err: PlerkleSerializationError) -> Self {
         BlockbusterError::IOError(err.to_string())
     }
 }

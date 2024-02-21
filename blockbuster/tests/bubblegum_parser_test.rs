@@ -1,6 +1,5 @@
 #[cfg(test)]
 use blockbuster::{
-    instruction::InstructionBundle,
     program_handler::ProgramParser,
     programs::{bubblegum::BubblegumParser, ProgramParseResult},
 };
@@ -11,7 +10,6 @@ use mpl_bubblegum::{
     types::{BubblegumEventType, Creator, LeafSchema, MetadataArgs, TokenProgramVersion, Version},
     LeafSchemaEvent,
 };
-use plerkle_serialization::Pubkey;
 use spl_account_compression::{
     events::{AccountCompressionEvent, ChangeLogEvent},
     state::PathNode,
@@ -31,10 +29,7 @@ fn test_mint() {
     let subject = BubblegumParser {};
 
     let accounts = random_list_of(9, |_i| random_pubkey());
-    let fb_accounts: Vec<Pubkey> = accounts
-        .iter()
-        .map(|account| Pubkey(account.to_bytes()))
-        .collect();
+    let fb_accounts = accounts.clone();
     let fb_account_indexes: Vec<u8> = fb_accounts
         .iter()
         .enumerate()
@@ -101,13 +96,12 @@ fn test_mint() {
     );
     let cs_event = AccountCompressionEvent::ChangeLog(cs);
 
-    let mut ix_b = InstructionBundle::default();
     let mut fbb1 = FlatBufferBuilder::new();
     let mut fbb2 = FlatBufferBuilder::new();
     let mut fbb3 = FlatBufferBuilder::new();
     let mut fbb4 = FlatBufferBuilder::new();
 
-    build_bubblegum_bundle(
+    let ix_b = build_bubblegum_bundle(
         &mut fbb1,
         &mut fbb2,
         &mut fbb3,
@@ -117,7 +111,6 @@ fn test_mint() {
         &ix_data,
         lse,
         cs_event,
-        &mut ix_b,
     );
 
     let result = subject.handle_instruction(&ix_b);
@@ -141,10 +134,7 @@ fn test_basic_success_parsing() {
     let subject = BubblegumParser {};
 
     let accounts = random_list_of(8, |_i| random_pubkey());
-    let fb_accounts: Vec<Pubkey> = accounts
-        .iter()
-        .map(|account| Pubkey(account.to_bytes()))
-        .collect();
+    let fb_accounts = accounts.clone();
     let fb_account_indexes: Vec<u8> = fb_accounts
         .iter()
         .enumerate()
@@ -199,13 +189,12 @@ fn test_basic_success_parsing() {
     );
     let cs_event = AccountCompressionEvent::ChangeLog(cs);
 
-    let mut ix_b = InstructionBundle::default();
     let mut fbb1 = FlatBufferBuilder::new();
     let mut fbb2 = FlatBufferBuilder::new();
     let mut fbb3 = FlatBufferBuilder::new();
     let mut fbb4 = FlatBufferBuilder::new();
 
-    build_bubblegum_bundle(
+    let ix_b = build_bubblegum_bundle(
         &mut fbb1,
         &mut fbb2,
         &mut fbb3,
@@ -215,7 +204,6 @@ fn test_basic_success_parsing() {
         &ix_data,
         lse,
         cs_event,
-        &mut ix_b,
     );
     let result = subject.handle_instruction(&ix_b);
 
