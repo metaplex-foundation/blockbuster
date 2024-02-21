@@ -314,9 +314,10 @@ pub fn build_bubblegum_bundle<'a>(
 
     let inner_ix = vec![noop_bgum_ix, gummy_roll_ix, noop_compression_ix];
 
+    // `Box::leak` is ok for tests
     InstructionBundle {
         program: mpl_bubblegum::ID,
-        inner_ix: Some(inner_ix),
+        inner_ix: Some(Box::leak(Box::new(inner_ix))),
         keys: accounts,
         instruction: Some(Box::leak(Box::new(outer_ix))),
         ..Default::default()

@@ -104,7 +104,7 @@ fn helium_nested() {
             txn_id: "",
             program,
             instruction: Some(instruction),
-            inner_ix,
+            inner_ix: inner_ix.as_deref(),
             keys: ix_accounts.as_slice(),
             slot,
         };

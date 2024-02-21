@@ -127,7 +127,7 @@ impl ProgramParser for BubblegumParser {
         let ix_type = get_instruction_type(outer_ix_data);
         let mut b_inst = BubblegumInstruction::new(ix_type);
         if let Some(ixs) = inner_ix {
-            for (pid, cix) in ixs {
+            for (pid, cix) in ixs.iter() {
                 if pid == &spl_noop::id() && !cix.data.is_empty() {
                     match AccountCompressionEvent::try_from_slice(&cix.data) {
                         Ok(result) => match result {

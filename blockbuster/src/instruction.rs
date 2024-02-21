@@ -4,12 +4,12 @@ use std::collections::{HashSet, VecDeque};
 
 pub type IxPair<'a> = (Pubkey, &'a CompiledInstruction);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct InstructionBundle<'a> {
     pub txn_id: &'a str,
     pub program: Pubkey,
     pub instruction: Option<&'a CompiledInstruction>,
-    pub inner_ix: Option<Vec<IxPair<'a>>>,
+    pub inner_ix: Option<&'a [IxPair<'a>]>,
     pub keys: &'a [Pubkey],
     pub slot: u64,
 }
@@ -51,8 +51,7 @@ pub fn order_instructions<'a>(
             })
             .collect::<Vec<IxPair>>();
 
-        let hoister = non_hoisted_inner_instruction.clone();
-        let hoisted = hoist_known_programs(programs, hoister);
+        let hoisted = hoist_known_programs(programs, &non_hoisted_inner_instruction);
         ordered_ixs.extend(hoisted);
 
         let outer_ix_program_id_index = message_instruction.program_id_index as usize;
@@ -73,23 +72,27 @@ pub fn order_instructions<'a>(
 
 fn hoist_known_programs<'a>(
     programs: &HashSet<Pubkey>,
-    ix_pairs: Vec<IxPair<'a>>,
+    ix_pairs: &[IxPair<'a>],
 ) -> Vec<(IxPair<'a>, Option<Vec<IxPair<'a>>>)> {
-    let mut hoist = Vec::new();
-    // there must be a safe and less copy way to do this, I should only need to move CI, and copy the found nodes matching predicate on 172
-    for (index, (pid, ci)) in ix_pairs.iter().enumerate() {
-        if programs.contains(pid) {
-            let mut inner_copy = vec![];
-            for new_inner_elem in ix_pairs.iter().skip(index + 1) {
-                if pid != &new_inner_elem.0 {
-                    inner_copy.push(*new_inner_elem);
-                } else {
-                    break;
+    // there must be a safe and less copy way to do this,
+    // I should only need to move CI, and copy the found nodes matching predicate on 172
+    ix_pairs
+        .iter()
+        .enumerate()
+        .filter_map(|(index, (pid, ci))| {
+            if programs.contains(pid) {
+                let mut inner_copy = vec![];
+                for new_inner_elem in ix_pairs.iter().skip(index + 1) {
+                    if pid != &new_inner_elem.0 {
+                        inner_copy.push(*new_inner_elem);
+                    } else {
+                        break;
+                    }
                 }
+                Some(((*pid, *ci), Some(inner_copy)))
+            } else {
+                None
             }
-
-            hoist.push(((*pid, *ci), Some(inner_copy)));
-        }
-    }
-    hoist
+        })
+        .collect()
 }
