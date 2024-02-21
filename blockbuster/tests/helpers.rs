@@ -20,8 +20,7 @@ use solana_transaction_status::EncodedConfirmedTransactionWithStatusMeta;
 use spl_account_compression::events::{
     AccountCompressionEvent, ApplicationDataEvent, ApplicationDataEventV1,
 };
-use std::fs::File;
-use std::io::BufReader;
+use std::{fs::File, io::BufReader};
 
 pub fn random_program() -> Pubkey {
     Pubkey::new_unique()

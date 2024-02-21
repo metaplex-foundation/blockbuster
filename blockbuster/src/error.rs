@@ -1,6 +1,6 @@
+use plerkle_serialization::error::PlerkleSerializationError;
 use std::io::Error;
 use thiserror::Error;
-use plerkle_serialization::error::PlerkleSerializationError;
 
 #[derive(Error, Debug)]
 pub enum BlockbusterError {

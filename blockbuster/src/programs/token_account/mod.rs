@@ -17,7 +17,7 @@ pub struct TokenAccountParser;
 pub enum TokenProgramAccount {
     Mint(Mint),
     TokenAccount(TokenAccount),
-    EmptyAccount
+    EmptyAccount,
 }
 
 impl ParseResult for TokenProgramAccount {
@@ -58,14 +58,20 @@ impl ProgramParser for TokenAccountParser {
 
         let account_type = match account_data.len() {
             165 => {
-                let token_account = TokenAccount::unpack(&account_data)
-                    .map_err(|_| BlockbusterError::CustomDeserializationError("Token Account Unpack Failed".to_string()))?;
+                let token_account = TokenAccount::unpack(&account_data).map_err(|_| {
+                    BlockbusterError::CustomDeserializationError(
+                        "Token Account Unpack Failed".to_string(),
+                    )
+                })?;
 
                 TokenProgramAccount::TokenAccount(token_account)
             }
             82 => {
-                let mint = Mint::unpack(&account_data)
-                    .map_err(|_| BlockbusterError::CustomDeserializationError("Token MINT Unpack Failed".to_string()))?;
+                let mint = Mint::unpack(&account_data).map_err(|_| {
+                    BlockbusterError::CustomDeserializationError(
+                        "Token MINT Unpack Failed".to_string(),
+                    )
+                })?;
 
                 TokenProgramAccount::Mint(mint)
             }
@@ -76,5 +82,4 @@ impl ProgramParser for TokenAccountParser {
 
         Ok(Box::new(account_type))
     }
-
 }

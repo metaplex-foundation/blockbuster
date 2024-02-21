@@ -288,7 +288,7 @@ fn build_mint_v1_payload(
     }
 
     let authority = keys
-        .get(0)
+        .first()
         .ok_or(BlockbusterError::InstructionParsingError)?
         .0;
 

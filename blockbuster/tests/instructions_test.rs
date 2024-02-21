@@ -18,8 +18,7 @@ use spl_account_compression::events::{
     AccountCompressionEvent::{self},
     ApplicationDataEvent, ApplicationDataEventV1, ChangeLogEvent, ChangeLogEventV1,
 };
-use std::collections::HashSet;
-use std::env;
+use std::{collections::HashSet, env};
 #[test]
 fn test_filter() {
     let mut rng = rand::thread_rng();
