@@ -19,7 +19,6 @@ pub use mpl_bubblegum::{
     types::{LeafSchema, UseMethod},
     InstructionName, LeafSchemaEvent, ID,
 };
-use plerkle_serialization::AccountInfo;
 use solana_sdk::pubkey::Pubkey;
 pub use spl_account_compression::events::{
     AccountCompressionEvent::{self, ApplicationData, ChangeLog},
@@ -107,7 +106,7 @@ impl ProgramParser for BubblegumParser {
     }
     fn handle_account(
         &self,
-        _account_info: &AccountInfo,
+        _account_data: &[u8],
     ) -> Result<Box<(dyn ParseResult + 'static)>, BlockbusterError> {
         Ok(Box::new(NotUsed::new()))
     }
