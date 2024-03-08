@@ -10,18 +10,19 @@ use mpl_bubblegum::LeafSchemaEvent;
 use plerkle_serialization::{
     root_as_account_info, root_as_compiled_instruction,
     serializer::seralize_encoded_transaction_with_status, AccountInfo, AccountInfoArgs,
-    CompiledInstruction, CompiledInstructionBuilder, InnerInstructionsBuilder, Pubkey as FBPubkey,
-    TransactionInfo, TransactionInfoBuilder,
+    CompiledInstruction as FBCompiledInstruction, CompiledInstructionBuilder,
+    InnerInstructionsBuilder, Pubkey as FBPubkey, TransactionInfo, TransactionInfoBuilder,
 };
 use rand::Rng;
 use solana_geyser_plugin_interface::geyser_plugin_interface::ReplicaAccountInfo;
-use solana_sdk::pubkey::Pubkey;
-use solana_transaction_status::EncodedConfirmedTransactionWithStatusMeta;
+use solana_sdk::{instruction::CompiledInstruction, pubkey::Pubkey};
+use solana_transaction_status::{
+    EncodedConfirmedTransactionWithStatusMeta, InnerInstruction, InnerInstructions,
+};
 use spl_account_compression::events::{
     AccountCompressionEvent, ApplicationDataEvent, ApplicationDataEventV1,
 };
-use std::fs::File;
-use std::io::BufReader;
+use std::{fs::File, io::BufReader};
 
 pub fn random_program() -> Pubkey {
     Pubkey::new_unique()
@@ -78,7 +79,7 @@ pub fn build_random_instruction<'a>(
     fbb: &mut FlatBufferBuilder<'a>,
     accounts_number_in_transaction: usize,
     number_of_accounts: usize,
-) -> WIPOffset<CompiledInstruction<'a>> {
+) -> WIPOffset<FBCompiledInstruction<'a>> {
     let accounts = random_list(5, random_u8_bound(1, number_of_accounts as u8));
     let accounts = fbb.create_vector(&accounts);
     let data = random_data(10);
@@ -134,7 +135,6 @@ pub fn get_programs(txn_info: TransactionInfo) -> Vec<Pubkey> {
         .unwrap()
         .iter()
         .map(|ix| {
-            println!("{:?}", txn_info);
             Pubkey::new_from_array(
                 txn_info
                     .account_keys()
@@ -176,7 +176,7 @@ pub fn build_instruction<'a>(
     fbb: &'a mut FlatBufferBuilder<'a>,
     data: &[u8],
     account_indexes: &[u8],
-) -> Result<CompiledInstruction<'a>, flatbuffers::InvalidFlatbuffer> {
+) -> Result<CompiledInstruction, flatbuffers::InvalidFlatbuffer> {
     let accounts_vec = fbb.create_vector(account_indexes);
     let ix_data = fbb.create_vector(data);
     let mut builder = CompiledInstructionBuilder::new(fbb);
@@ -187,7 +187,20 @@ pub fn build_instruction<'a>(
     fbb.finish_minimal(offset);
     let data = fbb.finished_data();
 
-    root_as_compiled_instruction(data)
+    let cix = root_as_compiled_instruction(data)?;
+    Ok(CompiledInstruction {
+        program_id_index: cix.program_id_index(),
+        accounts: cix
+            .accounts()
+            .expect("failed to deserialize accounts")
+            .bytes()
+            .to_vec(),
+        data: cix
+            .data()
+            .expect("failed to deserialize data")
+            .bytes()
+            .to_vec(),
+    })
 }
 
 pub fn build_account_update<'a>(
@@ -262,7 +275,8 @@ pub fn build_txn_from_fixture(
     .unwrap();
     let reader = BufReader::new(file);
     let ectxn: EncodedConfirmedTransactionWithStatusMeta = serde_json::from_reader(reader).unwrap();
-    seralize_encoded_transaction_with_status(fbb, ectxn).map_err(Into::into)
+    Ok(seralize_encoded_transaction_with_status(fbb, ectxn)
+        .expect("failed serialize encoded tx with status"))
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -271,35 +285,112 @@ pub fn build_bubblegum_bundle<'a>(
     fbb2: &'a mut FlatBufferBuilder<'a>,
     fbb3: &'a mut FlatBufferBuilder<'a>,
     fbb4: &'a mut FlatBufferBuilder<'a>,
-    accounts: &'a Vec<FBPubkey>,
+    accounts: &'a [Pubkey],
     account_indexes: &'a [u8],
     ix_data: &'a [u8],
     lse: LeafSchemaEvent,
     cs_event: AccountCompressionEvent,
-    ixb: &mut InstructionBundle<'a>,
-) {
+) -> InstructionBundle<'a> {
     let lse_versioned = ApplicationDataEventV1 {
         application_data: lse.try_to_vec().unwrap(),
     };
     let lse_event =
         AccountCompressionEvent::ApplicationData(ApplicationDataEvent::V1(lse_versioned));
     let outer_ix = build_instruction(fbb1, ix_data, account_indexes).unwrap();
+
     let lse = lse_event.try_to_vec().unwrap();
     let noop_bgum = spl_noop::instruction(lse).data;
     let ix = build_instruction(fbb2, &noop_bgum, account_indexes).unwrap();
-    let noop_bgum_ix: IxPair = (FBPubkey(spl_noop::id().to_bytes()), ix);
+    let noop_bgum_ix: IxPair = (spl_noop::id(), Box::leak(Box::new(ix)));
+
     // The Compression Instruction here doesnt matter only the noop but we add it here to ensure we are validating that one Account compression event is happening after Bubblegum
     let ix = build_instruction(fbb3, &[0; 0], account_indexes).unwrap();
-    let gummy_roll_ix: IxPair = (FBPubkey(spl_account_compression::id().to_bytes()), ix);
+    let gummy_roll_ix: IxPair = (spl_account_compression::id(), Box::leak(Box::new(ix)));
+
     let cs = cs_event.try_to_vec().unwrap();
     let noop_compression = spl_noop::instruction(cs).data;
     let ix = build_instruction(fbb4, &noop_compression, account_indexes).unwrap();
-    let noop_compression_ix = (FBPubkey(spl_noop::id().to_bytes()), ix);
+    let noop_compression_ix: IxPair = (spl_noop::id(), Box::leak(Box::new(ix)));
 
     let inner_ix = vec![noop_bgum_ix, gummy_roll_ix, noop_compression_ix];
 
-    ixb.program = FBPubkey(mpl_bubblegum::ID.to_bytes());
-    ixb.inner_ix = Some(inner_ix);
-    ixb.keys = accounts.as_slice();
-    ixb.instruction = Some(outer_ix);
+    // `Box::leak` is ok for tests
+    InstructionBundle {
+        program: mpl_bubblegum::ID,
+        inner_ix: Some(Box::leak(Box::new(inner_ix))),
+        keys: accounts,
+        instruction: Some(Box::leak(Box::new(outer_ix))),
+        ..Default::default()
+    }
+}
+
+pub fn parse_fb(
+    tx_info: &TransactionInfo,
+) -> (
+    Vec<Pubkey>,
+    Vec<CompiledInstruction>,
+    Vec<InnerInstructions>,
+) {
+    let mut account_keys = vec![];
+    for key in tx_info.account_keys().iter().flatten() {
+        account_keys.push(Pubkey::try_from(key.0.as_slice()).expect("valid key from FlatBuffer"));
+    }
+
+    let mut message_instructions = vec![];
+    for cix in tx_info
+        .outer_instructions()
+        .expect("valid outer_instructions")
+    {
+        message_instructions.push(CompiledInstruction {
+            program_id_index: cix.program_id_index(),
+            accounts: cix.accounts().expect("valid accounts").bytes().to_vec(),
+            data: cix.data().expect("valid data").bytes().to_vec(),
+        });
+    }
+
+    let mut meta_inner_instructions = vec![];
+    if let Some(ixs) = tx_info.compiled_inner_instructions() {
+        for ix in ixs {
+            let mut instructions = vec![];
+            for ix in ix.instructions().expect("valid instructions") {
+                let cix = ix.compiled_instruction().expect("valid instruction");
+                instructions.push(InnerInstruction {
+                    instruction: CompiledInstruction {
+                        program_id_index: cix.program_id_index(),
+                        accounts: cix.accounts().expect("valid accounts").bytes().to_vec(),
+                        data: cix.data().expect("valid data").bytes().to_vec(),
+                    },
+                    stack_height: Some(ix.stack_height() as u32),
+                })
+            }
+
+            meta_inner_instructions.push(InnerInstructions {
+                index: ix.index(),
+                instructions,
+            })
+        }
+    } else if let Some(ixs) = tx_info.inner_instructions() {
+        for ix in ixs {
+            let mut instructions = vec![];
+            for cix in ix.instructions().expect("valid instructions") {
+                instructions.push(InnerInstruction {
+                    instruction: CompiledInstruction {
+                        program_id_index: cix.program_id_index(),
+                        accounts: cix.accounts().expect("valid accounts").bytes().to_vec(),
+                        data: cix.data().expect("valid data").bytes().to_vec(),
+                    },
+                    stack_height: Some(0),
+                })
+            }
+
+            meta_inner_instructions.push(InnerInstructions {
+                index: ix.index(),
+                instructions,
+            })
+        }
+    } else {
+        panic!("expect valid compiled_inner_instructions/inner_instructions")
+    }
+
+    (account_keys, message_instructions, meta_inner_instructions)
 }

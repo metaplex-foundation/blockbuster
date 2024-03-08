@@ -6,8 +6,6 @@ use crate::{
 use borsh::BorshDeserialize;
 use solana_sdk::{borsh0_10::try_from_slice_unchecked, pubkey::Pubkey, pubkeys};
 
-use plerkle_serialization::AccountInfo;
-
 use mpl_token_metadata::{
     accounts::{
         CollectionAuthorityRecord, DeprecatedMasterEditionV1, Edition, EditionMarker,
@@ -70,16 +68,8 @@ impl ProgramParser for TokenMetadataParser {
 
     fn handle_account(
         &self,
-        account_info: &AccountInfo,
+        account_data: &[u8],
     ) -> Result<Box<(dyn ParseResult + 'static)>, BlockbusterError> {
-        let account_data = if let Some(account_info) = account_info.data() {
-            account_info.iter().collect::<Vec<_>>()
-        } else {
-            return Ok(Box::new(TokenMetadataAccountState {
-                key: Key::Uninitialized,
-                data: TokenMetadataAccountData::EmptyAccount,
-            }));
-        };
         if account_data.is_empty() {
             return Ok(Box::new(TokenMetadataAccountState {
                 key: Key::Uninitialized,
@@ -89,7 +79,7 @@ impl ProgramParser for TokenMetadataParser {
         let key = Key::try_from_slice(&account_data[0..1])?;
         let token_metadata_account_state = match key {
             Key::EditionV1 => {
-                let account: Edition = try_from_slice_unchecked(&account_data)?;
+                let account: Edition = try_from_slice_unchecked(account_data)?;
 
                 TokenMetadataAccountState {
                     key: account.key,
@@ -97,7 +87,7 @@ impl ProgramParser for TokenMetadataParser {
                 }
             }
             Key::MasterEditionV1 => {
-                let account: DeprecatedMasterEditionV1 = try_from_slice_unchecked(&account_data)?;
+                let account: DeprecatedMasterEditionV1 = try_from_slice_unchecked(account_data)?;
 
                 TokenMetadataAccountState {
                     key: account.key,
@@ -105,7 +95,7 @@ impl ProgramParser for TokenMetadataParser {
                 }
             }
             Key::MasterEditionV2 => {
-                let account: MasterEdition = try_from_slice_unchecked(&account_data)?;
+                let account: MasterEdition = try_from_slice_unchecked(account_data)?;
 
                 TokenMetadataAccountState {
                     key: account.key,
@@ -113,7 +103,7 @@ impl ProgramParser for TokenMetadataParser {
                 }
             }
             Key::UseAuthorityRecord => {
-                let account: UseAuthorityRecord = try_from_slice_unchecked(&account_data)?;
+                let account: UseAuthorityRecord = try_from_slice_unchecked(account_data)?;
 
                 TokenMetadataAccountState {
                     key: account.key,
@@ -121,7 +111,7 @@ impl ProgramParser for TokenMetadataParser {
                 }
             }
             Key::EditionMarker => {
-                let account: EditionMarker = try_from_slice_unchecked(&account_data)?;
+                let account: EditionMarker = try_from_slice_unchecked(account_data)?;
 
                 TokenMetadataAccountState {
                     key: account.key,
@@ -129,7 +119,7 @@ impl ProgramParser for TokenMetadataParser {
                 }
             }
             Key::CollectionAuthorityRecord => {
-                let account: CollectionAuthorityRecord = try_from_slice_unchecked(&account_data)?;
+                let account: CollectionAuthorityRecord = try_from_slice_unchecked(account_data)?;
 
                 TokenMetadataAccountState {
                     key: account.key,
@@ -137,7 +127,7 @@ impl ProgramParser for TokenMetadataParser {
                 }
             }
             Key::MetadataV1 => {
-                let account = Metadata::safe_deserialize(&account_data)?;
+                let account = Metadata::safe_deserialize(account_data)?;
 
                 TokenMetadataAccountState {
                     key: account.key,

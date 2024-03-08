@@ -3,7 +3,6 @@ use crate::{
     program_handler::{ParseResult, ProgramParser},
     programs::ProgramParseResult,
 };
-use plerkle_serialization::AccountInfo;
 use solana_sdk::{program_pack::Pack, pubkey::Pubkey, pubkeys};
 use spl_token::state::{Account as TokenAccount, Mint};
 
@@ -17,7 +16,6 @@ pub struct TokenAccountParser;
 pub enum TokenProgramAccount {
     Mint(Mint),
     TokenAccount(TokenAccount),
-    EmptyAccount
 }
 
 impl ParseResult for TokenProgramAccount {
@@ -48,24 +46,24 @@ impl ProgramParser for TokenAccountParser {
     }
     fn handle_account(
         &self,
-        account_info: &AccountInfo,
+        account_data: &[u8],
     ) -> Result<Box<(dyn ParseResult + 'static)>, BlockbusterError> {
-        let account_data = if let Some(account_info) = account_info.data() {
-            account_info.iter().collect::<Vec<_>>()
-        } else {
-            return Ok(Box::new(TokenProgramAccount::EmptyAccount));
-        };
-
         let account_type = match account_data.len() {
             165 => {
-                let token_account = TokenAccount::unpack(&account_data)
-                    .map_err(|_| BlockbusterError::CustomDeserializationError("Token Account Unpack Failed".to_string()))?;
+                let token_account = TokenAccount::unpack(account_data).map_err(|_| {
+                    BlockbusterError::CustomDeserializationError(
+                        "Token Account Unpack Failed".to_string(),
+                    )
+                })?;
 
                 TokenProgramAccount::TokenAccount(token_account)
             }
             82 => {
-                let mint = Mint::unpack(&account_data)
-                    .map_err(|_| BlockbusterError::CustomDeserializationError("Token MINT Unpack Failed".to_string()))?;
+                let mint = Mint::unpack(account_data).map_err(|_| {
+                    BlockbusterError::CustomDeserializationError(
+                        "Token MINT Unpack Failed".to_string(),
+                    )
+                })?;
 
                 TokenProgramAccount::Mint(mint)
             }
@@ -76,5 +74,4 @@ impl ProgramParser for TokenAccountParser {
 
         Ok(Box::new(account_type))
     }
-
 }
