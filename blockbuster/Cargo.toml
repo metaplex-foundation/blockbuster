@@ -16,6 +16,7 @@ bs58 = "0.4.0"
 lazy_static = "1.4.0"
 log = "0.4.17"
 mpl-bubblegum = "1.2.0"
+mpl-core = { version = "0.1.0", features = ["serde"] }
 mpl-token-metadata = { version = "4.1.1", features = ["serde"] }
 solana-sdk = "~1.17"
 solana-transaction-status = "~1.17"
