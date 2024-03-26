@@ -4,7 +4,6 @@ use crate::{
     program_handler::{ParseResult, ProgramParser},
     programs::ProgramParseResult,
 };
-use plerkle_serialization::AccountInfo;
 use serde::{Deserialize, Serialize};
 use solana_sdk::{pubkey::Pubkey, pubkeys};
 use spl_token_2022::{
