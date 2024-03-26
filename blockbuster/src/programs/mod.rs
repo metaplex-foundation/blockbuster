@@ -1,9 +1,11 @@
 use bubblegum::BubblegumInstruction;
 use token_account::TokenProgramAccount;
+use token_extensions::TokenExtensionsProgramAccount;
 use token_metadata::TokenMetadataAccountState;
 
 pub mod bubblegum;
 pub mod token_account;
+pub mod token_extensions;
 pub mod token_metadata;
 
 // Note: `ProgramParseResult` used to contain the following variants that have been deprecated and
@@ -24,5 +26,6 @@ pub enum ProgramParseResult<'a> {
     Bubblegum(&'a BubblegumInstruction),
     TokenMetadata(&'a TokenMetadataAccountState),
     TokenProgramAccount(&'a TokenProgramAccount),
+    TokenExtensionsProgramAccount(&'a TokenExtensionsProgramAccount),
     Unknown,
 }
