@@ -1,11 +1,13 @@
 use bubblegum::BubblegumInstruction;
 use mpl_core_program::MplCoreAccountState;
 use token_account::TokenProgramAccount;
+use token_extensions::TokenExtensionsProgramAccount;
 use token_metadata::TokenMetadataAccountState;
 
 pub mod bubblegum;
 pub mod mpl_core_program;
 pub mod token_account;
+pub mod token_extensions;
 pub mod token_metadata;
 
 // Note: `ProgramParseResult` used to contain the following variants that have been deprecated and
@@ -27,5 +29,6 @@ pub enum ProgramParseResult<'a> {
     MplCore(&'a MplCoreAccountState),
     TokenMetadata(&'a TokenMetadataAccountState),
     TokenProgramAccount(&'a TokenProgramAccount),
+    TokenExtensionsProgramAccount(&'a TokenExtensionsProgramAccount),
     Unknown,
 }
