@@ -565,6 +565,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9d297deb1925b89f2ccc13d7635fa0714f12c87adce1c75356b39ca9b7178567"
 
 [[package]]
+name = "base64"
+version = "0.22.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9475866fec1451be56a3c2400fd081ff546538961565ccb5b7142cbd22bc7a51"
+
+[[package]]
 name = "base64ct"
 version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -655,6 +661,7 @@ dependencies = [
  "lazy_static",
  "log",
  "mpl-bubblegum",
+ "mpl-core",
  "mpl-token-metadata",
  "plerkle_serialization",
  "rand 0.8.5",
@@ -2162,6 +2169,22 @@ dependencies = [
  "kaigan",
  "num-derive 0.3.3",
  "num-traits",
+ "solana-program",
+ "thiserror",
+]
+
+[[package]]
+name = "mpl-core"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e2aa89feb937353e5744ca7d30132a07e7380127ad42278e92b90796c60c4b11"
+dependencies = [
+ "base64 0.22.0",
+ "borsh 0.10.3",
+ "num-derive 0.3.3",
+ "num-traits",
+ "serde",
+ "serde_with 3.7.0",
  "solana-program",
  "thiserror",
 ]
