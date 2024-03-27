@@ -9,6 +9,7 @@ use solana_sdk::{pubkey::Pubkey, pubkeys};
 
 pubkeys!(mpl_core_id, "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d");
 
+#[derive(Clone, Debug, PartialEq)]
 pub enum MplCoreAccountData {
     Asset(IndexableAsset),
     Collection(IndexableAsset),
