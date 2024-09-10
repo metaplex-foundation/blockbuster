@@ -9,7 +9,9 @@ use log::warn;
 use mpl_bubblegum::{
     get_instruction_type,
     instructions::{
-        UnverifyCreatorInstructionArgs, UpdateMetadataInstructionArgs, VerifyCreatorInstructionArgs,
+        FinalizeTreeWithRootAndCollectionInstructionArgs, FinalizeTreeWithRootInstructionArgs,
+        UnverifyCreatorInstructionArgs, UpdateMetadataInstructionArgs,
+        VerifyCreatorInstructionArgs,
     },
     types::{BubblegumEventType, MetadataArgs, UpdateArgs},
 };
@@ -51,6 +53,12 @@ pub enum Payload {
     UpdateMetadata {
         current_metadata: MetadataArgs,
         update_args: UpdateArgs,
+        tree_id: Pubkey,
+    },
+    FinalizeTreeWithRoot {
+        args: FinalizeTreeWithRootInstructionArgs,
+        staker: Pubkey,
+        collection_mint: Option<Pubkey>,
         tree_id: Pubkey,
     },
 }
@@ -206,6 +214,14 @@ impl ProgramParser for BubblegumParser {
                     InstructionName::UpdateMetadata => {
                         b_inst.payload = Some(build_update_metadata_payload(keys, ix_data)?);
                     }
+                    InstructionName::FinalizeTreeWithRoot => {
+                        b_inst.payload = Some(build_create_tree_with_root_payload(keys, ix_data)?);
+                    }
+                    InstructionName::FinalizeTreeWithRootAndCollection => {
+                        b_inst.payload = Some(build_create_tree_with_root_and_collection_payload(
+                            keys, ix_data,
+                        )?);
+                    }
                     _ => {}
                 };
             }
@@ -296,6 +312,62 @@ fn build_update_metadata_payload(
     Ok(Payload::UpdateMetadata {
         current_metadata: args.current_metadata,
         update_args: args.update_args,
+        tree_id,
+    })
+}
+
+// See Bubblegum for offsets and positions:
+// https://github.com/metaplex-foundation/mpl-bubblegum/blob/main/programs/bubblegum/README.md
+fn build_create_tree_with_root_payload(
+    keys: &[Pubkey],
+    ix_data: &[u8],
+) -> Result<Payload, BlockbusterError> {
+    let args = FinalizeTreeWithRootInstructionArgs::try_from_slice(ix_data)?;
+
+    let tree_id = *keys
+        .get(1)
+        .ok_or(BlockbusterError::InstructionParsingError)?;
+    let staker = *keys
+        .get(4)
+        .ok_or(BlockbusterError::InstructionParsingError)?;
+
+    Ok(Payload::FinalizeTreeWithRoot {
+        args,
+        staker,
+        collection_mint: None,
+        tree_id,
+    })
+}
+
+// See Bubblegum for offsets and positions:
+// https://github.com/metaplex-foundation/mpl-bubblegum/blob/main/programs/bubblegum/README.md
+fn build_create_tree_with_root_and_collection_payload(
+    keys: &[Pubkey],
+    ix_data: &[u8],
+) -> Result<Payload, BlockbusterError> {
+    let args = FinalizeTreeWithRootAndCollectionInstructionArgs::try_from_slice(ix_data)?;
+
+    let tree_id = *keys
+        .get(1)
+        .ok_or(BlockbusterError::InstructionParsingError)?;
+    let staker = *keys
+        .get(4)
+        .ok_or(BlockbusterError::InstructionParsingError)?;
+    let collection_mint = *keys
+        .get(11)
+        .ok_or(BlockbusterError::InstructionParsingError)?;
+    let args = FinalizeTreeWithRootInstructionArgs {
+        root: args.root,
+        rightmost_leaf: args.rightmost_leaf,
+        rightmost_index: args.rightmost_index,
+        metadata_url: args.metadata_url,
+        metadata_hash: args.metadata_hash,
+    };
+
+    Ok(Payload::FinalizeTreeWithRoot {
+        args,
+        staker,
+        collection_mint: Some(collection_mint),
         tree_id,
     })
 }
