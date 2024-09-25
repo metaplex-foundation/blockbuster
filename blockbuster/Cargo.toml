@@ -12,11 +12,10 @@ readme = "../README.md"
 bytemuck = { version = "1.17.0", features = ["derive"] }
 spl-token-2022 = { version = "1.0", features = ["no-entrypoint"] }
 
-# Update these deps to original SPL crate after merging 'feature/init_with_root' changes into original repo.
-spl-account-compression = { git = "https://github.com/StanChe/solana-program-library.git", rev = "f343436", features = ["no-entrypoint"] }
-spl-noop = { git = "https://github.com/StanChe/solana-program-library.git", rev = "f343436", features = ["no-entrypoint"] }
-mpl-bubblegum = { git = "https://github.com/adm-metaex/mpl-bubblegum", rev = "afebaf7", features = ["test-sbf", "serde"] }
-# ^^^
+spl-account-compression = { version = "0.4.0", features = ["no-entrypoint"] }
+spl-noop = { version = "0.2.0", features = ["no-entrypoint"] }
+## TODO: replace with a crate as soon as it's published
+mpl-bubblegum = { git = "https://github.com/metaplex-foundation/mpl-bubblegum", rev = "c3010c1", features = ["test-sbf", "serde"] }
 
 mpl-core = { version = "=0.8.0-beta.1", features = ["serde"] }
 mpl-token-metadata = { version = "4.1.1", features = ["serde"] }
