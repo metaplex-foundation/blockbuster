@@ -852,9 +852,9 @@ dependencies = [
 
 [[package]]
 name = "bytemuck"
-version = "1.17.1"
+version = "1.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "773d90827bc3feecfb67fab12e24de0749aad83c74b9504ecde46237b5cd24e2"
+checksum = "8334215b81e418a0a7bdb8ef0849474f40bb10c8b71f1c4ed315cff49f32494d"
 dependencies = [
  "bytemuck_derive",
 ]
@@ -2217,20 +2217,9 @@ dependencies = [
 ]
 
 [[package]]
-name = "modular-bitfield-impl"
-version = "0.11.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5a7d5f7076603ebc68de2dc6a650ec331a062a13abaa346975be747bbfa4b789"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 1.0.109",
-]
-
-[[package]]
 name = "mpl-bubblegum"
 version = "1.5.0"
-source = "git+https://github.com/adm-metaex/mpl-bubblegum?rev=d27bc9b#d27bc9b6a2465d8817726b81453935074594e118"
+source = "git+https://github.com/metaplex-foundation/mpl-bubblegum.git?rev=07678e6#07678e698dfd0d12c3fdf44855e1bb7e8101443a"
 dependencies = [
  "borsh 0.10.3",
  "kaigan",
@@ -4234,13 +4223,13 @@ dependencies = [
 
 [[package]]
 name = "spl-account-compression"
-version = "0.3.1"
-source = "git+https://github.com/StanChe/solana-program-library.git?rev=f343436#f343436322f3d61f26058057ee9a83f42cc4b125"
+version = "0.4.0"
+source = "git+https://github.com/solana-labs/solana-program-library.git?rev=b8615ab#b8615ab735897b5134dae251ff239461b08ae1dc"
 dependencies = [
  "anchor-lang",
  "bytemuck",
  "solana-program",
- "spl-concurrent-merkle-tree 0.3.0",
+ "spl-concurrent-merkle-tree 0.4.0",
  "spl-noop",
 ]
 
@@ -4273,8 +4262,8 @@ dependencies = [
 
 [[package]]
 name = "spl-concurrent-merkle-tree"
-version = "0.3.0"
-source = "git+https://github.com/StanChe/solana-program-library.git?rev=f343436#f343436322f3d61f26058057ee9a83f42cc4b125"
+version = "0.4.0"
+source = "git+https://github.com/solana-labs/solana-program-library.git?rev=b8615ab#b8615ab735897b5134dae251ff239461b08ae1dc"
 dependencies = [
  "bytemuck",
  "solana-program",
@@ -4328,7 +4317,7 @@ dependencies = [
 [[package]]
 name = "spl-noop"
 version = "0.2.0"
-source = "git+https://github.com/StanChe/solana-program-library.git?rev=f343436#f343436322f3d61f26058057ee9a83f42cc4b125"
+source = "git+https://github.com/solana-labs/solana-program-library.git?rev=b8615ab#b8615ab735897b5134dae251ff239461b08ae1dc"
 dependencies = [
  "solana-program",
 ]
