@@ -1,18 +1,18 @@
 {
-    "configurations": [
+  "configurations": [
     {
-        "type": "lldb",
-        "request": "launch",
-        "name": "Cargo test",
-        "cwd": "${workspaceFolder}/blockbuster",
-        "cargo": {
-            "args": [
-                "test",
-                "--no-run",
-                "--lib"
-            ]
-        },
-        "args": []
+      "type": "lldb",
+      "request": "launch",
+      "name": "Cargo test",
+      "cwd": "${workspaceFolder}/blockbuster",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--lib"
+        ]
+      },
+      "args": []
     }
-    ]
+  ]
 }
