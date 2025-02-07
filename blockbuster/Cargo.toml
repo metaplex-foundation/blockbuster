@@ -18,7 +18,7 @@ lazy_static = "1.4.0"
 log = "0.4.17"
 mpl-account-compression = {version = "0.4.2", features = ["no-entrypoint"]}
 mpl-bubblegum = "1.2.0"
-mpl-core = {version = "0.8.0-beta.1", features = ["serde"]}
+mpl-core = {version = "0.9.0", features = ["serde"]}
 mpl-noop = {version = "0.2.1", features = ["no-entrypoint"]}
 mpl-token-metadata = {version = "4.1.1", features = ["serde"]}
 serde = "1.0.137"
