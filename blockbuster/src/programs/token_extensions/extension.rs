@@ -13,7 +13,6 @@ use spl_token_2022::extension::{
     default_account_state::DefaultAccountState,
     group_member_pointer::GroupMemberPointer,
     group_pointer::GroupPointer,
-    immutable_owner::ImmutableOwner,
     interest_bearing_mint::{BasisPoints, InterestBearingConfig},
     memo_transfer::MemoTransfer,
     metadata_pointer::MetadataPointer,
@@ -22,28 +21,12 @@ use spl_token_2022::extension::{
     transfer_fee::{TransferFee, TransferFeeAmount, TransferFeeConfig},
     transfer_hook::TransferHook,
 };
-use std::fmt;
 
 use spl_token_group_interface::state::{TokenGroup, TokenGroupMember};
 use spl_token_metadata_interface::state::TokenMetadata;
 
-const AE_CIPHERTEXT_LEN: usize = 36;
-const UNIT_LEN: usize = 32;
-const RISTRETTO_POINT_LEN: usize = UNIT_LEN;
-pub(crate) const DECRYPT_HANDLE_LEN: usize = RISTRETTO_POINT_LEN;
-pub(crate) const PEDERSEN_COMMITMENT_LEN: usize = RISTRETTO_POINT_LEN;
-const ELGAMAL_PUBKEY_LEN: usize = RISTRETTO_POINT_LEN;
-const ELGAMAL_CIPHERTEXT_LEN: usize = PEDERSEN_COMMITMENT_LEN + DECRYPT_HANDLE_LEN;
 type PodAccountState = u8;
 pub type UnixTimestamp = PodI64;
-pub type EncryptedBalance = ShadowElGamalCiphertext;
-pub type DecryptableBalance = ShadowAeCiphertext;
-pub type EncryptedWithheldAmount = ShadowElGamalCiphertext;
-
-use serde::{
-    de::{self, SeqAccess, Visitor},
-    Deserializer, Serializer,
-};
 
 /// Bs58 encoded public key string. Used for storing Pubkeys in a human readable format.
 /// Ideally we'd store them as is in the DB and later convert them to bs58 for display on the API.
@@ -54,19 +37,6 @@ use serde::{
 /// - `Pubkey` doesn't implement something like `schemars::JsonSchema` so we can't convert them back to the rust struct either.
 type PublicKeyString = String;
 
-struct ShadowAeCiphertextVisitor;
-
-struct ShadowElGamalCiphertextVisitor;
-
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub struct ShadowAeCiphertext(pub [u8; AE_CIPHERTEXT_LEN]);
-
-#[derive(Clone, Copy, Debug, PartialEq, Zeroable)]
-pub struct ShadowElGamalCiphertext(pub [u8; ELGAMAL_CIPHERTEXT_LEN]);
-
-#[derive(Clone, Copy, Debug, Default, Zeroable, PartialEq, Eq, Serialize, Deserialize)]
-pub struct ShadowElGamalPubkey(pub [u8; ELGAMAL_PUBKEY_LEN]);
-
 #[derive(Clone, Copy, Debug, Default, PartialEq, Zeroable, Serialize, Deserialize)]
 pub struct ShadowCpiGuard {
     pub lock_cpi: PodBool,
@@ -76,9 +46,6 @@ pub struct ShadowCpiGuard {
 pub struct ShadowDefaultAccountState {
     pub state: PodAccountState,
 }
-
-#[derive(Clone, Copy, Debug, Default, PartialEq, Zeroable, Serialize, Deserialize)]
-pub struct ShadowImmutableOwner;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Zeroable, Serialize, Deserialize)]
 pub struct ShadowInterestBearingConfig {
@@ -97,20 +64,16 @@ pub struct ShadowMemoTransfer {
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Zeroable, Serialize, Deserialize)]
 pub struct ShadowMetadataPointer {
-    pub authority: OptionalNonZeroPubkey,
     pub metadata_address: OptionalNonZeroPubkey,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Zeroable, Serialize, Deserialize)]
 pub struct ShadowGroupMemberPointer {
-    pub authority: OptionalNonZeroPubkey,
     pub member_address: OptionalNonZeroPubkey,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Zeroable, Serialize, Deserialize)]
 pub struct ShadowGroupPointer {
-    /// Authority that can set the group address
-    pub authority: OptionalNonZeroPubkey,
     /// Account address that holds the group
     pub group_address: OptionalNonZeroPubkey,
 }
@@ -172,14 +135,14 @@ pub struct ShadowConfidentialTransferMint {
     pub auditor_elgamal_pubkey: OptionalNonZeroElGamalPubkey,
 }
 
-#[derive(Clone, Copy, Debug, Default, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct ShadowConfidentialTransferAccount {
     pub approved: PodBool,
-    pub elgamal_pubkey: ShadowElGamalPubkey,
-    pub pending_balance_lo: EncryptedBalance,
-    pub pending_balance_hi: EncryptedBalance,
-    pub available_balance: EncryptedBalance,
-    pub decryptable_available_balance: DecryptableBalance,
+    pub elgamal_pubkey: String,
+    pub pending_balance_lo: String,
+    pub pending_balance_hi: String,
+    pub available_balance: String,
+    pub decryptable_available_balance: String,
     pub allow_confidential_credits: PodBool,
     pub allow_non_confidential_credits: PodBool,
     pub pending_balance_credit_counter: PodU64,
@@ -188,16 +151,16 @@ pub struct ShadowConfidentialTransferAccount {
     pub actual_pending_balance_credit_counter: PodU64,
 }
 
-#[derive(Clone, Copy, Debug, Default, PartialEq, Zeroable, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct ShadowConfidentialTransferFeeConfig {
     pub authority: OptionalNonZeroPubkey,
-    pub withdraw_withheld_authority_elgamal_pubkey: ShadowElGamalPubkey,
+    pub withdraw_withheld_authority_elgamal_pubkey: String,
     pub harvest_to_mint_enabled: PodBool,
-    pub withheld_amount: EncryptedWithheldAmount,
+    pub withheld_amount: String,
 }
 
 pub struct ShadowConfidentialTransferFeeAmount {
-    pub withheld_amount: EncryptedWithheldAmount,
+    pub withheld_amount: String,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Zeroable, Serialize, Deserialize)]
@@ -224,114 +187,6 @@ pub struct ShadowMetadata {
     pub additional_metadata: Vec<(String, String)>,
 }
 
-impl Serialize for ShadowAeCiphertext {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_bytes(&self.0)
-    }
-}
-
-impl<'de> Visitor<'de> for ShadowElGamalCiphertextVisitor {
-    type Value = ShadowElGamalCiphertext;
-
-    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        formatter.write_str("a byte array of length ELGAMAL_CIPHERTEXT_LEN")
-    }
-
-    fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
-    where
-        E: de::Error,
-    {
-        if v.len() == ELGAMAL_CIPHERTEXT_LEN {
-            let mut arr = [0u8; ELGAMAL_CIPHERTEXT_LEN];
-            arr.copy_from_slice(v);
-            Ok(ShadowElGamalCiphertext(arr))
-        } else {
-            Err(E::invalid_length(v.len(), &self))
-        }
-    }
-}
-
-impl<'de> Deserialize<'de> for ShadowElGamalCiphertext {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        deserializer.deserialize_bytes(ShadowElGamalCiphertextVisitor)
-    }
-}
-
-impl Default for ShadowElGamalCiphertext {
-    fn default() -> Self {
-        ShadowElGamalCiphertext([0u8; ELGAMAL_CIPHERTEXT_LEN])
-    }
-}
-
-impl Default for ShadowAeCiphertext {
-    fn default() -> Self {
-        ShadowAeCiphertext([0u8; AE_CIPHERTEXT_LEN])
-    }
-}
-
-impl<'de> Visitor<'de> for ShadowAeCiphertextVisitor {
-    type Value = ShadowAeCiphertext;
-
-    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-        formatter.write_str("a byte array of length AE_CIPHERTEXT_LEN")
-    }
-
-    fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
-    where
-        A: SeqAccess<'de>,
-    {
-        let mut arr = [0u8; AE_CIPHERTEXT_LEN];
-        for i in 0..AE_CIPHERTEXT_LEN {
-            arr[i] = seq
-                .next_element()?
-                .ok_or(de::Error::invalid_length(i, &self))?;
-        }
-        Ok(ShadowAeCiphertext(arr))
-    }
-}
-
-impl<'de> Deserialize<'de> for ShadowAeCiphertext {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        deserializer.deserialize_tuple(AE_CIPHERTEXT_LEN, ShadowAeCiphertextVisitor)
-    }
-}
-
-impl Serialize for ShadowElGamalCiphertext {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_bytes(&self.0)
-    }
-}
-
-impl From<AeCiphertext> for ShadowAeCiphertext {
-    fn from(original: AeCiphertext) -> Self {
-        ShadowAeCiphertext(original.0)
-    }
-}
-
-impl From<ElGamalCiphertext> for ShadowElGamalCiphertext {
-    fn from(original: ElGamalCiphertext) -> Self {
-        ShadowElGamalCiphertext(original.0)
-    }
-}
-
-impl From<ElGamalPubkey> for ShadowElGamalPubkey {
-    fn from(original: ElGamalPubkey) -> Self {
-        ShadowElGamalPubkey(original.0)
-    }
-}
-
 impl From<CpiGuard> for ShadowCpiGuard {
     fn from(original: CpiGuard) -> Self {
         ShadowCpiGuard {
@@ -348,16 +203,10 @@ impl From<DefaultAccountState> for ShadowDefaultAccountState {
     }
 }
 
-impl From<ImmutableOwner> for ShadowImmutableOwner {
-    fn from(_: ImmutableOwner) -> Self {
-        ShadowImmutableOwner
-    }
-}
-
 impl From<ConfidentialTransferFeeAmount> for ShadowConfidentialTransferFeeAmount {
     fn from(original: ConfidentialTransferFeeAmount) -> Self {
         ShadowConfidentialTransferFeeAmount {
-            withheld_amount: original.withheld_amount.into(),
+            withheld_amount: original.withheld_amount.to_base58(),
         }
     }
 }
@@ -381,7 +230,6 @@ impl From<MemoTransfer> for ShadowMemoTransfer {
 impl From<MetadataPointer> for ShadowMetadataPointer {
     fn from(original: MetadataPointer) -> Self {
         ShadowMetadataPointer {
-            authority: original.authority,
             metadata_address: original.metadata_address,
         }
     }
@@ -390,7 +238,6 @@ impl From<MetadataPointer> for ShadowMetadataPointer {
 impl From<GroupPointer> for ShadowGroupPointer {
     fn from(original: GroupPointer) -> Self {
         ShadowGroupPointer {
-            authority: original.authority,
             group_address: original.group_address,
         }
     }
@@ -400,7 +247,7 @@ impl From<TokenGroup> for ShadowTokenGroup {
     fn from(original: TokenGroup) -> Self {
         ShadowTokenGroup {
             update_authority: original.update_authority,
-            mint: bs58::encode(original.mint).into_string(),
+            mint: original.mint.to_string(),
             size: original.size,
             max_size: original.max_size,
         }
@@ -410,8 +257,8 @@ impl From<TokenGroup> for ShadowTokenGroup {
 impl From<TokenGroupMember> for ShadowTokenGroupMember {
     fn from(original: TokenGroupMember) -> Self {
         ShadowTokenGroupMember {
-            mint: bs58::encode(original.mint).into_string(),
-            group: bs58::encode(original.group).into_string(),
+            mint: original.mint.to_string(),
+            group: original.group.to_string(),
             member_number: original.member_number,
         }
     }
@@ -420,7 +267,6 @@ impl From<TokenGroupMember> for ShadowTokenGroupMember {
 impl From<GroupMemberPointer> for ShadowGroupMemberPointer {
     fn from(original: GroupMemberPointer) -> Self {
         ShadowGroupMemberPointer {
-            authority: original.authority,
             member_address: original.member_address,
         }
     }
@@ -498,24 +344,19 @@ impl From<ConfidentialTransferMint> for ShadowConfidentialTransferMint {
 impl From<ConfidentialTransferAccount> for ShadowConfidentialTransferAccount {
     fn from(original: ConfidentialTransferAccount) -> Self {
         ShadowConfidentialTransferAccount {
-            approved: original.approved.into(),
-            elgamal_pubkey: original.elgamal_pubkey.into(),
-            pending_balance_lo: original.pending_balance_lo.into(),
-            pending_balance_hi: original.pending_balance_hi.into(),
-            available_balance: original.available_balance.into(),
-            decryptable_available_balance: original.decryptable_available_balance.into(),
-            allow_confidential_credits: original.allow_confidential_credits.into(),
-            allow_non_confidential_credits: original.allow_non_confidential_credits.into(),
-            pending_balance_credit_counter: original.pending_balance_credit_counter.into(),
-            maximum_pending_balance_credit_counter: original
-                .maximum_pending_balance_credit_counter
-                .into(),
+            approved: original.approved,
+            elgamal_pubkey: original.elgamal_pubkey.to_base58(),
+            pending_balance_lo: original.pending_balance_lo.to_base58(),
+            pending_balance_hi: original.pending_balance_hi.to_base58(),
+            available_balance: original.available_balance.to_base58(),
+            decryptable_available_balance: original.decryptable_available_balance.to_base58(),
+            allow_confidential_credits: original.allow_confidential_credits,
+            allow_non_confidential_credits: original.allow_non_confidential_credits,
+            pending_balance_credit_counter: original.pending_balance_credit_counter,
+            maximum_pending_balance_credit_counter: original.maximum_pending_balance_credit_counter,
             expected_pending_balance_credit_counter: original
-                .expected_pending_balance_credit_counter
-                .into(),
-            actual_pending_balance_credit_counter: original
-                .actual_pending_balance_credit_counter
-                .into(),
+                .expected_pending_balance_credit_counter,
+            actual_pending_balance_credit_counter: original.actual_pending_balance_credit_counter,
         }
     }
 }
@@ -526,9 +367,9 @@ impl From<ConfidentialTransferFeeConfig> for ShadowConfidentialTransferFeeConfig
             authority: original.authority,
             withdraw_withheld_authority_elgamal_pubkey: original
                 .withdraw_withheld_authority_elgamal_pubkey
-                .into(),
+                .to_base58(),
             harvest_to_mint_enabled: original.harvest_to_mint_enabled,
-            withheld_amount: original.withheld_amount.into(),
+            withheld_amount: original.withheld_amount.to_base58(),
         }
     }
 }
@@ -543,5 +384,27 @@ impl From<TokenMetadata> for ShadowMetadata {
             uri: original.uri,
             additional_metadata: original.additional_metadata,
         }
+    }
+}
+
+trait FromBytesToBase58 {
+    fn to_base58(&self) -> String;
+}
+
+impl FromBytesToBase58 for ElGamalPubkey {
+    fn to_base58(&self) -> String {
+        bs58::encode(self.0).into_string()
+    }
+}
+
+impl FromBytesToBase58 for ElGamalCiphertext {
+    fn to_base58(&self) -> String {
+        bs58::encode(self.0).into_string()
+    }
+}
+
+impl FromBytesToBase58 for AeCiphertext {
+    fn to_base58(&self) -> String {
+        bs58::encode(self.0).into_string()
     }
 }

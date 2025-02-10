@@ -301,6 +301,7 @@ fn convert_mpl_to_spl_change_log_event(
         index: mpl_changelog_event.index,
     }
 }
+
 // See Bubblegum documentation for offsets and positions:
 // https://github.com/metaplex-foundation/mpl-bubblegum/blob/main/programs/bubblegum/README.md#-verify_creator-and-unverify_creator
 fn build_creator_verification_payload(
