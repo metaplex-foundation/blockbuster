@@ -9,36 +9,36 @@ edition = "2021"
 readme = "../README.md"
 
 [dependencies]
-anchor-lang = "0.29.0"
-async-trait = "0.1.60"
-borsh = "~0.10.3"
-bs58 = "0.4.0"
-bytemuck = {version = "1.14.0", features = ["derive"]}
-lazy_static = "1.4.0"
-log = "0.4.17"
-mpl-account-compression = {version = "0.4.2", features = ["no-entrypoint"]}
-mpl-bubblegum = "1.2.0"
-mpl-core = {version = "0.9.0", features = ["serde"]}
-mpl-noop = {version = "0.2.1", features = ["no-entrypoint"]}
-mpl-token-metadata = {version = "4.1.1", features = ["serde"]}
-serde = "1.0.137"
-solana-sdk = "~1.18.15"
-solana-transaction-status = "~1.18.15"
-solana-zk-token-sdk = "~1.18.15"
-spl-account-compression = {version = "0.4.2", features = ["no-entrypoint"]}
-spl-noop = {version = "0.2.0", features = ["no-entrypoint"]}
-spl-pod = {version = "0.1.0", features = ["serde-traits"]}
-spl-token = {version = ">= 3.5.0, < 5.0", features = ["no-entrypoint"]}
-spl-token-2022 = {version = "1.0", features = ["no-entrypoint"]}
-spl-token-group-interface = "0.1.0"
-spl-token-metadata-interface = "0.2.0"
-thiserror = "1.0.31"
+anchor-lang = { workspace = true }
+async-trait = { workspace = true }
+borsh = { workspace = true }
+bs58 = { workspace = true }
+bytemuck = { workspace = true, features = ["derive"] }
+lazy_static = { workspace = true }
+log = { workspace = true }
+mpl-account-compression = { workspace = true, features = ["no-entrypoint"] }
+mpl-bubblegum = { workspace = true }
+mpl-core = { workspace = true, features = ["serde"] }
+mpl-noop = { workspace = true, features = ["no-entrypoint"] }
+mpl-token-metadata = { workspace = true, features = ["serde"] }
+serde = { workspace = true }
+solana-sdk = { workspace = true }
+solana-transaction-status = { workspace = true }
+solana-zk-token-sdk = { workspace = true }
+spl-account-compression = { workspace = true, features = ["no-entrypoint"] }
+spl-noop = { workspace = true, features = ["no-entrypoint"] }
+spl-pod = { workspace = true, features = ["serde-traits"] }
+spl-token = { workspace = true, features = ["no-entrypoint"] }
+spl-token-2022 = { workspace = true, features = ["no-entrypoint"] }
+spl-token-group-interface = { workspace = true }
+spl-token-metadata-interface = { workspace = true }
+thiserror = { workspace = true }
 
 [dev-dependencies]
-flatbuffers = "23.1.21"
-plerkle_serialization = "1.8.0"
-rand = "0.8.5"
-serde_json = "1.0.81"
-solana-client = "~1.18.15"
-solana-geyser-plugin-interface = "~1.18.15"
-spl-concurrent-merkle-tree = "0.4.1"
+flatbuffers = { workspace = true }
+plerkle_serialization = { workspace = true }
+rand = { workspace = true }
+serde_json = { workspace = true }
+solana-client = { workspace = true }
+solana-geyser-plugin-interface = { workspace = true }
+spl-concurrent-merkle-tree = { workspace = true }
