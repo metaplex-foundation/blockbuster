@@ -6,6 +6,13 @@ use crate::{
 };
 use borsh::de::BorshDeserialize;
 use log::warn;
+
+/// Deserialize Borsh instruction data, tolerating trailing bytes to match on-chain Anchor behavior.
+#[inline]
+fn deserialize_ix_data<T: BorshDeserialize>(data: &[u8]) -> std::io::Result<T> {
+    T::deserialize(&mut &data[..])
+}
+
 use mpl_bubblegum::{
     get_instruction_type,
     instructions::{
@@ -192,7 +199,7 @@ impl ProgramParser for BubblegumParser {
                         b_inst.payload = Some(build_mint_v1_payload(keys, ix_data, true)?);
                     }
                     InstructionName::DecompressV1 => {
-                        let args: MetadataArgs = MetadataArgs::try_from_slice(ix_data)?;
+                        let args: MetadataArgs = deserialize_ix_data(ix_data)?;
                         b_inst.payload = Some(Payload::Decompress { args });
                     }
                     InstructionName::CancelRedeem => {
@@ -269,9 +276,9 @@ fn build_creator_verification_payload(
     verify: bool,
 ) -> Result<Payload, BlockbusterError> {
     let metadata = if verify {
-        VerifyCreatorInstructionArgs::try_from_slice(ix_data)?.metadata
+        deserialize_ix_data::<VerifyCreatorInstructionArgs>(ix_data)?.metadata
     } else {
-        UnverifyCreatorInstructionArgs::try_from_slice(ix_data)?.metadata
+        deserialize_ix_data::<UnverifyCreatorInstructionArgs>(ix_data)?.metadata
     };
 
     let creator = *keys
@@ -305,7 +312,7 @@ fn build_mint_v1_payload(
     ix_data: &[u8],
     set_verify: bool,
 ) -> Result<Payload, BlockbusterError> {
-    let mut args: MetadataArgs = MetadataArgs::try_from_slice(ix_data)?;
+    let mut args: MetadataArgs = deserialize_ix_data(ix_data)?;
     if set_verify {
         if let Some(ref mut col) = args.collection {
             col.verified = true;
@@ -333,7 +340,7 @@ fn build_update_metadata_payload(
     keys: &[Pubkey],
     ix_data: &[u8],
 ) -> Result<Payload, BlockbusterError> {
-    let args = UpdateMetadataInstructionArgs::try_from_slice(ix_data)?;
+    let args: UpdateMetadataInstructionArgs = deserialize_ix_data(ix_data)?;
 
     let tree_id = *keys
         .get(8)
